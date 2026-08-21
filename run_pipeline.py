@@ -1,13 +1,3 @@
-"""
-run_pipeline.py — Master One-Click Execution Pipeline for Perovskite SEM GAN & Live Detection
-=============================================================================================
-Usage:
-    py run_pipeline.py --mode all
-    py run_pipeline.py --mode inpaint
-    py run_pipeline.py --mode train
-    py run_pipeline.py --mode eval
-"""
-
 import os
 import sys
 import argparse
@@ -20,16 +10,16 @@ def banner(title):
 
 def main():
     parser = argparse.ArgumentParser(description="Master Execution Pipeline")
-    parser.add_argument("--mode", type=str, default="all", choices=["all", "inpaint", "train", "eval"])
+    parser.add_argument("--mode", type=str, default="all", choices=["all", "train_gan", "inpaint", "train_detector", "eval"])
     parser.add_argument("--data_dir", type=str, default=r"C:\Users\Sahil\Downloads\SEM-Annotation\balanced_dataset")
     parser.add_argument("--save_dir", type=str, default=r"C:\Users\Sahil\Downloads\SEM_GAN_Dissertation")
-    parser.add_argument("--inpaint_samples", type=int, default=50) # default 50 for quick run
-    parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--gan_epochs", type=int, default=10)
+    parser.add_argument("--inpaint_samples", type=int, default=100)
+    parser.add_argument("--detector_epochs", type=int, default=10)
+    parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--lr", type=float, default=1e-3)
     
     args = parser.parse_args()
-    
     start_total = time.time()
     
     banner("PEROVSKITE SEM GENERATIVE & LIVE DETECTION PIPELINE: INITIALIZING")
@@ -38,10 +28,24 @@ def main():
     print(f"  Execution Mode: {args.mode.upper()}")
     
     # -------------------------------------------------------------
-    # Stage 1 & 2: Physics & Generative Inpainting
+    # Stage 1: Train Defect GAN Generator & Generate Samples
+    # -------------------------------------------------------------
+    if args.mode in ["all", "train_gan"]:
+        banner("STAGE 1: TRAINING PEROVSKITE DEFECT GAN WITH DUAL-DOMAIN DISCRIMINATOR")
+        from pipeline.train_gan import train_gan_generator
+        train_gan_generator(
+            data_dir=args.data_dir,
+            save_dir=os.path.join(args.save_dir, "checkpoints"),
+            output_dir=os.path.join(args.save_dir, "outputs", "gan_generated_samples"),
+            epochs=args.gan_epochs,
+            batch_size=args.batch_size
+        )
+
+    # -------------------------------------------------------------
+    # Stage 2: Generative Inpainting & Dataset Expansion
     # -------------------------------------------------------------
     if args.mode in ["all", "inpaint"]:
-        banner("STAGE 1 & 2: GENERATIVE DEFECT INPAINTING & DATASET EXPANSION")
+        banner("STAGE 2: GENERATING EXPANDED DEFECT DATASET VIA INPAINTING")
         from pipeline.generate_synthetic_dataset import generate_expanded_dataset
         exp_dir = os.path.join(args.save_dir, "data", "expanded_dataset")
         generate_expanded_dataset(
@@ -53,15 +57,15 @@ def main():
     # -------------------------------------------------------------
     # Stage 3: Live Evidential Detector Training
     # -------------------------------------------------------------
-    if args.mode in ["all", "train"]:
+    if args.mode in ["all", "train_detector"]:
         banner("STAGE 3: TRAINING LIVE EVIDENTIAL DETECTOR (EDL)")
         from pipeline.train_live_detector import train_detector
         
         class TrainArgs:
             data_dir = args.data_dir
             save_dir = os.path.join(args.save_dir, "checkpoints")
-            epochs = args.epochs
-            batch_size = args.batch_size
+            epochs = args.detector_epochs
+            batch_size = args.batch_size * 2
             lr = args.lr
             
         train_detector(TrainArgs)
