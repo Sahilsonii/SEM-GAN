@@ -2,17 +2,28 @@ import os
 import glob
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 
 CLASS_NAMES = ["PbI2", "3D_pinholes", "3D-2D_pinholes", "3D_background", "3D-2D_background"]
 CLASS_FOLDERS = ["class0_pbI2", "class1_3D_pinholes", "class2_3D-2D_pinholes", "class3_3D_background", "class4_3D-2D_background"]
 
+STANDARD_SIZE = (1024, 768) # (Width, Height)
+
 def yolo_collate_fn(batch):
     """
-    Custom collate function for batches with variable number of bounding boxes per image.
+    Custom collate function for batches with variable-sized bounding boxes and images.
+    Ensures all images in batch are uniformly sized [3, 768, 1024].
     """
-    images = torch.stack([item["image"] for item in batch], dim=0)
+    processed_images = []
+    for item in batch:
+        img = item["image"] # [3, H, W]
+        if img.shape[1] != STANDARD_SIZE[1] or img.shape[2] != STANDARD_SIZE[0]:
+            img = F.interpolate(img.unsqueeze(0), size=(STANDARD_SIZE[1], STANDARD_SIZE[0]), mode='bilinear', align_corners=False).squeeze(0)
+        processed_images.append(img)
+        
+    images = torch.stack(processed_images, dim=0) # [B, 3, 768, 1024]
     class_indices = torch.tensor([item["class_idx"] for item in batch], dtype=torch.long)
     filenames = [item["filename"] for item in batch]
     class_names = [item["class_name"] for item in batch]
@@ -31,13 +42,12 @@ def yolo_collate_fn(batch):
 class PerovskiteYOLODataset(Dataset):
     """
     Dataset loader for Perovskite FESEM images with YOLO-format annotations.
-    Supports raw image loading, bounding box parsing, and clean vs defect separation.
+    Automatically standardizes image resolution to (1024x768) and parses normalized bounding boxes.
     """
-    def __init__(self, root_dir=r"C:\Users\Sahil\Downloads\SEM-Annotation\balanced_dataset", split="all", img_size=(768, 1024), transform=None):
+    def __init__(self, root_dir=r"C:\Users\Sahil\Downloads\SEM-Annotation\balanced_dataset", split="all", target_size=(1024, 768)):
         self.root_dir = root_dir
         self.split = split
-        self.img_size = img_size
-        self.transform = transform
+        self.target_size = target_size # (W, H)
         
         self.images_dir = os.path.join(root_dir, "images")
         self.labels_dir = os.path.join(root_dir, "labels")
@@ -106,10 +116,13 @@ class PerovskiteYOLODataset(Dataset):
     def __getitem__(self, idx):
         item = self.samples[idx]
         img = Image.open(item["img_path"]).convert("RGB")
-        img_np = np.array(img, dtype=np.float32) / 255.0 # [H, W, 3] in [0, 1]
         
-        # Convert to tensor [3, H, W]
-        img_tensor = torch.from_numpy(img_np).permute(2, 0, 1)
+        # Standardize size
+        if img.size != self.target_size:
+            img = img.resize(self.target_size, Image.BILINEAR)
+            
+        img_np = np.array(img, dtype=np.float32) / 255.0 # [H, W, 3] in [0, 1]
+        img_tensor = torch.from_numpy(img_np).permute(2, 0, 1) # [3, H, W]
         
         return {
             "image": img_tensor,
@@ -130,6 +143,6 @@ class PerovskiteYOLODataset(Dataset):
 
 if __name__ == "__main__":
     ds = PerovskiteYOLODataset()
-    loader = DataLoader(ds, batch_size=4, collate_fn=yolo_collate_fn)
+    loader = DataLoader(ds, batch_size=8, collate_fn=yolo_collate_fn)
     b = next(iter(loader))
-    print(f"Batch loaded successfully! Image tensor shape: {b['image'].shape}, Class indices: {b['class_idx']}")
+    print(f"Batch loaded: image tensor shape={b['image'].shape}, labels={b['class_idx']}")
