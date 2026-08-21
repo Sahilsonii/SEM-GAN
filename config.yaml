@@ -1,0 +1,48 @@
+# config.yaml — Master Configuration Registry for Perovskite SEM GAN & Live Detection Pipeline
+
+project:
+  name: "Perovskite_SEM_Generative_Live_Detection"
+  seed: 42
+  device: "cuda"  # Auto-falls back to "cpu" if CUDA is unavailable
+
+data:
+  raw_dir: "C:/Users/Sahil/Downloads/SEM-Annotation/balanced_dataset"
+  expanded_dir: "C:/Users/Sahil/Downloads/SEM_GAN_Dissertation/data/expanded_dataset"
+  patch_size: 256
+  stride: 128
+  num_classes: 5
+  class_map:
+    0: "PbI2"
+    1: "3D_pinholes"
+    2: "3D-2D_pinholes"
+    3: "3D_background"
+    4: "3D-2D_background"
+  clean_classes: [3, 4]   # Pristine canvases for inpainting
+  defect_classes: [0, 1, 2] # Defect categories to inject
+
+physics:
+  absorber_thickness_nm: 500.0   # Nominal perovskite absorber thickness in nm
+  shunt_threshold_ratio: 0.75    # Void depth > 75% thickness classified as electrical shunt
+  sigma_passivation_px: 15.0     # Gaussian decay radius for PbI2 to grain boundary passivation
+
+inpainting:
+  target_synthetic_images: 2000  # Total synthetic defect images to generate
+  embed_dim: 48
+  batch_size: 4
+  epochs: 10
+  lr: 1.0e-4
+  lambda_pixel: 1.0
+  lambda_fft: 0.1
+
+detection:
+  img_size: 640
+  batch_size: 8
+  epochs: 20
+  lr: 1.0e-3
+  uncertainty_threshold: 0.35   # Flags live frames above this uncertainty score
+  confidence_threshold: 0.40
+
+output:
+  checkpoints_dir: "C:/Users/Sahil/Downloads/SEM_GAN_Dissertation/checkpoints"
+  figures_dir: "C:/Users/Sahil/Downloads/SEM_GAN_Dissertation/outputs"
+  dpi: 300
