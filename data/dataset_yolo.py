@@ -8,6 +8,26 @@ from PIL import Image
 CLASS_NAMES = ["PbI2", "3D_pinholes", "3D-2D_pinholes", "3D_background", "3D-2D_background"]
 CLASS_FOLDERS = ["class0_pbI2", "class1_3D_pinholes", "class2_3D-2D_pinholes", "class3_3D_background", "class4_3D-2D_background"]
 
+def yolo_collate_fn(batch):
+    """
+    Custom collate function for batches with variable number of bounding boxes per image.
+    """
+    images = torch.stack([item["image"] for item in batch], dim=0)
+    class_indices = torch.tensor([item["class_idx"] for item in batch], dtype=torch.long)
+    filenames = [item["filename"] for item in batch]
+    class_names = [item["class_name"] for item in batch]
+    is_clean = [item["is_clean"] for item in batch]
+    boxes = [item["boxes"] for item in batch] # list of variable-size tensors
+
+    return {
+        "image": images,
+        "class_idx": class_indices,
+        "filename": filenames,
+        "class_name": class_names,
+        "is_clean": is_clean,
+        "boxes": boxes
+    }
+
 class PerovskiteYOLODataset(Dataset):
     """
     Dataset loader for Perovskite FESEM images with YOLO-format annotations.
@@ -70,7 +90,7 @@ class PerovskiteYOLODataset(Dataset):
                     "filename": fname,
                     "class_idx": cls_idx,
                     "class_name": CLASS_NAMES[cls_idx],
-                    "boxes": boxes, # list of [class_id, cx, cy, w, h] normalized
+                    "boxes": boxes,
                     "is_clean": (cls_idx in [3, 4] or len(boxes) == 0)
                 }
                 
@@ -110,8 +130,6 @@ class PerovskiteYOLODataset(Dataset):
 
 if __name__ == "__main__":
     ds = PerovskiteYOLODataset()
-    print(f"Perovskite Dataset Loaded: {len(ds)} total images")
-    print(f"  - Clean Background Canvases: {len(ds.get_clean_canvases())} images")
-    print(f"  - Defective Annotated Images: {len(ds.get_defect_samples())} images")
-    sample = ds[0]
-    print(f"Sample 0: {sample['filename']} | Class: {sample['class_name']} | Image Tensor: {sample['image'].shape} | Boxes: {len(sample['boxes'])}")
+    loader = DataLoader(ds, batch_size=4, collate_fn=yolo_collate_fn)
+    b = next(iter(loader))
+    print(f"Batch loaded successfully! Image tensor shape: {b['image'].shape}, Class indices: {b['class_idx']}")

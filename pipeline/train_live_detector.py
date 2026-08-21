@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
 
-from data.dataset_yolo import PerovskiteYOLODataset
+from data.dataset_yolo import PerovskiteYOLODataset, yolo_collate_fn
 from models.live_detector_edl import LiveDetectorEDL
 from losses.physics_loss import EvidentialLoss
 
@@ -23,8 +23,8 @@ def train_detector(args):
     train_size = len(dataset) - val_size
     train_set, val_set = random_split(dataset, [train_size, val_size])
     
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
-    val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False)
+    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=yolo_collate_fn)
+    val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False, collate_fn=yolo_collate_fn)
     
     print(f"Loaded {len(dataset)} total samples ({train_size} Train | {val_size} Val)")
     

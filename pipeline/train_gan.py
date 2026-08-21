@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from PIL import Image
 import numpy as np
 
-from data.dataset_yolo import PerovskiteYOLODataset
+from data.dataset_yolo import PerovskiteYOLODataset, yolo_collate_fn
 from models.inpainter_controlnet import DefectInpainterUNet, generate_random_defect_layout
 from models.discriminator import DualDomainDiscriminator
 from losses.physics_loss import PhysicsFourierLoss
@@ -47,7 +47,7 @@ def train_gan_generator(
     optG = torch.optim.AdamW(netG.parameters(), lr=lr_g, betas=(0.5, 0.999))
     optD = torch.optim.AdamW(netD.parameters(), lr=lr_d, betas=(0.5, 0.999))
     
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=yolo_collate_fn)
     
     for epoch in range(1, epochs + 1):
         netG.train()
