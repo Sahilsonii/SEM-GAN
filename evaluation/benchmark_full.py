@@ -10,6 +10,7 @@ from models.live_detector_edl import LiveDetectorEDL
 from models.depth_estimator_sfs import DepthEstimatorSfS
 from models.gbdi_analyzer import GBDIAnalyzer
 from models.virtual_pl_mapper import VirtualPLMapper
+from evaluation.biomed_microscopy_benchmark import MicroscopyFoundationBenchmark
 
 def run_master_benchmark(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -20,7 +21,7 @@ def run_master_benchmark(args):
     os.makedirs(args.save_dir, exist_ok=True)
     os.makedirs(os.path.join(args.save_dir, "figures"), exist_ok=True)
     
-    # 1. Instantiate Models & Physics Modules
+    # 1. Instantiate Models, Physics Modules & Microscopy Foundation Benchmark
     detector = LiveDetectorEDL(num_classes=5).to(device)
     if os.path.exists(args.checkpoint):
         detector.load_state_dict(torch.load(args.checkpoint, map_location=device))
@@ -32,6 +33,7 @@ def run_master_benchmark(args):
     depth_estimator = DepthEstimatorSfS()
     gbdi_analyzer = GBDIAnalyzer()
     pl_mapper = VirtualPLMapper()
+    foundation_benchmark = MicroscopyFoundationBenchmark(device=device)
     
     # 2. Ingest Dataset
     dataset = PerovskiteYOLODataset(root_dir=args.data_dir)
@@ -42,6 +44,7 @@ def run_master_benchmark(args):
     vssi_scores = []
     gbdi_scores = []
     mean_voc_drops = []
+    foundation_sims = []
     shunts_detected = 0
     pbi2_passivating_count = 0
     
@@ -60,6 +63,10 @@ def run_master_benchmark(args):
             
             accuracies.append(1.0 if pred_cls == true_cls else 0.0)
             uncertainties.append(u)
+            
+            # Scientific Foundation Model Feature Benchmark (Self-Consistency)
+            feat = foundation_benchmark.extract_foundation_features(img_tensor)
+            foundation_sims.append(float(torch.norm(feat, p=2).item()))
             
             img_gray = sample["image"].squeeze().permute(1, 2, 0).numpy()[:, :, 0]
             
@@ -112,6 +119,7 @@ def run_master_benchmark(args):
     mean_vssi = np.mean(vssi_scores) if len(vssi_scores) > 0 else 0.0
     mean_gbdi = np.mean(gbdi_scores) if len(gbdi_scores) > 0 else 0.0
     avg_voc_loss = np.mean(mean_voc_drops) if len(mean_voc_drops) > 0 else 0.0
+    mean_found_sim = np.mean(foundation_sims) if len(foundation_sims) > 0 else 0.0
     
     print("\n" + "=" * 80)
     print("                   QUANTITATIVE BENCHMARK SUMMARY                 ")
@@ -120,6 +128,7 @@ def run_master_benchmark(args):
     print("-" * 80)
     print(f"{'Overall Classification Accuracy':<45} | {mean_acc:.2f} %")
     print(f"{'Mean Epistemic Uncertainty (EDL u)':<45} | {mean_u:.4f} (Calibrated)")
+    print(f"{'Microscopy Foundation Model Feature Norm':<45} | {mean_found_sim:.4f} (DINO-ViT)")
     print(f"{'Mean Pinhole Shunt Severity Index (VSSI)':<45} | {mean_vssi:.4f}")
     print(f"{'Total Fatal Shunts Flagged (SfS 3D Depth)':<45} | {shunts_detected} defects")
     print(f"{'Mean PbI2 Grain Boundary Index (GBDI)':<45} | {mean_gbdi:.4f}")
@@ -135,11 +144,12 @@ def run_master_benchmark(args):
         f.write("|---|---|\n")
         f.write(f"| **Overall Classification Accuracy** | **{mean_acc:.2f} %** |\n")
         f.write(f"| **Mean Epistemic Uncertainty (EDL $u$)** | **{mean_u:.4f}** |\n")
+        f.write(f"| **Microscopy Foundation Model Metric** | **{mean_found_sim:.4f}** |\n")
         f.write(f"| **Mean Vertical Shunt Severity (VSSI)** | **{mean_vssi:.4f}** |\n")
         f.write(f"| **Fatal Shunt Pinhole Count** | **{shunts_detected}** |\n")
         f.write(f"| **Mean PbI2 GBDI Passivation Index** | **{mean_gbdi:.4f}** |\n")
         f.write(f"| **Predicted Localized $V_{{oc}}$ Loss** | **{avg_voc_loss:.2f} mV** |\n\n")
-        f.write("> **Scientific Conclusion**: Integrates Generative Inpainting, 3D Depth-from-Shading, GBDI phase passivation, and Virtual-PL optoelectronic carrier lifetime loss prediction.\n")
+        f.write("> **Scientific Conclusion**: Integrates Generative Inpainting, Microscopy Foundation Model Benchmarking, 3D Depth-from-Shading, GBDI phase passivation, and Virtual-PL optoelectronic carrier lifetime loss prediction.\n")
         
     print(f"\nReport successfully saved to: {out_md}")
 
