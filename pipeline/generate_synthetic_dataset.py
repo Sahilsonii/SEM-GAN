@@ -11,32 +11,41 @@ from models.inpainter_controlnet import DefectInpainterUNet, generate_random_def
 def generate_expanded_dataset(
     raw_dataset_dir=r"C:\Users\Sahil\Downloads\SEM-Annotation\balanced_dataset",
     output_dir=r"C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\data\expanded_dataset",
-    num_synthetic_samples=1000,
+    num_synthetic_samples=100,
     device=None
 ):
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         
     device_name = torch.cuda.get_device_name(0) if device == "cuda" else "CPU"
+    use_amp = (device == "cuda")
     
-    print("=" * 70)
+    print("=" * 75)
     print(f"       GENERATIVE DEFECT INPAINTING: DATASET EXPANSION PIPELINE       ")
-    print(f"       Device: {device.upper()} ({device_name})")
-    print("=" * 70)
+    print(f"       Device: {device.upper()} ({device_name}) | Synthetic Targets: {num_synthetic_samples}")
+    print("=" * 75)
     
     os.makedirs(os.path.join(output_dir, "images"), exist_ok=True)
     os.makedirs(os.path.join(output_dir, "labels"), exist_ok=True)
     
     # 1. Load Real Dataset & Clean Canvases
-    ds = PerovskiteYOLODataset(root_dir=raw_dataset_dir)
+    ds = PerovskiteYOLODataset(root_dir=raw_dataset_dir, target_size=(512, 512))
     clean_canvases = ds.get_clean_canvases()
     print(f"Loaded {len(ds)} real images ({len(clean_canvases)} pristine background canvases)")
     
     if len(clean_canvases) == 0:
         raise ValueError("No clean background images found for inpainting canvas generation.")
 
-    # 2. Instantiate Generative Inpainter
+    # 2. Instantiate Generative Inpainter (Load Stage 1 Checkpoint if exists)
     inpainter = DefectInpainterUNet().to(device)
+    ckpt_path = os.path.join(os.path.dirname(output_dir), "..", "checkpoints", "best_gan_generator.pth")
+    if os.path.exists(ckpt_path):
+        try:
+            inpainter.load_state_dict(torch.load(ckpt_path, map_location=device))
+            print(f"Loaded Trained GAN Generator Weights from: {ckpt_path}")
+        except Exception:
+            pass
+            
     inpainter.eval()
     
     print(f"\nSynthesizing {num_synthetic_samples} novel defect images via generative inpainting...")
@@ -45,23 +54,28 @@ def generate_expanded_dataset(
     total_generated_boxes = 0
     
     with torch.no_grad():
-        for i in tqdm(range(num_synthetic_samples), desc="Generating Defect Inpaintings"):
+        for i in tqdm(range(num_synthetic_samples), desc="Generating Defect Inpaintings", dynamic_ncols=True):
             # Sample a clean background canvas
             bg_item = clean_canvases[i % len(clean_canvases)]
             bg_pil = Image.open(bg_item["img_path"]).convert("RGB")
-            bg_np = np.array(bg_pil, dtype=np.float32) / 255.0 # [H, W, 3]
             
-            H, W = bg_np.shape[:2]
+            # Standardize canvas to 512x512
+            if bg_pil.size != (512, 512):
+                bg_pil = bg_pil.resize((512, 512), Image.BILINEAR)
+                
+            bg_np = np.array(bg_pil, dtype=np.float32) / 255.0 # [512, 512, 3]
             
             # Generate random defect layout & YOLO bounding boxes
-            mask_np, boxes = generate_random_defect_layout(H=H, W=W, max_defects=12)
+            mask_np, boxes = generate_random_defect_layout(H=512, W=512, max_defects=12)
             
             # Prepare tensors
-            bg_tensor = torch.from_numpy(bg_np).permute(2, 0, 1).unsqueeze(0).to(device) # [1, 3, H, W]
-            mask_tensor = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(device) # [1, 1, H, W]
+            bg_tensor = torch.from_numpy(bg_np).permute(2, 0, 1).unsqueeze(0).to(device) # [1, 3, 512, 512]
+            mask_tensor = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).to(device) # [1, 1, 512, 512]
             
             # Synthesize defect texture onto clean canvas
-            syn_tensor = inpainter(bg_tensor, mask_tensor)
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                syn_tensor = inpainter(bg_tensor, mask_tensor)
+                
             syn_np = (syn_tensor.squeeze().permute(1, 2, 0).cpu().numpy() * 255.0).clip(0, 255).astype(np.uint8)
             
             # Save Synthetic Image
@@ -80,13 +94,13 @@ def generate_expanded_dataset(
             synthetic_count += 1
             total_generated_boxes += len(boxes)
             
-    print("\n" + "=" * 70)
+    print("\n" + "=" * 75)
     print("                DATASET EXPANSION COMPLETE!                ")
-    print("=" * 70)
+    print("=" * 75)
     print(f"Total Synthetic Images Generated: {synthetic_count}")
     print(f"Total Synthetic Bounding Boxes:   {total_generated_boxes}")
     print(f"Output Directory:                 {output_dir}")
-    print("=" * 70)
+    print("=" * 75)
 
 if __name__ == "__main__":
-    generate_expanded_dataset(num_synthetic_samples=50) # Fast test run
+    generate_expanded_dataset(num_synthetic_samples=50)

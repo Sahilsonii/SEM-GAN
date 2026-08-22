@@ -9,10 +9,10 @@ class DefectInpainterUNet(nn.Module):
     """
     Controllable Multi-Scale Inpainting Generator for Perovskite Defect Synthesis.
     Conditioned on pristine background SEM and defect layout binary mask.
+    Features dynamic spatial interpolation to handle any image dimensions without shape mismatch.
     """
     def __init__(self, in_channels=4, out_channels=3, embed_dim=48):
         super().__init__()
-        # Input: 3 channels (clean background) + 1 channel (defect layout mask) = 4 channels
         
         # Encoder
         self.enc1 = nn.Sequential(
@@ -44,7 +44,7 @@ class DefectInpainterUNet(nn.Module):
             nn.Conv2d(embed_dim * 4, embed_dim * 4, kernel_size=3, padding=1)
         )
         
-        # Decoder with Skip Connections
+        # Decoder
         self.dec2 = nn.Sequential(
             nn.ConvTranspose2d(embed_dim * 4, embed_dim * 2, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(embed_dim * 2),
@@ -58,12 +58,17 @@ class DefectInpainterUNet(nn.Module):
         
         self.out_conv = nn.Sequential(
             nn.Conv2d(embed_dim * 2, out_channels, kernel_size=3, padding=1),
-            nn.Sigmoid() # Output normalized image [0, 1]
+            nn.Sigmoid()
         )
 
     def forward(self, bg_img, defect_mask):
         # bg_img: [B, 3, H, W]
         # defect_mask: [B, 1, H, W]
+        
+        # Ensure mask matches background dimensions
+        if defect_mask.shape[-2:] != bg_img.shape[-2:]:
+            defect_mask = F.interpolate(defect_mask, size=bg_img.shape[-2:], mode='nearest')
+            
         x_in = torch.cat([bg_img, defect_mask], dim=1)
         
         e1 = self.enc1(x_in)
@@ -74,15 +79,24 @@ class DefectInpainterUNet(nn.Module):
         r = r + self.res2(r)
         
         d2 = self.dec2(r)
+        # Dynamic shape matching for skip connection
+        if d2.shape[-2:] != e2.shape[-2:]:
+            d2 = F.interpolate(d2, size=e2.shape[-2:], mode='bilinear', align_corners=False)
         d1 = self.dec1(torch.cat([d2, e2], dim=1))
         
+        # Dynamic shape matching for final output
+        if d1.shape[-2:] != e1.shape[-2:]:
+            d1 = F.interpolate(d1, size=e1.shape[-2:], mode='bilinear', align_corners=False)
         out = self.out_conv(torch.cat([d1, e1], dim=1))
         
-        # Blend: Keep background where mask is 0, synthesize defect where mask is 1
+        # Ensure output matches input spatial size
+        if out.shape[-2:] != bg_img.shape[-2:]:
+            out = F.interpolate(out, size=bg_img.shape[-2:], mode='bilinear', align_corners=False)
+            
         blended = bg_img * (1.0 - defect_mask) + out * defect_mask
         return blended
 
-def generate_random_defect_layout(H=768, W=1024, max_defects=15):
+def generate_random_defect_layout(H=512, W=512, max_defects=12):
     """
     Synthesizes a realistic random bounding box defect layout.
     Returns: binary mask [H, W] and list of YOLO boxes [cid, cx, cy, w, h].
@@ -92,17 +106,17 @@ def generate_random_defect_layout(H=768, W=1024, max_defects=15):
     
     num_defects = np.random.randint(3, max_defects + 1)
     for _ in range(num_defects):
-        cid = np.random.choice([0, 1, 2], p=[0.35, 0.35, 0.30]) # PbI2, 3D_pinholes, 3D-2D_pinholes
+        cid = int(np.random.choice([0, 1, 2], p=[0.35, 0.35, 0.30])) # PbI2, 3D_pinholes, 3D-2D_pinholes
         
-        bw = np.random.uniform(0.015, 0.07) # width
+        bw = np.random.uniform(0.02, 0.08) # width
         bh = bw * np.random.uniform(0.8, 1.2) # height
         cx = np.random.uniform(bw/2 + 0.02, 1.0 - bw/2 - 0.02)
         cy = np.random.uniform(bh/2 + 0.02, 1.0 - bh/2 - 0.02)
         
-        x1 = int((cx - bw/2) * W)
-        x2 = int((cx + bw/2) * W)
-        y1 = int((cy - bh/2) * H)
-        y2 = int((cy + bh/2) * H)
+        x1 = max(0, int((cx - bw/2) * W))
+        x2 = min(W, int((cx + bw/2) * W))
+        y1 = max(0, int((cy - bh/2) * H))
+        y2 = min(H, int((cy + bh/2) * H))
         
         mask[y1:y2, x1:x2] = 1.0
         boxes.append([cid, cx, cy, bw, bh])
@@ -111,9 +125,9 @@ def generate_random_defect_layout(H=768, W=1024, max_defects=15):
 
 if __name__ == "__main__":
     model = DefectInpainterUNet()
-    bg = torch.randn(2, 3, 256, 256).clamp(0, 1)
-    mask = torch.zeros(2, 1, 256, 256)
+    bg = torch.randn(2, 3, 513, 513).clamp(0, 1) # Test with odd dimension
+    mask = torch.zeros(2, 1, 513, 513)
     mask[:, :, 50:100, 50:100] = 1.0
     
     out = model(bg, mask)
-    print(f"Defect Inpainter Test Passed: Input {bg.shape} -> Output {out.shape}")
+    print(f"Defect Inpainter Odd Shape Test Passed: Input {bg.shape} -> Output {out.shape}")
