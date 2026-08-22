@@ -21,11 +21,16 @@ def train_gan_generator(
     batch_size=4,
     lr_g=1e-4,
     lr_d=1e-4,
-    device="cpu"
+    device=None
 ):
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        
+    device_name = torch.cuda.get_device_name(0) if device == "cuda" else "CPU"
+    
     print("=" * 75)
     print(f"   TRAINING PEROVSKITE DEFECT GENERATIVE ADVERSARIAL NETWORK (GAN)   ")
-    print(f"   Device: {device} | Epochs: {epochs} | Batch Size: {batch_size}   ")
+    print(f"   Device: {device.upper()} ({device_name}) | Epochs: {epochs} | Batch Size: {batch_size}   ")
     print("=" * 75)
     
     os.makedirs(save_dir, exist_ok=True)

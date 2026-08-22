@@ -12,10 +12,16 @@ def generate_expanded_dataset(
     raw_dataset_dir=r"C:\Users\Sahil\Downloads\SEM-Annotation\balanced_dataset",
     output_dir=r"C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\data\expanded_dataset",
     num_synthetic_samples=1000,
-    device="cpu"
+    device=None
 ):
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        
+    device_name = torch.cuda.get_device_name(0) if device == "cuda" else "CPU"
+    
     print("=" * 70)
-    print("       GENERATIVE DEFECT INPAINTING: DATASET EXPANSION PIPELINE       ")
+    print(f"       GENERATIVE DEFECT INPAINTING: DATASET EXPANSION PIPELINE       ")
+    print(f"       Device: {device.upper()} ({device_name})")
     print("=" * 70)
     
     os.makedirs(os.path.join(output_dir, "images"), exist_ok=True)
