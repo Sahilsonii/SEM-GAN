@@ -4,6 +4,7 @@ import argparse
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
+from tqdm import tqdm
 
 from data.dataset_yolo import PerovskiteYOLODataset, yolo_collate_fn
 from models.live_detector_edl import LiveDetectorEDL
@@ -11,9 +12,11 @@ from losses.physics_loss import EvidentialLoss
 
 def train_detector(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("=" * 70)
-    print(f"   TRAINING LIVE EVIDENTIAL DETECTOR (EDL) ON DEVICE: {device}   ")
-    print("=" * 70)
+    device_name = torch.cuda.get_device_name(0) if device.type == "cuda" else "CPU"
+    print("=" * 75)
+    print(f"   TRAINING LIVE EVIDENTIAL DETECTOR (EDL)   ")
+    print(f"   Device: {device.type.upper()} ({device_name}) | Epochs: {args.epochs} | Batch Size: {args.batch_size}   ")
+    print("=" * 75)
     
     os.makedirs(args.save_dir, exist_ok=True)
     
@@ -26,7 +29,7 @@ def train_detector(args):
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=yolo_collate_fn)
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False, collate_fn=yolo_collate_fn)
     
-    print(f"Loaded {len(dataset)} total samples ({train_size} Train | {val_size} Val)")
+    print(f"Loaded {len(dataset)} total samples ({train_size} Train | {val_size} Val)\n")
     
     # 2. Model & Loss & Optimizer
     model = LiveDetectorEDL(num_classes=5).to(device)
@@ -41,7 +44,9 @@ def train_detector(args):
         running_u = 0.0
         start_time = time.time()
         
-        for batch in train_loader:
+        pbar = tqdm(train_loader, desc=f"Detector Epoch [{epoch:02d}/{args.epochs:02d}]", dynamic_ncols=True)
+        
+        for batch in pbar:
             imgs = batch["image"].to(device) # [B, 3, H, W]
             labels = batch["class_idx"].to(device) # [B]
             
@@ -58,6 +63,11 @@ def train_detector(args):
             
             running_loss += loss.item()
             running_u += u_val
+            
+            pbar.set_postfix({
+                "Loss": f"{loss.item():.4f}",
+                "Uncertainty_u": f"{u_val:.3f}"
+            })
             
         avg_loss = running_loss / len(train_loader)
         avg_u = running_u / len(train_loader)
@@ -83,17 +93,17 @@ def train_detector(args):
         val_acc = (correct / total) * 100.0 if total > 0 else 0.0
         val_avg_u = val_u / len(val_loader)
         
-        print(f"Epoch [{epoch:02d}/{args.epochs:02d}] | Train Loss: {avg_loss:.4f} | Train Uncertainty: {avg_u:.4f} | Val Acc: {val_acc:.2f}% | Val Uncertainty: {val_avg_u:.4f} | Time: {elapsed:.1f}s")
+        print(f"  >>> [Epoch {epoch:02d} Summary] | Train Loss: {avg_loss:.4f} | Val Acc: {val_acc:.2f}% | Uncertainty: {val_avg_u:.4f} | Time: {elapsed:.1f}s")
         
         if val_acc >= best_acc:
             best_acc = val_acc
             ckpt_path = os.path.join(args.save_dir, "best_live_detector.pth")
             torch.save(model.state_dict(), ckpt_path)
-            print(f"  >>> Checkpoint Saved: {ckpt_path} (Acc: {best_acc:.2f}%)")
+            print(f"      ⭐ New Best Checkpoint Saved (Acc: {best_acc:.2f}%)\n")
             
-    print("\n" + "=" * 70)
+    print("=" * 75)
     print(f"   DETECTOR TRAINING COMPLETE! Best Validation Accuracy: {best_acc:.2f}%   ")
-    print("=" * 70)
+    print("=" * 75)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train Live Evidential Detector")

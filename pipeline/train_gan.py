@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from PIL import Image
 import numpy as np
+from tqdm import tqdm
 
 from data.dataset_yolo import PerovskiteYOLODataset, yolo_collate_fn
 from models.inpainter_controlnet import DefectInpainterUNet, generate_random_defect_layout
@@ -39,7 +40,7 @@ def train_gan_generator(
     # 1. Dataset
     dataset = PerovskiteYOLODataset(root_dir=data_dir)
     clean_canvases = dataset.get_clean_canvases()
-    print(f"Loaded {len(dataset)} dataset samples ({len(clean_canvases)} pristine background canvases)")
+    print(f"Loaded {len(dataset)} dataset samples ({len(clean_canvases)} pristine background canvases)\n")
     
     # 2. Generator & Dual-Domain Discriminator
     netG = DefectInpainterUNet(in_channels=4, out_channels=3, embed_dim=48).to(device)
@@ -60,9 +61,12 @@ def train_gan_generator(
         
         running_g_loss = 0.0
         running_d_loss = 0.0
+        running_fft_loss = 0.0
         start_time = time.time()
         
-        for batch in loader:
+        pbar = tqdm(loader, desc=f"Epoch [{epoch:02d}/{epochs:02d}]", dynamic_ncols=True)
+        
+        for batch in pbar:
             real_imgs = batch["image"].to(device) # [B, 3, H, W]
             B, C, H, W = real_imgs.shape
             
@@ -107,27 +111,35 @@ def train_gan_generator(
             
             running_g_loss += loss_g.item()
             running_d_loss += loss_d.item()
+            running_fft_loss += loss_g_fft.item()
+            
+            # Live batch progress bar update
+            pbar.set_postfix({
+                "G_Loss": f"{loss_g.item():.3f}",
+                "D_Loss": f"{loss_d.item():.3f}",
+                "FFT_Physics": f"{loss_g_fft.item():.3f}"
+            })
             
         avg_g = running_g_loss / len(loader)
         avg_d = running_d_loss / len(loader)
+        avg_fft = running_fft_loss / len(loader)
         elapsed = time.time() - start_time
         
-        print(f"Epoch [{epoch:02d}/{epochs:02d}] | G_Loss: {avg_g:.4f} | D_Loss: {avg_d:.4f} | Physics FFT Loss: {loss_g_fft.item():.4f} | Time: {elapsed:.1f}s")
+        print(f"  >>> [Epoch {epoch:02d} Summary] | G_Loss: {avg_g:.4f} | D_Loss: {avg_d:.4f} | 2D-FFT Physics Loss: {avg_fft:.4f} | Time: {elapsed:.1f}s")
         
-        # Save sample generated images every 2 epochs
-        if epoch % 2 == 0 or epoch == epochs:
-            netG.eval()
-            with torch.no_grad():
-                sample_out = fake_imgs[0].permute(1, 2, 0).cpu().numpy()
-                sample_u8 = (sample_out * 255.0).clip(0, 255).astype(np.uint8)
-                sample_path = os.path.join(output_dir, f"gan_generated_epoch_{epoch:02d}.jpg")
-                Image.fromarray(sample_u8).save(sample_path)
-                print(f"  >>> Sample Generated GAN Image Saved: {sample_path}")
+        # Save sample generated image for EVERY single epoch
+        netG.eval()
+        with torch.no_grad():
+            sample_out = fake_imgs[0].permute(1, 2, 0).cpu().numpy()
+            sample_u8 = (sample_out * 255.0).clip(0, 255).astype(np.uint8)
+            sample_path = os.path.join(output_dir, f"gan_generated_epoch_{epoch:02d}.jpg")
+            Image.fromarray(sample_u8).save(sample_path)
+            print(f"      🖼️ Visual Sample Saved -> {sample_path}\n")
                 
     # Save Generator Checkpoint
     ckpt_path = os.path.join(save_dir, "best_gan_generator.pth")
     torch.save(netG.state_dict(), ckpt_path)
-    print("\n" + "=" * 75)
+    print("=" * 75)
     print(f"   GAN TRAINING COMPLETE! Checkpoint Saved to: {ckpt_path}   ")
     print("=" * 75)
 
