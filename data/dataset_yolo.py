@@ -9,12 +9,12 @@ from PIL import Image
 CLASS_NAMES = ["PbI2", "3D_pinholes", "3D-2D_pinholes", "3D_background", "3D-2D_background"]
 CLASS_FOLDERS = ["class0_pbI2", "class1_3D_pinholes", "class2_3D-2D_pinholes", "class3_3D_background", "class4_3D-2D_background"]
 
-STANDARD_SIZE = (1024, 768) # (Width, Height)
+STANDARD_SIZE = (512, 512) # (Width, Height) optimized for RTX 3050 Ti VRAM
 
 def yolo_collate_fn(batch):
     """
     Custom collate function for batches with variable-sized bounding boxes and images.
-    Ensures all images in batch are uniformly sized [3, 768, 1024].
+    Ensures all images in batch are uniformly sized [3, 512, 512].
     """
     processed_images = []
     for item in batch:
@@ -23,12 +23,12 @@ def yolo_collate_fn(batch):
             img = F.interpolate(img.unsqueeze(0), size=(STANDARD_SIZE[1], STANDARD_SIZE[0]), mode='bilinear', align_corners=False).squeeze(0)
         processed_images.append(img)
         
-    images = torch.stack(processed_images, dim=0) # [B, 3, 768, 1024]
+    images = torch.stack(processed_images, dim=0) # [B, 3, 512, 512]
     class_indices = torch.tensor([item["class_idx"] for item in batch], dtype=torch.long)
     filenames = [item["filename"] for item in batch]
     class_names = [item["class_name"] for item in batch]
     is_clean = [item["is_clean"] for item in batch]
-    boxes = [item["boxes"] for item in batch] # list of variable-size tensors
+    boxes = [item["boxes"] for item in batch]
 
     return {
         "image": images,
@@ -42,9 +42,9 @@ def yolo_collate_fn(batch):
 class PerovskiteYOLODataset(Dataset):
     """
     Dataset loader for Perovskite FESEM images with YOLO-format annotations.
-    Automatically standardizes image resolution to (1024x768) and parses normalized bounding boxes.
+    Automatically standardizes image resolution to (512x512) to fit 4GB GPU VRAM.
     """
-    def __init__(self, root_dir=r"C:\Users\Sahil\Downloads\SEM-Annotation\balanced_dataset", split="all", target_size=(1024, 768)):
+    def __init__(self, root_dir=r"C:\Users\Sahil\Downloads\SEM-Annotation\balanced_dataset", split="all", target_size=(512, 512)):
         self.root_dir = root_dir
         self.split = split
         self.target_size = target_size # (W, H)
@@ -117,7 +117,7 @@ class PerovskiteYOLODataset(Dataset):
         item = self.samples[idx]
         img = Image.open(item["img_path"]).convert("RGB")
         
-        # Standardize size
+        # Standardize size to 512x512
         if img.size != self.target_size:
             img = img.resize(self.target_size, Image.BILINEAR)
             
@@ -143,6 +143,6 @@ class PerovskiteYOLODataset(Dataset):
 
 if __name__ == "__main__":
     ds = PerovskiteYOLODataset()
-    loader = DataLoader(ds, batch_size=8, collate_fn=yolo_collate_fn)
+    loader = DataLoader(ds, batch_size=2, collate_fn=yolo_collate_fn)
     b = next(iter(loader))
     print(f"Batch loaded: image tensor shape={b['image'].shape}, labels={b['class_idx']}")

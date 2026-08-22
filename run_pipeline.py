@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import time
+import torch
 
 def banner(title):
     print("\n" + "=" * 80)
@@ -16,16 +17,21 @@ def main():
     parser.add_argument("--gan_epochs", type=int, default=10)
     parser.add_argument("--inpaint_samples", type=int, default=100)
     parser.add_argument("--detector_epochs", type=int, default=10)
-    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--gan_batch_size", type=int, default=2) # 2 for 4GB VRAM GPU
+    parser.add_argument("--detector_batch_size", type=int, default=4)
     parser.add_argument("--lr", type=float, default=1e-3)
     
     args = parser.parse_args()
     start_total = time.time()
     
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device_name = torch.cuda.get_device_name(0) if device == "cuda" else "CPU"
+    
     banner("PEROVSKITE SEM GENERATIVE & LIVE DETECTION PIPELINE: INITIALIZING")
-    print(f"  Root Dataset  : {args.data_dir}")
-    print(f"  Project Output: {args.save_dir}")
-    print(f"  Execution Mode: {args.mode.upper()}")
+    print(f"  Root Dataset   : {args.data_dir}")
+    print(f"  Project Output : {args.save_dir}")
+    print(f"  Execution Mode : {args.mode.upper()}")
+    print(f"  Hardware Device: {device.upper()} ({device_name})")
     
     # -------------------------------------------------------------
     # Stage 1: Train Defect GAN Generator & Generate Samples
@@ -38,7 +44,8 @@ def main():
             save_dir=os.path.join(args.save_dir, "checkpoints"),
             output_dir=os.path.join(args.save_dir, "outputs", "gan_generated_samples"),
             epochs=args.gan_epochs,
-            batch_size=args.batch_size
+            batch_size=args.gan_batch_size,
+            device=device
         )
 
     # -------------------------------------------------------------
@@ -51,7 +58,8 @@ def main():
         generate_expanded_dataset(
             raw_dataset_dir=args.data_dir,
             output_dir=exp_dir,
-            num_synthetic_samples=args.inpaint_samples
+            num_synthetic_samples=args.inpaint_samples,
+            device=device
         )
 
     # -------------------------------------------------------------
@@ -65,7 +73,7 @@ def main():
             data_dir = args.data_dir
             save_dir = os.path.join(args.save_dir, "checkpoints")
             epochs = args.detector_epochs
-            batch_size = args.batch_size * 2
+            batch_size = args.detector_batch_size
             lr = args.lr
             
         train_detector(TrainArgs)

@@ -13,6 +13,8 @@ from losses.physics_loss import EvidentialLoss
 def train_detector(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device_name = torch.cuda.get_device_name(0) if device.type == "cuda" else "CPU"
+    use_amp = (device.type == "cuda")
+    
     print("=" * 75)
     print(f"   TRAINING LIVE EVIDENTIAL DETECTOR (EDL)   ")
     print(f"   Device: {device.type.upper()} ({device_name}) | Epochs: {args.epochs} | Batch Size: {args.batch_size}   ")
@@ -21,13 +23,13 @@ def train_detector(args):
     os.makedirs(args.save_dir, exist_ok=True)
     
     # 1. Dataset & Split
-    dataset = PerovskiteYOLODataset(root_dir=args.data_dir)
+    dataset = PerovskiteYOLODataset(root_dir=args.data_dir, target_size=(512, 512))
     val_size = int(len(dataset) * 0.15)
     train_size = len(dataset) - val_size
     train_set, val_set = random_split(dataset, [train_size, val_size])
     
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=yolo_collate_fn)
-    val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False, collate_fn=yolo_collate_fn)
+    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=yolo_collate_fn, pin_memory=use_amp)
+    val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False, collate_fn=yolo_collate_fn, pin_memory=use_amp)
     
     print(f"Loaded {len(dataset)} total samples ({train_size} Train | {val_size} Val)\n")
     
@@ -35,6 +37,7 @@ def train_detector(args):
     model = LiveDetectorEDL(num_classes=5).to(device)
     criterion = EvidentialLoss(num_classes=5)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
+    scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
     
     best_acc = 0.0
     
@@ -47,19 +50,21 @@ def train_detector(args):
         pbar = tqdm(train_loader, desc=f"Detector Epoch [{epoch:02d}/{args.epochs:02d}]", dynamic_ncols=True)
         
         for batch in pbar:
-            imgs = batch["image"].to(device) # [B, 3, H, W]
-            labels = batch["class_idx"].to(device) # [B]
+            imgs = batch["image"].to(device, non_blocking=True) # [B, 3, H, W]
+            labels = batch["class_idx"].to(device, non_blocking=True) # [B]
             
             # One-hot target
             target_one_hot = torch.zeros(len(labels), 5, device=device)
             target_one_hot.scatter_(1, labels.unsqueeze(1), 1.0)
             
-            optimizer.zero_grad()
-            out = model(imgs)
-            
-            loss, u_val = criterion(out["alpha"], target_one_hot, epoch=epoch)
-            loss.backward()
-            optimizer.step()
+            optimizer.zero_grad(set_to_none=True)
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                out = model(imgs)
+                loss, u_val = criterion(out["alpha"], target_one_hot, epoch=epoch)
+                
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             
             running_loss += loss.item()
             running_u += u_val
@@ -81,9 +86,10 @@ def train_detector(args):
         
         with torch.no_grad():
             for val_batch in val_loader:
-                imgs_v = val_batch["image"].to(device)
-                labels_v = val_batch["class_idx"].to(device)
-                out_v = model(imgs_v)
+                imgs_v = val_batch["image"].to(device, non_blocking=True)
+                labels_v = val_batch["class_idx"].to(device, non_blocking=True)
+                with torch.cuda.amp.autocast(enabled=use_amp):
+                    out_v = model(imgs_v)
                 
                 preds = torch.argmax(out_v["probs"], dim=1)
                 correct += (preds == labels_v).sum().item()
@@ -101,6 +107,9 @@ def train_detector(args):
             torch.save(model.state_dict(), ckpt_path)
             print(f"      ⭐ New Best Checkpoint Saved (Acc: {best_acc:.2f}%)\n")
             
+        if device.type == "cuda":
+            torch.cuda.empty_cache()
+            
     print("=" * 75)
     print(f"   DETECTOR TRAINING COMPLETE! Best Validation Accuracy: {best_acc:.2f}%   ")
     print("=" * 75)
@@ -110,7 +119,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", type=str, default=r"C:\Users\Sahil\Downloads\SEM-Annotation\balanced_dataset")
     parser.add_argument("--save_dir", type=str, default=r"C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\checkpoints")
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--lr", type=float, default=1e-3)
     
     args = parser.parse_args()

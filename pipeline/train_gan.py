@@ -19,8 +19,8 @@ def train_gan_generator(
     save_dir=r"C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\checkpoints",
     output_dir=r"C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\outputs\gan_generated_samples",
     epochs=10,
-    batch_size=4,
-    lr_g=1e-4,
+    batch_size=2,
+    lr_g=2e-4,
     lr_d=1e-4,
     device=None
 ):
@@ -32,13 +32,14 @@ def train_gan_generator(
     print("=" * 75)
     print(f"   TRAINING PEROVSKITE DEFECT GENERATIVE ADVERSARIAL NETWORK (GAN)   ")
     print(f"   Device: {device.upper()} ({device_name}) | Epochs: {epochs} | Batch Size: {batch_size}   ")
+    print(f"   Precision: FP16 Mixed Precision (AMP Enabled for Ultra-Fast Speed)   ")
     print("=" * 75)
     
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
     
     # 1. Dataset
-    dataset = PerovskiteYOLODataset(root_dir=data_dir)
+    dataset = PerovskiteYOLODataset(root_dir=data_dir, target_size=(512, 512))
     clean_canvases = dataset.get_clean_canvases()
     print(f"Loaded {len(dataset)} dataset samples ({len(clean_canvases)} pristine background canvases)\n")
     
@@ -46,14 +47,18 @@ def train_gan_generator(
     netG = DefectInpainterUNet(in_channels=4, out_channels=3, embed_dim=48).to(device)
     netD = DualDomainDiscriminator(in_channels=3, ndf=32).to(device)
     
-    # 3. Losses & Optimizers
+    # 3. Losses, Optimizers & AMP Scaler
     l1_loss = nn.L1Loss()
     fft_loss = PhysicsFourierLoss()
     
     optG = torch.optim.AdamW(netG.parameters(), lr=lr_g, betas=(0.5, 0.999))
     optD = torch.optim.AdamW(netD.parameters(), lr=lr_d, betas=(0.5, 0.999))
     
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=yolo_collate_fn)
+    use_amp = (device == "cuda")
+    scaler_g = torch.cuda.amp.GradScaler(enabled=use_amp)
+    scaler_d = torch.cuda.amp.GradScaler(enabled=use_amp)
+    
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=yolo_collate_fn, pin_memory=use_amp)
     
     for epoch in range(1, epochs + 1):
         netG.train()
@@ -67,7 +72,7 @@ def train_gan_generator(
         pbar = tqdm(loader, desc=f"Epoch [{epoch:02d}/{epochs:02d}]", dynamic_ncols=True)
         
         for batch in pbar:
-            real_imgs = batch["image"].to(device) # [B, 3, H, W]
+            real_imgs = batch["image"].to(device, non_blocking=True) # [B, 3, H, W]
             B, C, H, W = real_imgs.shape
             
             # Generate defect layout condition masks
@@ -77,47 +82,50 @@ def train_gan_generator(
                 masks[b, 0] = torch.from_numpy(mask_np).to(device)
                 
             # ---------------------
-            # Train Discriminator
+            # Train Discriminator (with FP16 AMP)
             # ---------------------
-            optD.zero_grad()
-            with torch.no_grad():
-                fake_imgs = netG(real_imgs, masks)
+            optD.zero_grad(set_to_none=True)
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                with torch.no_grad():
+                    fake_imgs = netG(real_imgs, masks)
+                    
+                s_real, f_real = netD(real_imgs)
+                s_fake, f_fake = netD(fake_imgs.detach())
                 
-            s_real, f_real = netD(real_imgs)
-            s_fake, f_fake = netD(fake_imgs.detach())
-            
-            loss_d_real = torch.mean(F.relu(1.0 - s_real)) + torch.mean(F.relu(1.0 - f_real))
-            loss_d_fake = torch.mean(F.relu(1.0 + s_fake)) + torch.mean(F.relu(1.0 + f_fake))
-            loss_d = 0.5 * (loss_d_real + loss_d_fake)
-            
-            loss_d.backward()
-            optD.step()
+                loss_d_real = torch.mean(F.relu(1.0 - s_real)) + torch.mean(F.relu(1.0 - f_real))
+                loss_d_fake = torch.mean(F.relu(1.0 + s_fake)) + torch.mean(F.relu(1.0 + f_fake))
+                loss_d = 0.5 * (loss_d_real + loss_d_fake)
+                
+            scaler_d.scale(loss_d).backward()
+            scaler_d.step(optD)
+            scaler_d.update()
             
             # ---------------------
-            # Train Generator (G)
+            # Train Generator (with FP16 AMP)
             # ---------------------
-            optG.zero_grad()
-            fake_imgs = netG(real_imgs, masks)
-            s_fake, f_fake = netD(fake_imgs)
-            
-            loss_g_adv = -torch.mean(s_fake) - torch.mean(f_fake)
-            loss_g_pixel = l1_loss(fake_imgs * (1.0 - masks), real_imgs * (1.0 - masks))
-            loss_g_fft = fft_loss(fake_imgs, real_imgs)
-            
-            loss_g = 0.01 * loss_g_adv + 1.0 * loss_g_pixel + 0.1 * loss_g_fft
-            
-            loss_g.backward()
-            optG.step()
+            optG.zero_grad(set_to_none=True)
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                fake_imgs = netG(real_imgs, masks)
+                s_fake, f_fake = netD(fake_imgs)
+                
+                loss_g_adv = -torch.mean(s_fake) - torch.mean(f_fake)
+                loss_g_pixel = l1_loss(fake_imgs * (1.0 - masks), real_imgs * (1.0 - masks))
+                loss_g_fft = fft_loss(fake_imgs, real_imgs)
+                
+                loss_g = 0.01 * loss_g_adv + 1.0 * loss_g_pixel + 0.1 * loss_g_fft
+                
+            scaler_g.scale(loss_g).backward()
+            scaler_g.step(optG)
+            scaler_g.update()
             
             running_g_loss += loss_g.item()
             running_d_loss += loss_d.item()
             running_fft_loss += loss_g_fft.item()
             
-            # Live batch progress bar update
             pbar.set_postfix({
                 "G_Loss": f"{loss_g.item():.3f}",
                 "D_Loss": f"{loss_d.item():.3f}",
-                "FFT_Physics": f"{loss_g_fft.item():.3f}"
+                "FFT": f"{loss_g_fft.item():.3f}"
             })
             
         avg_g = running_g_loss / len(loader)
@@ -127,7 +135,7 @@ def train_gan_generator(
         
         print(f"  >>> [Epoch {epoch:02d} Summary] | G_Loss: {avg_g:.4f} | D_Loss: {avg_d:.4f} | 2D-FFT Physics Loss: {avg_fft:.4f} | Time: {elapsed:.1f}s")
         
-        # Save sample generated image for EVERY single epoch
+        # Save sample generated image for every single epoch
         netG.eval()
         with torch.no_grad():
             sample_out = fake_imgs[0].permute(1, 2, 0).cpu().numpy()
@@ -135,6 +143,9 @@ def train_gan_generator(
             sample_path = os.path.join(output_dir, f"gan_generated_epoch_{epoch:02d}.jpg")
             Image.fromarray(sample_u8).save(sample_path)
             print(f"      🖼️ Visual Sample Saved -> {sample_path}\n")
+            
+        if device == "cuda":
+            torch.cuda.empty_cache()
                 
     # Save Generator Checkpoint
     ckpt_path = os.path.join(save_dir, "best_gan_generator.pth")
@@ -148,7 +159,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", type=str, default=r"C:\Users\Sahil\Downloads\SEM-Annotation\balanced_dataset")
     parser.add_argument("--save_dir", type=str, default=r"C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\checkpoints")
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--batch_size", type=int, default=2)
     args = parser.parse_args()
     
     train_gan_generator(
