@@ -53,7 +53,15 @@ def _assert_no_holdout_leak(used_groups: set[str]) -> None:
 
 def generate(n_images: int = 200, render_px: int = 512, seed: int = 42,
              pool_name: str = "controlled", severity=None,
-             defects_per_image=None, split: str = "train") -> dict:
+             defects_per_image=None, split: str = "train",
+             pbi2_fraction: float = 0.0) -> dict:
+    """Build a synthetic pool.
+
+    pbi2_fraction defaults to 0: the closed-set task is pinhole detection and
+    PbI2 is the held-out unknown morphology, so synthesising PbI2 into the
+    training pool would defeat the open-set experiment. Raise it only to build a
+    deliberate unknown-morphology probe.
+    """
     backgrounds = background_pool(split)
     if not backgrounds:
         raise RuntimeError(f"no defect-free backgrounds in split '{split}'")
@@ -86,7 +94,7 @@ def generate(n_images: int = 200, render_px: int = 512, seed: int = 42,
             # canvases come from data/curated, where the FESEM banner is already
             # gone - no placement restriction is needed here any more
             params = sample_params(priors, k, rng, render_px=render_px,
-                                   severity=severity)
+                                   severity=severity, pbi2_fraction=pbi2_fraction)
             res = render(img, params, seed=int(rng.integers(0, 2**31 - 1)))
             if not res["boxes"]:
                 continue
@@ -121,6 +129,7 @@ def generate(n_images: int = 200, render_px: int = 512, seed: int = 42,
         "seed": seed,
         "render_px": render_px,
         "severity": severity,
+        "pbi2_fraction": pbi2_fraction,
         "placement": "full frame (canvases are pre-cropped; no banner exists)",
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=1), encoding="utf-8")
@@ -194,8 +203,11 @@ if __name__ == "__main__":
     ap.add_argument("--pool", default="controlled")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--render-px", type=int, default=512)
+    ap.add_argument("--pbi2-fraction", type=float, default=0.0,
+                    help="0 keeps PbI2 out of training pools (it is the open-set unknown)")
     ap.add_argument("--ladder", action="store_true", help="also build the severity ladder")
     a = ap.parse_args()
-    generate(n_images=a.n, pool_name=a.pool, seed=a.seed, render_px=a.render_px)
+    generate(n_images=a.n, pool_name=a.pool, seed=a.seed, render_px=a.render_px,
+             pbi2_fraction=a.pbi2_fraction)
     if a.ladder:
         severity_ladder(render_px=a.render_px)

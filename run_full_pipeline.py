@@ -87,7 +87,7 @@ def stage2_bins(args):
 def stage3_synth(args):
     from synth.generate import generate, severity_ladder
     generate(n_images=args.n_synth, pool_name="controlled",
-             seed=args.seed, render_px=args.render_px)
+             seed=args.seed, render_px=args.render_px, pbi2_fraction=0.0)
     severity_ladder(render_px=args.render_px)
 
 
@@ -112,7 +112,19 @@ def stage6_quality(args):
 
 
 def stage7_detector(args):
-    raise NotImplementedError("YOLO11s+P2 / RF-DETR training matrix.")
+    """E-A (real only) and E-D (real + synthetic), same budget, same seed."""
+    from train_detector import train
+    rows = [train(regime="real_only", seed=args.seed, epochs=args.epochs,
+                  imgsz=args.imgsz, batch=args.batch, p2=args.p2)]
+    if not args.skip_synth_regime:
+        rows.append(train(regime="real_plus_synth", seed=args.seed,
+                          epochs=args.epochs, imgsz=args.imgsz, batch=args.batch,
+                          p2=args.p2, synth_pool="controlled"))
+    print()
+    print("  regime               mAP50    mAP50-95   P       R")
+    for r in rows:
+        print(f"  {r['regime']:<20} {r['mAP50']:<8.4f} {r['mAP50_95']:<10.4f} "
+              f"{r['precision']:<7.3f} {r['recall']:.3f}")
 
 
 def stage8_uncertainty(args):
@@ -146,7 +158,8 @@ STAGES = [
     Stage(9, "final",     "LOCKED real test-set evaluation + master results table",
           ("ultralytics",), stage9_final),
 ]
-FIRST_UNIMPLEMENTED = 5     # stages >= this are declared but not built yet
+FIRST_UNIMPLEMENTED = 5   # stage 7 is implemented; see IMPLEMENTED below
+IMPLEMENTED = {0, 1, 2, 3, 4, 7}     # stages >= this are declared but not built yet
 BY_KEY = {s.key: s for s in STAGES}
 BY_NUM = {str(s.num): s for s in STAGES}
 
@@ -177,7 +190,7 @@ def preflight() -> None:
     print("=" * 74)
     for s in STAGES:
         miss = _missing(s.needs)
-        if s.num >= FIRST_UNIMPLEMENTED:
+        if s.num not in IMPLEMENTED:
             status = "TODO"
         elif miss:
             status = "BLOCKED"
@@ -227,6 +240,11 @@ def main() -> int:
     ap.add_argument("--mdcv-min-area", type=int, default=120,
                     help="tuned on val: interior optimum of the min_area sweep")
     ap.add_argument("--mdcv-sensitivity", type=float, default=1.5)
+    ap.add_argument("--epochs", type=int, default=100)
+    ap.add_argument("--imgsz", type=int, default=640)
+    ap.add_argument("--batch", type=int, default=8)
+    ap.add_argument("--p2", action="store_true", help="enable the stride-4 head")
+    ap.add_argument("--skip-synth-regime", action="store_true")
     args = ap.parse_args()
 
     if args.check:
