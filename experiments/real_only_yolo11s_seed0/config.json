@@ -1,0 +1,16 @@
+{
+ "exp_id": "real_only_yolo11s_seed0",
+ "regime": "real_only",
+ "seed": 0,
+ "epochs": 3,
+ "imgsz": 640,
+ "batch": 8,
+ "model": "yolo11s",
+ "p2_head": false,
+ "weights": "yolo11s.pt",
+ "synth_pool": null,
+ "synth_ratio": 1.0,
+ "device": "0",
+ "git_sha": "72e2892",
+ "data_yaml": "C:\\Users\\Sahil\\Downloads\\SEM_GAN_Dissertation\\data\\yolo\\real_only\\data.yaml"
+}

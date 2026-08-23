@@ -35,6 +35,10 @@ CURATED = ROOT / "curated"
 
 # raw box class ids -> merged scheme
 MERGED_MAP = {0: 0, 1: 1, 2: 1}          # PbI2 -> 0, both pinhole kinds -> 1
+
+# Folders whose images are genuine defect-free negatives. An image in ANY other
+# folder with an empty label file is UNLABELLED, not negative - see label_status.
+BACKGROUND_FOLDERS = {"class3_3D_background", "class4_3D-2D_background"}
 MERGED_NAMES = ["pbi2", "pinhole"]
 RAW_NAMES = ["pbi2", "pinhole_3d", "pinhole_3d2d"]
 
@@ -119,8 +123,26 @@ def curate(keep_3class: bool = False) -> dict:
             "".join("%d %.6f %.6f %.6f %.6f" % tuple(b) + "\n" for b in kept_boxes),
             encoding="utf-8")
 
+        # An empty label file means two completely different things depending on
+        # where the image sits. In class3/class4 it is a curated defect-free
+        # background - a true negative. In class0/class1/class2 a human filed it
+        # as containing that defect and then nobody drew boxes: 65 of the 73
+        # class0_pbI2 images are like this. Training on those as negatives would
+        # teach the detector that PbI2 morphology is "nothing here", which is
+        # worse than not using them at all.
+        folder = rel.parts[0] if len(rel.parts) > 1 else ""
+        if kept_boxes:
+            label_status = "annotated"
+        elif folder in BACKGROUND_FOLDERS:
+            label_status = "true_background"
+        else:
+            label_status = "unlabelled"
+            dropped["unlabelled_defect_class_image"] += 1
+
         records.append({
             "file": rel.as_posix(),          # relative to data/curated/images
+            "label_status": label_status,
+            "source_folder": folder,
             "stem": stem,
             "group": group_key(stem),
             "md5": h,
@@ -131,24 +153,34 @@ def curate(keep_3class: bool = False) -> dict:
             "banner_rows_removed": H0 - H1,
         })
 
+    # unlabelled images are kept in curated.json for provenance but excluded
+    # from every split, so they can never act as false negatives
+    usable = [r for r in records if r["label_status"] != "unlabelled"]
+
     groups = defaultdict(list)
-    for r in records:
+    for r in usable:
         groups[r["group"]].append(r)
 
-    cls_counter = Counter(b[0] for r in records for b in r["boxes"])
+    cls_counter = Counter(b[0] for r in usable for b in r["boxes"])
     names = RAW_NAMES if keep_3class else MERGED_NAMES
 
     meta = {
         "class_names": names,
         "n_raw_files": len(images),
-        "n_curated": len(records),
+        "n_curated": len(usable),
+        "n_all_records": len(records),
         "n_groups": len(groups),
         "n_groups_with_defects": sum(1 for g in groups.values()
                                      if any(r["n_boxes"] for r in g)),
-        "n_boxes": sum(r["n_boxes"] for r in records),
+        "n_boxes": sum(r["n_boxes"] for r in usable),
+        "n_annotated_images": sum(1 for r in usable if r["label_status"] == "annotated"),
+        "n_true_backgrounds": sum(1 for r in usable if r["label_status"] == "true_background"),
+        "n_unlabelled_excluded": sum(1 for r in records if r["label_status"] == "unlabelled"),
         "boxes_per_class": {names[c]: n for c, n in sorted(cls_counter.items())},
         "dropped": dict(dropped),
-        "records": records,
+        "records": usable,
+        "excluded_unlabelled": [r["file"] for r in records
+                                if r["label_status"] == "unlabelled"],
     }
 
     meta["banner"] = {
@@ -168,6 +200,10 @@ def curate(keep_3class: bool = False) -> dict:
     print(f"[curate] {meta['n_groups']} source groups, "
           f"{meta['n_groups_with_defects']} carry defects, {meta['n_boxes']} boxes")
     print(f"[curate] boxes per class: {meta['boxes_per_class']}")
+    print(f"[curate] EXCLUDED {meta['n_unlabelled_excluded']} unlabelled images from "
+          f"defect-class folders (empty labels != defect-free)")
+    print(f"[curate] usable: {meta['n_annotated_images']} annotated + "
+          f"{meta['n_true_backgrounds']} true backgrounds")
     b = meta["banner"]
     print(f"[curate] SEM banner stripped: median {b['median_rows_removed']} rows removed, "
           f"{b['boxes_dropped_in_banner']} boxes dropped as banner-only")

@@ -12,32 +12,32 @@
  "split_level": "source_group",
  "summary": {
   "train": {
-   "groups": 160,
-   "images": 197,
-   "boxes": 3176,
+   "groups": 126,
+   "images": 160,
+   "boxes": 2607,
    "boxes_per_class": {
-    "pbi2": 738,
-    "pinhole": 2438
+    "pbi2": 331,
+    "pinhole": 2276
    },
    "images_with_defects": 50
   },
   "val": {
-   "groups": 39,
-   "images": 59,
-   "boxes": 663,
+   "groups": 31,
+   "images": 40,
+   "boxes": 640,
    "boxes_per_class": {
-    "pbi2": 131,
+    "pbi2": 108,
     "pinhole": 532
    },
    "images_with_defects": 12
   },
   "test": {
-   "groups": 68,
-   "images": 82,
-   "boxes": 739,
+   "groups": 54,
+   "images": 73,
+   "boxes": 1331,
    "boxes_per_class": {
-    "pbi2": 166,
-    "pinhole": 573
+    "pbi2": 596,
+    "pinhole": 735
    },
    "images_with_defects": 22
   }
