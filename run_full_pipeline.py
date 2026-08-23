@@ -49,6 +49,14 @@ def _missing(mods) -> list[str]:
     return [m for m in mods if not _have(m)]
 
 
+# import name -> pip name, where they differ
+PIP_NAME = {"sklearn": "scikit-learn", "cv2": "opencv-python", "skimage": "scikit-image"}
+
+
+def _pip_cmd(mods) -> str:
+    return "py -3.10 -m pip install " + " ".join(PIP_NAME.get(m, m) for m in mods)
+
+
 # ---- stage bodies --------------------------------------------------------
 
 def stage0_snapshot(args):
@@ -84,8 +92,15 @@ def stage3_synth(args):
 
 
 def stage4_microdefectcv(args):
-    from eval.microdefectcv_baseline import run_baseline
-    run_baseline(split="val")          # test stays locked until stage 9
+    """R1: tune on val, then report. The test split stays locked until stage 9."""
+    from eval.microdefectcv_baseline import run_baseline, sweep
+    if args.sweep:
+        best = sweep(split="val", limit=args.sweep_limit)
+        run_baseline(split="val", min_area=best["min_area"],
+                     sensitivity=best["sensitivity"])
+    else:
+        run_baseline(split="val", min_area=args.mdcv_min_area,
+                     sensitivity=args.mdcv_sensitivity)
 
 
 def stage5_refiner(args):
@@ -120,14 +135,13 @@ STAGES = [
     Stage(3, "synth",     "Parametric synthetic pool + counterfactual ladder (N1, N4)",
           ("cv2", "numpy"), stage3_synth),
     Stage(4, "classical", "MicroDefectCV zero-training baseline (R1)",
-          ("microdefectcv",), stage4_microdefectcv,
-          "pip install microdefectcv"),
+          ("microdefectcv",), stage4_microdefectcv),
     Stage(5, "refiner",   "Conditional GAN texture refiner (H2 FFT ablation)",
           ("torch",), stage5_refiner),
     Stage(6, "quality",   "Quality filter + domain-gap -> utility regression (N2)",
-          ("torch", "sklearn"), stage6_quality, "pip install scikit-learn"),
+          ("torch", "sklearn"), stage6_quality),
     Stage(7, "detector",  "Detector matrix E-A..E-E (YOLO11s+P2, RF-DETR)",
-          ("ultralytics",), stage7_detector, "pip install ultralytics"),
+          ("ultralytics",), stage7_detector),
     Stage(8, "uncertain", "Open-set PbI2 + calibration (ECE, Brier, risk-coverage)",
           ("ultralytics", "sklearn"), stage8_uncertainty),
     Stage(9, "final",     "LOCKED real test-set evaluation + master results table",
@@ -172,8 +186,7 @@ def preflight() -> None:
             status = "READY"
         print(f"  [{s.num}] {s.key:<10} {status:<8} {s.title}")
         if miss:
-            print(f"      missing {', '.join(miss)}  ->  "
-                  f"{s.note or 'py -3.10 -m pip install ' + ' '.join(miss)}")
+            print(f"      missing {', '.join(miss)}  ->  {_pip_cmd(miss)}")
     print("=" * 74)
 
 
@@ -209,6 +222,11 @@ def main() -> int:
     ap.add_argument("--keep-3class", action="store_true")
     ap.add_argument("--force", action="store_true", help="re-copy the snapshot")
     ap.add_argument("--skip-tests", action="store_true")
+    ap.add_argument("--sweep", action="store_true",
+                    help="stage 4: hyperparameter search for MicroDefectCV on val")
+    ap.add_argument("--sweep-limit", type=int, default=8)
+    ap.add_argument("--mdcv-min-area", type=int, default=30)
+    ap.add_argument("--mdcv-sensitivity", type=float, default=1.5)
     args = ap.parse_args()
 
     if args.check:
