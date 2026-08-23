@@ -2,7 +2,7 @@ task: detect
 mode: train
 model: yolo11s.pt
 data: C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\data\yolo\real_only\data.yaml
-epochs: 3
+epochs: 150
 time: null
 patience: 30
 batch: 8
