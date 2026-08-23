@@ -40,13 +40,16 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
           imgsz: int = 640, batch: int = 8, model: str = "yolo11s",
           p2: bool = False, synth_pool: str | None = None,
           synth_ratio: float = 1.0, device: str = "0",
-          patience: int = 30) -> dict:
+          patience: int = 30, known_classes: tuple = (0, 1)) -> dict:
     from ultralytics import YOLO
 
     import yolo_export
 
     data_yaml = yolo_export.build(regime=regime, synth_pool=synth_pool,
-                                  synth_ratio=synth_ratio)
+                                  synth_ratio=synth_ratio,
+                                  known_classes=known_classes)
+    export = json.loads((data_yaml.parent / "export_manifest.json")
+                        .read_text(encoding="utf-8"))
 
     exp_id = f"{regime}_{model}{'-p2' if p2 else ''}_seed{seed}"
     exp_dir = EXPERIMENTS / exp_id
@@ -111,12 +114,36 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
         "recall": round(float(box.mr), 4),
         "params_M": round(sum(p.numel() for p in net.model.parameters()) / 1e6, 2),
     }
+
+    # Per-class AP, carried alongside the training support that produced it.
+    # A class with 5 training images will score near zero; recording the two
+    # together is what stops that number being read as a property of the method.
+    class_names = export["class_names"]
+    support = export["train_images_per_class"]
+    per_class = {}
+    for i, cname in enumerate(class_names):
+        try:
+            ap50, ap = float(box.ap50[i]), float(box.ap[i])
+        except (IndexError, TypeError):
+            ap50 = ap = 0.0
+        per_class[cname] = {
+            "AP50": round(ap50, 4),
+            "AP50_95": round(ap, 4),
+            "train_images": support.get(cname, 0),
+            "interpretable": support.get(cname, 0) >= 10,
+        }
+    result["per_class"] = per_class
+    result["low_support_classes"] = export.get("low_support_classes", {})
     (exp_dir / "metrics.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
 
     _append_master(result)
     print(f"[train] {exp_id}: mAP50={result['mAP50']:.4f} "
           f"mAP50-95={result['mAP50_95']:.4f} P={result['precision']:.3f} "
           f"R={result['recall']:.3f}  ({elapsed/60:.1f} min)")
+    for cname, v in per_class.items():
+        flag = "" if v["interpretable"] else "   <- NOT INTERPRETABLE (low support)"
+        print(f"         {cname:<10} AP50={v['AP50']:.4f} AP50-95={v['AP50_95']:.4f} "
+              f"(train imgs={v['train_images']}){flag}")
     return result
 
 
@@ -146,7 +173,10 @@ if __name__ == "__main__":
     ap.add_argument("--synth-pool", default=None)
     ap.add_argument("--synth-ratio", type=float, default=1.0)
     ap.add_argument("--device", default="0")
+    ap.add_argument("--known-classes", default="0,1",
+                    help="closed-set class ids; '1' alone = open-set (PbI2 held out)")
     a = ap.parse_args()
     train(regime=a.regime, seed=a.seed, epochs=a.epochs, imgsz=a.imgsz,
           batch=a.batch, model=a.model, p2=a.p2, synth_pool=a.synth_pool,
-          synth_ratio=a.synth_ratio, device=a.device)
+          synth_ratio=a.synth_ratio, device=a.device,
+          known_classes=tuple(int(x) for x in a.known_classes.split(",")))

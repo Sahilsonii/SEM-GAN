@@ -51,15 +51,23 @@ def _write_pair(img_src: Path, lbl_src: Path, img_dst: Path, lbl_dst: Path) -> b
 def build(regime: str = "real_only", synth_pool: str | None = None,
           synth_ratio: float = 1.0, include_test: bool = False,
           include_backgrounds: bool = True,
-          known_classes: tuple = (1,)) -> Path:
+          known_classes: tuple = (0, 1)) -> Path:
     """Write data/yolo/<regime>/ and return the path to its data.yaml.
 
     known_classes is the closed-set vocabulary. Everything else is an UNKNOWN
     morphology reserved for open-set evaluation and must never be trained on.
 
-    Default (1,) = pinhole only. PbI2 is held out because the corpus contains
-    just 9 source groups carrying it and no group carries both classes - five
-    training images is not a class, but it is a perfectly good unknown.
+    Default (0, 1) = two-class detection, pbi2 + pinhole.
+
+    CAVEAT, and it must travel with every PbI2 number this produces: only 9
+    source groups in the corpus carry PbI2 and just 5 PbI2 images land in train.
+    PbI2 AP is therefore expected to be near zero and is not interpretable as a
+    measure of the method - it measures the annotation budget. Report it, label
+    it, do not build a claim on it. The count is written into every export
+    manifest and metrics file so the caveat cannot get separated from the number.
+
+    Pass known_classes=(1,) for the open-set configuration, where PbI2 becomes
+    the held-out unknown morphology instead of a trained class.
 
     An image whose only annotations are unknown-class is EXCLUDED rather than
     emitted with an empty label. Emitting it would reintroduce exactly the false
@@ -161,6 +169,13 @@ def build(regime: str = "real_only", synth_pool: str | None = None,
     lines += [f"  {i}: {n}" for i, n in enumerate(names)]
     yaml_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
+    # per-class training support - the number the PbI2 caveat rests on
+    train_per_class = {n: 0 for n in names}
+    for r in splits["train"]["records"]:
+        for c in {b[0] for b in r["boxes"]} & known:
+            train_per_class[all_names[c]] += 1
+    low_support = {k: v for k, v in train_per_class.items() if v < 10}
+
     (out / "export_manifest.json").write_text(json.dumps({
         "regime": regime,
         "counts": counts,
@@ -172,13 +187,20 @@ def build(regime: str = "real_only", synth_pool: str | None = None,
         "class_names": names,
         "held_out_unknown_classes": unknown_names,
         "held_out_images": held_out,
+        "train_images_per_class": train_per_class,
+        "low_support_classes": low_support,
     }, indent=1), encoding="utf-8")
 
     real_train = counts["train"] - n_synth
     n_held = sum(len(v) for v in held_out.values())
     print(f"[yolo] {regime}: train={counts['train']} ({real_train} real + {n_synth} synth) "
           f"val={counts['val']}" + (f" test={counts['test']}" if include_test else "")
-          + f"  | known={names} held-out={unknown_names} ({n_held} imgs reserved)")
+          + f"  | known={names}"
+          + (f" held-out={unknown_names} ({n_held} imgs reserved)" if unknown_names else ""))
+    print(f"[yolo] train images per class: {train_per_class}")
+    for k, v in low_support.items():
+        print(f"[yolo] WARNING low support: '{k}' has {v} training images - "
+              f"its AP will not be interpretable")
     return yaml_path
 
 
@@ -189,8 +211,8 @@ if __name__ == "__main__":
     ap.add_argument("--synth-pool", default=None)
     ap.add_argument("--synth-ratio", type=float, default=1.0)
     ap.add_argument("--include-test", action="store_true")
-    ap.add_argument("--known-classes", default="1",
-                    help="comma-separated closed-set class ids (default 1 = pinhole)")
+    ap.add_argument("--known-classes", default="0,1",
+                    help="closed-set class ids; '1' alone = open-set (PbI2 held out)")
     a = ap.parse_args()
     build(regime=a.regime, synth_pool=a.synth_pool,
           synth_ratio=a.synth_ratio, include_test=a.include_test,
