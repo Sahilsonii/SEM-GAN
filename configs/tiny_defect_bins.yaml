@@ -1,0 +1,22 @@
+# PRE-REGISTERED defect-scale bins. Committed BEFORE any detector is trained.
+#
+# Edges are the YOLO detection-head strides, not quantiles of the data. A P3
+# head has stride 8, so a defect whose side is below 8 px at the detector's
+# input resolution is smaller than one cell of the finest default pyramid
+# level. That is an architectural fact, independent of these images, which is
+# why the scheme cannot be accused of being fitted after seeing results.
+#
+# Sizes are in PIXELS at the detector input (reference_px). Physical (nm)
+# binning is impossible for this corpus: JPEG re-encoding stripped the FESEM
+# headers from all 440 images and no .tif originals survive, so no pixel-size
+# calibration exists. See plan section 0.3.
+
+reference_px: 640          # detector input; bins scale with sqrt(area_fraction) * 640
+
+bins:
+  - {name: T1_sub_stride, min_px: 0,  max_px: 8,    note: "below one P3 cell"}
+  - {name: T2_tiny,       min_px: 8,  max_px: 16,   note: "P3-resolvable only"}
+  - {name: T3_small,      min_px: 16, max_px: 32,   note: "P3/P4"}
+  - {name: T4_medium_up,  min_px: 32, max_px: null, note: "P4/P5"}
+
+report_per_bin: [precision, recall, f1, ap50, ap50_95, center_error_px, mean_uncertainty]
