@@ -1,0 +1,352 @@
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\05-07 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\Ref 1 step- CB OAI 8ml 1_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\1-6.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\05-03_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0410_aug065.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-05_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0414_aug041.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-11 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-20_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\14-01.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0404_aug031.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-06.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\13-08.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\7.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\08-06_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0413_aug026.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\04-17_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-08.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\07-04 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\01-16.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-01_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\02-15.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-01_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-13 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S1-5.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-12_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0409.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-13_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\07-06.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\04-06_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\01-12.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-12_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0410_aug023.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0407_aug006.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\13-12.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\05-12_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\5-5.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\01-12_aug005.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\01-05_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0406_aug005.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0406_aug047.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\Ref 1 step CB OAI 4ml 2_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\Ref 1 step- CB OAI 6ml 5_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\06-03 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\05-04 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0411.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\07-10_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-06 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\01-07.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\rbcl s2-2.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\02-01_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\04-18_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0404_aug059.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-09 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\05-03 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-14 (2).jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-05 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\07-09_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0409_aug064.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-06.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0401_aug056.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-01_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-09.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\02-08 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\03-09_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\13-07.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\01-13_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\03-13_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\01-16_aug006.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-10.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\09-04_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0405_aug032.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\06-13_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\07-11.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0408_aug035.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-14_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\11-09.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0403.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\13-01.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\Ref 1 step- CB OAI 8ml 2_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\06-16_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\14-02.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-07.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\07-06 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-03_aug012.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0412_aug011.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\01-08.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-14.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-02_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\13-02.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-09.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\Ref 1 step CB 3 unif 1_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-11 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-10.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0402_aug015.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\05-06_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\07-08_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\13-06.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\kcl s3-3.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-03 (3)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\07-06_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0404.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\08-12_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\OSpray S3-9_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-01.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\2-8_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\6.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\04-11.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\04-03.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-10 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S1-6.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0414.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-10.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-13.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\07-14_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\11-01.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-02.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\11-08.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0411_aug010.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\01-07_aug000.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\ref s1-3.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-24_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\03-13_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-07.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\01-10.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-06 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\11-12.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S1-4.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0405_aug046.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S2-6.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-02_aug011.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\16-09_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\04-19_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-03.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\08-05_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\02-01_aug007.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0409_aug022.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0403_aug016.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0407.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\02-12 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0405_aug018.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0408_aug021.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\03-19_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\06-14_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-02.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\Ref 1 step- CB OAI 8ml 3_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\05-02_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\1-1.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\Ref 1 step- CB OAI 8ml 5_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-03 (3)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-12.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0412_aug039.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\11-04.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\7-2_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S2-7.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S1-1.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-13 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\kcl s3-6.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\03-10_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\07-02.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\11-02.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\02-03 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-11.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S2-8.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\04-06.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\07-02 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-06 (3)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-11 (2).jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-11 (3)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S2-3.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0401_aug000.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-12 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\kcl s3-5.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-04.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\05-16_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\5-4.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-10 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\5-2.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\OSpray S3-5_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\04-13.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-16_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-11.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\01-09_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\1-3.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0413_aug012.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-11_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-03.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\kcl s3-2.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\08-13_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\04-07.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\07-05_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0405_aug060.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\10-06_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0402.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0403_aug030.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\02-09 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\03-01 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-07_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\Ref 1 step- CB OAI 6ml 1_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0406_aug019.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0409_aug008.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\OSpray S3-6_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\04-11_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-04 (3)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-03.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\06-06_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\04-08.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\03-16_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\03-09_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\OSpray S3-11_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\ref s1-2.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0410.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\09-02_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-05 (3)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-08.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-12 (2).jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\1-5.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\03-06_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-04.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\03-11_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\03-07_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S1-2.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-15_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\03-03_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-09_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\08-08_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\14-04_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\11-10.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-05_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0408_aug049.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0401_aug028.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-05.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0403_aug058.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0410_aug037.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-03 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\5-1.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\OSpray S3-2_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S3-1.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-05_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\10-11 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\02-02_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\03-22_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S3-2.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S2-5.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\04-09.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\13-09.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\04-01.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\03-18_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\13-03.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-08.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0408.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-02.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-21_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\07-02_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\02-12_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-15.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0406.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0413.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\04-10.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\07-03.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-16_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\04-01_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\5-3.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\06-05_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\03-15_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\07-03_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0414_aug013.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-08_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\07-01.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0405.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0408_aug007.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-05 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\09-03_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0410_aug009.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\02-15_aug009.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\07-01 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\08-14_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-02 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\1-2.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0413_aug054.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\09-08_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0406_aug033.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-04_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0411_aug038.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\11-05_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0402_aug001.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S2-1.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\01-01_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\04-13_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-02 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-04 (3)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0409_aug036.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-07.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-14 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\08-11_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\15-06.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\02-06 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\08-05.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0402_aug029.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\01-08_aug001.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\04-08_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\10-05_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-02_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-07 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\03-03 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0413_aug040.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0401_aug042.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\07-04_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-04_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-06_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\OSpin S2-8_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0412.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\08-06_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\02-04_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0407_aug034.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\13-10.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\13-11.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0402_aug043.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\Ref S1-5_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\03-01_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\03-08_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\10-08_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\16-10_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\13-05.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0402_aug057.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0403_aug044.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\03-09 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\01-09_aug002.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\09-01_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\01-11_aug004.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\11-06.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0407_aug048.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0409_aug050.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\10-10_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\02-01.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\02-11.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-09_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\04-02.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-05 (2)_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\S3-4.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\02-11_aug008.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0410_aug051.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-04_aug013.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class4_3D-2D_background\03-06 (2)_class4_3D-2D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\02-05_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class2_3D-2D_pinholes\0406_aug061.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\06-01_aug010.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class0_pbI2\5.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class3_3D_background\01-04_class3_3D_background.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\rbcl s2-3.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\07-12.jpg
+C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\images\class1_3D_pinholes\ref s1-1.jpg

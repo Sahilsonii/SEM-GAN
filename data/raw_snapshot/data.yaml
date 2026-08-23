@@ -1,0 +1,11 @@
+names:
+- PbI2
+- 3D_pinholes
+- 3D-2D_pinholes
+- 3D_background
+- 3D-2D_background
+nc: 5
+path: C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset
+test: C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\test.txt
+train: C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\train.txt
+val: C:\Users\asus\Downloads\SEM-Annotation\balanced_dataset\val.txt

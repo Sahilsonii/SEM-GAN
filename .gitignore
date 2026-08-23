@@ -1,2 +1,19 @@
 /Annexure1-Research Idea .docx
 /Dissertation_Proposal.pptx
+
+# vendored corpus: manifest is tracked, pixels are not (recreate with data/snapshot.py)
+data/raw_snapshot/images/
+data/raw_snapshot/labels/
+data/curated/
+data/synthetic/
+
+# experiment products
+experiments/*/weights/
+outputs/figures/
+outputs/failures/
+*.pth
+*.pt
+
+__pycache__/
+*.pyc
+.venv/
