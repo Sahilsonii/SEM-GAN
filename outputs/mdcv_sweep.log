@@ -1,0 +1,122 @@
+[R1] microdefectcv on val: 8 imgs, 7471 preds vs 246 gt
+     mAP50=0.0226  mAP50-95=0.0095  P=0.008  R=0.236  F1=0.015
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0084
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0307
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1692
+     2.920 s/image on CPU, 0 trainable params
+  -> min_area=4    sens=1.0  mAP50=0.0226 P=0.008 R=0.236 n_pred=7471
+[R1] microdefectcv on val: 8 imgs, 7471 preds vs 246 gt
+     mAP50=0.0226  mAP50-95=0.0095  P=0.008  R=0.236  F1=0.015
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0084
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0307
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1692
+     3.091 s/image on CPU, 0 trainable params
+  -> min_area=4    sens=1.5  mAP50=0.0226 P=0.008 R=0.236 n_pred=7471
+[R1] microdefectcv on val: 8 imgs, 7471 preds vs 246 gt
+     mAP50=0.0226  mAP50-95=0.0095  P=0.008  R=0.236  F1=0.015
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0084
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0307
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1692
+     3.188 s/image on CPU, 0 trainable params
+  -> min_area=4    sens=2.5  mAP50=0.0226 P=0.008 R=0.236 n_pred=7471
+[R1] microdefectcv on val: 8 imgs, 4818 preds vs 246 gt
+     mAP50=0.0321  mAP50-95=0.0146  P=0.012  R=0.236  F1=0.023
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0097
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0307
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1438
+     3.102 s/image on CPU, 0 trainable params
+  -> min_area=12   sens=1.0  mAP50=0.0321 P=0.012 R=0.236 n_pred=4818
+[R1] microdefectcv on val: 8 imgs, 4818 preds vs 246 gt
+     mAP50=0.0321  mAP50-95=0.0146  P=0.012  R=0.236  F1=0.023
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0097
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0307
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1438
+     3.471 s/image on CPU, 0 trainable params
+  -> min_area=12   sens=1.5  mAP50=0.0321 P=0.012 R=0.236 n_pred=4818
+[R1] microdefectcv on val: 8 imgs, 4818 preds vs 246 gt
+     mAP50=0.0321  mAP50-95=0.0146  P=0.012  R=0.236  F1=0.023
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0097
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0307
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1438
+     3.321 s/image on CPU, 0 trainable params
+  -> min_area=12   sens=2.5  mAP50=0.0321 P=0.012 R=0.236 n_pred=4818
+[R1] microdefectcv on val: 8 imgs, 2833 preds vs 246 gt
+     mAP50=0.0374  mAP50-95=0.0169  P=0.021  R=0.236  F1=0.038
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0135
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0242
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1438
+     3.102 s/image on CPU, 0 trainable params
+  -> min_area=30   sens=1.0  mAP50=0.0374 P=0.021 R=0.236 n_pred=2833
+[R1] microdefectcv on val: 8 imgs, 2833 preds vs 246 gt
+     mAP50=0.0374  mAP50-95=0.0169  P=0.021  R=0.236  F1=0.038
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0135
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0242
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1438
+     3.084 s/image on CPU, 0 trainable params
+  -> min_area=30   sens=1.5  mAP50=0.0374 P=0.021 R=0.236 n_pred=2833
+[R1] microdefectcv on val: 8 imgs, 2833 preds vs 246 gt
+     mAP50=0.0374  mAP50-95=0.0169  P=0.021  R=0.236  F1=0.038
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0135
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0242
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1438
+     3.111 s/image on CPU, 0 trainable params
+  -> min_area=30   sens=2.5  mAP50=0.0374 P=0.021 R=0.236 n_pred=2833
+[R1] microdefectcv on val: 8 imgs, 1583 preds vs 246 gt
+     mAP50=0.0442  mAP50-95=0.0190  P=0.037  R=0.236  F1=0.063
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0572
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0319
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1438
+     3.079 s/image on CPU, 0 trainable params
+  -> min_area=60   sens=1.0  mAP50=0.0442 P=0.037 R=0.236 n_pred=1583
+[R1] microdefectcv on val: 8 imgs, 1583 preds vs 246 gt
+     mAP50=0.0442  mAP50-95=0.0190  P=0.037  R=0.236  F1=0.063
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0572
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0319
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1438
+     3.067 s/image on CPU, 0 trainable params
+  -> min_area=60   sens=1.5  mAP50=0.0442 P=0.037 R=0.236 n_pred=1583
+[R1] microdefectcv on val: 8 imgs, 1583 preds vs 246 gt
+     mAP50=0.0442  mAP50-95=0.0190  P=0.037  R=0.236  F1=0.063
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.0572
+     T2_tiny        n_gt=129   recall=0.178  AP=0.0319
+     T3_small       n_gt=80    recall=0.250  AP=0.0607
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1438
+     3.116 s/image on CPU, 0 trainable params
+  -> min_area=60   sens=2.5  mAP50=0.0442 P=0.037 R=0.236 n_pred=1583
+[R1] microdefectcv on val: 8 imgs, 747 preds vs 246 gt
+     mAP50=0.0658  mAP50-95=0.0287  P=0.075  R=0.228  F1=0.113
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.2574
+     T2_tiny        n_gt=129   recall=0.163  AP=0.0641
+     T3_small       n_gt=80    recall=0.250  AP=0.0640
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1694
+     3.157 s/image on CPU, 0 trainable params
+  -> min_area=120  sens=1.0  mAP50=0.0658 P=0.075 R=0.228 n_pred=747
+[R1] microdefectcv on val: 8 imgs, 747 preds vs 246 gt
+     mAP50=0.0658  mAP50-95=0.0287  P=0.075  R=0.228  F1=0.113
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.2574
+     T2_tiny        n_gt=129   recall=0.163  AP=0.0641
+     T3_small       n_gt=80    recall=0.250  AP=0.0640
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1694
+     3.178 s/image on CPU, 0 trainable params
+  -> min_area=120  sens=1.5  mAP50=0.0658 P=0.075 R=0.228 n_pred=747
+[R1] microdefectcv on val: 8 imgs, 747 preds vs 246 gt
+     mAP50=0.0658  mAP50-95=0.0287  P=0.075  R=0.228  F1=0.113
+     T1_sub_stride  n_gt=8     recall=0.250  AP=0.2574
+     T2_tiny        n_gt=129   recall=0.163  AP=0.0641
+     T3_small       n_gt=80    recall=0.250  AP=0.0640
+     T4_medium_up   n_gt=29    recall=0.448  AP=0.1694
+     3.152 s/image on CPU, 0 trainable params
+  -> min_area=120  sens=2.5  mAP50=0.0658 P=0.075 R=0.228 n_pred=747
+
+[R1] best on val: min_area=120 sensitivity=1.0 mAP50=0.0658

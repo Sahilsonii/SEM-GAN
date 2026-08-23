@@ -96,8 +96,7 @@ def stage4_microdefectcv(args):
     from eval.microdefectcv_baseline import run_baseline, sweep
     if args.sweep:
         best = sweep(split="val", limit=args.sweep_limit)
-        run_baseline(split="val", min_area=best["min_area"],
-                     sensitivity=best["sensitivity"])
+        run_baseline(split="val", min_area=best["min_area"])
     else:
         run_baseline(split="val", min_area=args.mdcv_min_area,
                      sensitivity=args.mdcv_sensitivity)

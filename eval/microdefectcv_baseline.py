@@ -157,22 +157,26 @@ if __name__ == "__main__":
 
 
 def sweep(split: str = "val", limit: int = 8,
-          min_areas=(4, 12, 30, 60, 120), sensitivities=(1.0, 1.5, 2.5)) -> dict:
+          min_areas=(30, 60, 120, 240, 400, 700)) -> dict:
     """Tune MicroDefectCV on VAL before reporting it.
 
     A classical baseline run at whatever default happened to be in the signature
     is a straw man. It gets the same courtesy every deep model gets: a
     hyperparameter search on the validation split, with the test split untouched.
     """
+    # NOTE: `sensitivity` is NOT swept. Verified against microdefectcv 0.1.1 that
+    # the parameter is accepted and documented ("higher = more detections") but
+    # never referenced in the body of detect_defects - identical output for
+    # sensitivity in [0.1, 20.0]. Sweeping it would triple the cost for nothing.
+    # Upstream fix belongs in the package; see outputs/upstream_findings.md.
     rows = []
     for ma in min_areas:
-        for sn in sensitivities:
-            m = run_baseline(split=split, limit=limit, min_area=ma, sensitivity=sn)
-            rows.append({"min_area": ma, "sensitivity": sn, "mAP50": m["mAP50"],
-                         "mAP50_95": m["mAP50_95"], "precision": m["precision"],
-                         "recall": m["recall"], "n_pred": m["n_pred"]})
-            print(f"  -> min_area={ma:<4} sens={sn:<4} mAP50={m['mAP50']:.4f} "
-                  f"P={m['precision']:.3f} R={m['recall']:.3f} n_pred={m['n_pred']}")
+        m = run_baseline(split=split, limit=limit, min_area=ma)
+        rows.append({"min_area": ma, "mAP50": m["mAP50"],
+                     "mAP50_95": m["mAP50_95"], "precision": m["precision"],
+                     "recall": m["recall"], "n_pred": m["n_pred"]})
+        print(f"  -> min_area={ma:<5} mAP50={m['mAP50']:.4f} "
+              f"P={m['precision']:.3f} R={m['recall']:.3f} n_pred={m['n_pred']}")
     best = max(rows, key=lambda r: r["mAP50"])
     (OUT / f"microdefectcv_sweep_{split}.json").write_text(
         json.dumps({"rows": rows, "best": best}, indent=1), encoding="utf-8")
