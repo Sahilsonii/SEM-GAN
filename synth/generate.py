@@ -24,10 +24,9 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from data.sem_bar import find_bar_top
 from synth.renderer import fit_priors, render, sample_params
 
-SNAP_IMAGES = ROOT / "data" / "raw_snapshot" / "images"
+CURATED_IMAGES = ROOT / "data" / "curated" / "images"
 SPLITS = ROOT / "data" / "splits"
 OUT_ROOT = ROOT / "data" / "synthetic"
 
@@ -75,7 +74,7 @@ def generate(n_images: int = 200, render_px: int = 512, seed: int = 42,
             bg = backgrounds[i % len(backgrounds)]
             used_groups.add(bg["group"])
 
-            img = cv2.imread(str(SNAP_IMAGES / bg["file"]), cv2.IMREAD_COLOR)
+            img = cv2.imread(str(CURATED_IMAGES / bg["file"]), cv2.IMREAD_COLOR)
             if img is None:
                 continue
             if img.shape[:2] != (render_px, render_px):
@@ -84,12 +83,11 @@ def generate(n_images: int = 200, render_px: int = 512, seed: int = 42,
             k = (int(rng.choice(priors["counts"])) if defects_per_image is None
                  else int(defects_per_image))
             k = max(1, min(k, 60))
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            cy_max = find_bar_top(gray) / gray.shape[0]     # keep defects off the banner
+            # canvases come from data/curated, where the FESEM banner is already
+            # gone - no placement restriction is needed here any more
             params = sample_params(priors, k, rng, render_px=render_px,
-                                   severity=severity, cy_max=cy_max)
-            res = render(img, params, seed=int(rng.integers(0, 2**31 - 1)),
-                         region_bottom=find_bar_top(gray))
+                                   severity=severity)
+            res = render(img, params, seed=int(rng.integers(0, 2**31 - 1)))
             if not res["boxes"]:
                 continue
 
@@ -123,7 +121,7 @@ def generate(n_images: int = 200, render_px: int = 512, seed: int = 42,
         "seed": seed,
         "render_px": render_px,
         "severity": severity,
-        "placement": "imaging region only (SEM metadata banner excluded)",
+        "placement": "full frame (canvases are pre-cropped; no banner exists)",
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=1), encoding="utf-8")
     print(f"[synth] pool '{pool_name}': {summary['images']} images, {n_boxes} boxes, "
@@ -137,13 +135,12 @@ def severity_ladder(rungs=(0.0, 0.25, 0.5, 0.75, 1.0), render_px: int = 512,
     backgrounds = background_pool("train")
     bg = backgrounds[0]
     priors = fit_priors("train")
-    img = cv2.imread(str(SNAP_IMAGES / bg["file"]), cv2.IMREAD_COLOR)
+    img = cv2.imread(str(CURATED_IMAGES / bg["file"]), cv2.IMREAD_COLOR)
     img = cv2.resize(img, (render_px, render_px), interpolation=cv2.INTER_AREA)
 
     # identical layout on every rung - only severity changes
-    cy_max = find_bar_top(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)) / img.shape[0]
     params = sample_params(priors, n_defects, np.random.default_rng(seed),
-                           render_px=render_px, cy_max=cy_max)
+                           render_px=render_px)
     for p in params:
         p.size_px = max(p.size_px, 12.0)
 
@@ -162,8 +159,7 @@ def severity_ladder(rungs=(0.0, 0.25, 0.5, 0.75, 1.0), render_px: int = 512,
         else:
             for p in params:
                 p.severity = float(sev)
-            res = render(img, params, seed=seed,
-                         region_bottom=find_bar_top(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)))
+            res = render(img, params, seed=seed)
 
         stem = f"cf_sev{int(sev*100):03d}"
         cv2.imwrite(str(out_dir / "images" / f"{stem}.jpg"), res["image"],

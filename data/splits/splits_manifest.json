@@ -14,10 +14,10 @@
   "train": {
    "groups": 160,
    "images": 197,
-   "boxes": 3203,
+   "boxes": 3176,
    "boxes_per_class": {
     "pbi2": 738,
-    "pinhole": 2465
+    "pinhole": 2438
    },
    "images_with_defects": 50
   },
