@@ -124,3 +124,25 @@ def test_priors_come_from_train_split_only():
     te = fit_priors("test")
     assert len(tr["side_pinhole"]) != len(te["side_pinhole"]), \
         "train and test priors are identical - check the split being read"
+
+
+def test_masks_never_enter_the_metadata_banner():
+    """Defects must not be drawn into the burned-in FESEM instrument banner.
+
+    Bounding the defect CENTRE is not enough - a large blob centred just above
+    the banner still spills into it - so render() clips the mask at region_bottom
+    and the box, being derived from that mask, follows.
+    """
+    priors = fit_priors("train")
+    rng = np.random.default_rng(3)
+    H = 512
+    cut = int(H * 0.90)
+    ps = sample_params(priors, 25, rng, render_px=H)
+    for p in ps:
+        p.size_px = 60.0          # deliberately large
+        p.cy = 0.88               # deliberately near the banner
+    res = render(_canvas(H), ps, seed=0, region_bottom=cut)
+
+    assert res["mask"][cut:].sum() == 0, "mask pixels drawn inside the banner"
+    for _, _, cy, _, h in res["boxes"]:
+        assert (cy + h / 2) * H <= cut + 1, "box extends into the banner"

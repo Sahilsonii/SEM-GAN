@@ -122,17 +122,23 @@ def _apply(img: np.ndarray, soft: np.ndarray, p: DefectParams,
 
 
 def render(canvas: np.ndarray, params: list, seed: int = 0,
-           mask_threshold: float = 0.5) -> dict:
+           mask_threshold: float = 0.5, region_bottom: int | None = None) -> dict:
     """Draw params onto canvas.
 
     Returns exact per-defect masks, YOLO boxes and class ids. The box is derived
     from the mask it was drawn with, so box/mask/class agreement is a property
     of the code rather than something to be validated after the fact.
+
+    region_bottom is the first row of the FESEM metadata banner. Masks are
+    clipped there, so no synthetic defect - and therefore no synthetic box - can
+    extend into instrument text. Bounding the defect centre is not sufficient:
+    a large blob centred just above the banner would still spill into it.
     """
     rng = np.random.default_rng(seed)
     if canvas.ndim == 2:
         canvas = cv2.cvtColor(canvas, cv2.COLOR_GRAY2BGR)
     h, w = canvas.shape[:2]
+    cut = h if region_bottom is None else max(1, min(int(region_bottom), h))
 
     img = canvas.astype(np.float32)
     union = np.zeros((h, w), np.float32)
@@ -140,6 +146,8 @@ def render(canvas: np.ndarray, params: list, seed: int = 0,
 
     for p in params:
         soft = _blob_mask(h, w, p, rng)
+        if cut < h:
+            soft[cut:] = 0.0
         binary = soft >= mask_threshold
         if int(binary.sum()) < 4:                  # sub-resolution, skip
             continue
@@ -165,8 +173,14 @@ def render(canvas: np.ndarray, params: list, seed: int = 0,
 
 def sample_params(priors: dict, n: int, rng: np.random.Generator,
                   render_px: int = 512, severity=None,
-                  pbi2_fraction: float = 0.25) -> list:
-    """Draw n defect parameter sets from the expert-box priors."""
+                  pbi2_fraction: float = 0.25, cy_max: float = 1.0) -> list:
+    """Draw n defect parameter sets from the expert-box priors.
+
+    cy_max bounds vertical placement to the imaging region. Every image in this
+    corpus carries a burned-in FESEM metadata banner over the bottom ~8.2% of
+    its height (see data/sem_bar.py); rendering defects into it would teach the
+    detector that pinholes occur inside instrument text.
+    """
     out = []
     for _ in range(n):
         kind = PBI2 if rng.random() < pbi2_fraction else PINHOLE
@@ -179,10 +193,11 @@ def sample_params(priors: dict, n: int, rng: np.random.Generator,
             aspect = float(rng.uniform(0.9, 1.3))
         sev = float(rng.uniform(0.35, 0.95)) if severity is None else float(severity)
         margin = 0.04
+        cy_hi = max(margin + 1e-3, min(1.0, cy_max) - margin)
         out.append(DefectParams(
             kind=kind,
             cx=float(rng.uniform(margin, 1 - margin)),
-            cy=float(rng.uniform(margin, 1 - margin)),
+            cy=float(rng.uniform(margin, cy_hi)),
             size_px=max(3.0, side_norm * render_px),
             severity=sev,
             morphology=morph,
