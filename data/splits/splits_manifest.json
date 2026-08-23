@@ -1,0 +1,113 @@
+{
+ "seed": 42,
+ "ratios": {
+  "train": 0.6,
+  "val": 0.15,
+  "test": 0.25
+ },
+ "class_names": [
+  "pbi2",
+  "pinhole"
+ ],
+ "split_level": "source_group",
+ "summary": {
+  "train": {
+   "groups": 160,
+   "images": 197,
+   "boxes": 3203,
+   "boxes_per_class": {
+    "pbi2": 738,
+    "pinhole": 2465
+   },
+   "images_with_defects": 50
+  },
+  "val": {
+   "groups": 39,
+   "images": 59,
+   "boxes": 663,
+   "boxes_per_class": {
+    "pbi2": 131,
+    "pinhole": 532
+   },
+   "images_with_defects": 12
+  },
+  "test": {
+   "groups": 68,
+   "images": 82,
+   "boxes": 739,
+   "boxes_per_class": {
+    "pbi2": 166,
+    "pinhole": 573
+   },
+   "images_with_defects": 22
+  }
+ },
+ "leakage_assertions": [
+  "group_disjoint",
+  "md5_disjoint",
+  "no_augmented_files"
+ ],
+ "original_split_audit": {
+  "available": true,
+  "groups": {
+   "train": 231,
+   "val": 40,
+   "test": 41
+  },
+  "train_val_overlap": 22,
+  "train_test_overlap": 18,
+  "val_test_overlap": 8,
+  "examples": [
+   {
+    "group": "02-09",
+    "train": [
+     "02-09 (2)_class4_3D-2D_background.jpg",
+     "02-09_class3_3D_background.jpg"
+    ],
+    "test": [
+     "02-09 (3)_class3_3D_background.jpg"
+    ]
+   },
+   {
+    "group": "02-15",
+    "train": [
+     "02-15.jpg",
+     "02-15_aug009.jpg"
+    ],
+    "test": [
+     "02-15_class4_3D-2D_background.jpg"
+    ]
+   },
+   {
+    "group": "03-01",
+    "train": [
+     "03-01 (2)_class4_3D-2D_background.jpg",
+     "03-01_class4_3D-2D_background.jpg"
+    ],
+    "test": [
+     "03-01_class3_3D_background.jpg"
+    ]
+   },
+   {
+    "group": "04-09",
+    "train": [
+     "04-09.jpg"
+    ],
+    "test": [
+     "04-09_class4_3D-2D_background.jpg"
+    ]
+   },
+   {
+    "group": "0403",
+    "train": [
+     "0403.jpg",
+     "0403_aug016.jpg"
+    ],
+    "test": [
+     "0403_aug002.jpg"
+    ]
+   }
+  ],
+  "total_leaked_groups": 36
+ }
+}
