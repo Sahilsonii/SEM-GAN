@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
 
 def sweep(split: str = "val", limit: int = 8,
-          min_areas=(30, 60, 120, 240, 400, 700)) -> dict:
+          min_areas=(30, 60, 120, 240, 400, 700, 1200)) -> dict:
     """Tune MicroDefectCV on VAL before reporting it.
 
     A classical baseline run at whatever default happened to be in the signature

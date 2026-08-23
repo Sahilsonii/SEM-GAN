@@ -1,40 +1,40 @@
 {
- "mAP50": 0.0658,
- "mAP50_95": 0.0287,
- "precision": 0.075,
- "recall": 0.2276,
- "f1": 0.1128,
- "n_gt": 246,
- "n_pred": 747,
+ "mAP50": 0.0261,
+ "mAP50_95": 0.0105,
+ "precision": 0.0626,
+ "recall": 0.1599,
+ "f1": 0.09,
+ "n_gt": 663,
+ "n_pred": 1692,
  "per_bin_at50": {
   "T1_sub_stride": {
-   "ap": 0.2574,
-   "n_gt": 8,
-   "recall": 0.25
+   "ap": 0.1188,
+   "n_gt": 26,
+   "recall": 0.1154
   },
   "T2_tiny": {
-   "ap": 0.0641,
-   "n_gt": 129,
-   "recall": 0.1628
+   "ap": 0.0127,
+   "n_gt": 301,
+   "recall": 0.113
   },
   "T3_small": {
-   "ap": 0.064,
-   "n_gt": 80,
-   "recall": 0.25
+   "ap": 0.0439,
+   "n_gt": 213,
+   "recall": 0.2113
   },
   "T4_medium_up": {
-   "ap": 0.1694,
-   "n_gt": 29,
-   "recall": 0.4483
+   "ap": 0.068,
+   "n_gt": 123,
+   "recall": 0.1951
   }
  },
  "method": "microdefectcv",
  "split": "val",
- "images": 8,
- "seconds_total": 25.16,
- "seconds_per_image": 3.146,
+ "images": 12,
+ "seconds_total": 61.34,
+ "seconds_per_image": 5.112,
  "trainable_params": 0,
  "min_area": 120,
- "sensitivity": 2.5,
+ "sensitivity": 1.5,
  "note": "zero-training classical baseline; score = local contrast proxy"
 }

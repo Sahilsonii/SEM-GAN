@@ -224,7 +224,8 @@ def main() -> int:
     ap.add_argument("--sweep", action="store_true",
                     help="stage 4: hyperparameter search for MicroDefectCV on val")
     ap.add_argument("--sweep-limit", type=int, default=8)
-    ap.add_argument("--mdcv-min-area", type=int, default=30)
+    ap.add_argument("--mdcv-min-area", type=int, default=120,
+                    help="tuned on val: interior optimum of the min_area sweep")
     ap.add_argument("--mdcv-sensitivity", type=float, default=1.5)
     args = ap.parse_args()
 

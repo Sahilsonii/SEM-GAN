@@ -17,3 +17,4 @@ outputs/failures/
 __pycache__/
 *.pyc
 .venv/
+data/synthetic/
