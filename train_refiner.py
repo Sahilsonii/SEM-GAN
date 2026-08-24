@@ -146,6 +146,9 @@ def train(epochs: int = 30, batch: int = 16, patch: int = 192, lr_g: float = 2e-
           f"fft={'on' if use_fft else 'OFF (ablation A1)'} device={device}")
 
     history = []
+    best_rec = float("inf")
+    best_state = None
+    best_epoch = -1
     for epoch in range(1, epochs + 1):
         G.train(); D.train()
         agg = {"rec": 0.0, "adv": 0.0, "fft": 0.0, "d": 0.0}
@@ -198,16 +201,49 @@ def train(epochs: int = 30, batch: int = 16, patch: int = 192, lr_g: float = 2e-
         row = {k: round(v / n, 4) for k, v in agg.items()}
         row.update(epoch=epoch, seconds=round(time.time() - t0, 1))
         history.append(row)
-        print(f"  epoch {epoch:>3}/{epochs}  rec={row['rec']:.4f}  adv={row['adv']:.3f}  "
-              f"fft={row['fft']:.4f}  d={row['d']:.3f}  ({row['seconds']}s)")
 
-    out = CKPT / f"refiner_{tag}.pth"
+        # GAN training on ~2600 patches over 30 epochs can and does destabilise
+        # in the back half - the discriminator overpowers the generator (d -> 0,
+        # its hinge loss saturates, G's adversarial gradient goes to noise) or
+        # the reverse. Warn live rather than only discovering it after the fact
+        # from a loss-curve plot nobody looked at.
+        flag = ""
+        if row["d"] < 0.02:
+            flag = "  <- D SATURATED (near-zero loss = G getting no useful gradient)"
+        elif row["rec"] > 1.5 * best_rec and epoch > epochs // 3:
+            flag = "  <- rec regressed from its best - possible late-training divergence"
+        print(f"  epoch {epoch:>3}/{epochs}  rec={row['rec']:.4f}  adv={row['adv']:.3f}  "
+              f"fft={row['fft']:.4f}  d={row['d']:.3f}  ({row['seconds']}s){flag}")
+
+        # rec (reconstruction against a REAL defect crop) is the one term that
+        # directly measures texture fidelity and is not itself adversarial, so
+        # it is what "best" is judged on - the adversarial terms are exactly
+        # the ones prone to the collapse above and are not a trustworthy
+        # selection criterion on their own.
+        if row["rec"] < best_rec:
+            best_rec = row["rec"]
+            best_epoch = epoch
+            best_state = {k: v.detach().cpu().clone() for k, v in G.state_dict().items()}
+
+    last_path = CKPT / f"refiner_{tag}_last.pth"
     torch.save({"model": G.state_dict(), "use_fft": use_fft,
-                "n_classes": N_CLASSES, "patch": patch}, out)
+                "n_classes": N_CLASSES, "patch": patch, "epoch": epochs}, last_path)
+
+    best_path = CKPT / f"refiner_{tag}_best.pth"
+    torch.save({"model": best_state, "use_fft": use_fft,
+                "n_classes": N_CLASSES, "patch": patch, "epoch": best_epoch,
+                "rec": best_rec}, best_path)
+
     (CKPT / f"refiner_{tag}_history.json").write_text(
         json.dumps(history, indent=1), encoding="utf-8")
-    print(f"[refiner] saved -> {out}")
-    return {"checkpoint": str(out), "history": history}
+    print(f"[refiner] last -> {last_path} (epoch {epochs})")
+    print(f"[refiner] best -> {best_path} (epoch {best_epoch}, rec={best_rec:.4f})")
+    if best_epoch < epochs * 0.7:
+        print(f"[refiner] NOTE: best epoch ({best_epoch}) is well before the final "
+              f"epoch ({epochs}) - training likely destabilised late; inspect "
+              f"{CKPT / f'refiner_{tag}_history.json'} before trusting the last checkpoint")
+    return {"checkpoint": str(best_path), "last_checkpoint": str(last_path),
+            "best_epoch": best_epoch, "best_rec": best_rec, "history": history}
 
 
 if __name__ == "__main__":

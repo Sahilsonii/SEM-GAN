@@ -122,8 +122,13 @@ def stage5_refiner(args):
                         use_fft=True, tag="fft")
     nofft = train_refiner(epochs=args.refiner_epochs, batch=args.refiner_batch,
                           use_fft=False, tag="nofft")
-    print(f"[stage5] fft   final rec={fft['history'][-1]['rec']:.4f}")
-    print(f"[stage5] nofft final rec={nofft['history'][-1]['rec']:.4f}")
+    # best-epoch rec, not final-epoch: GAN training on ~2600 patches can and
+    # does destabilise in the back half, so the last epoch is not necessarily
+    # the one worth using - see train_refiner.train's checkpoint selection.
+    print(f"[stage5] fft   best epoch={fft['best_epoch']}/{args.refiner_epochs} "
+          f"rec={fft['best_rec']:.4f}")
+    print(f"[stage5] nofft best epoch={nofft['best_epoch']}/{args.refiner_epochs} "
+          f"rec={nofft['best_rec']:.4f}")
 
 
 def stage6_quality(args):
@@ -132,8 +137,8 @@ def stage6_quality(args):
     through unchanged - the refiner cannot move a defect or change its extent,
     only what it looks like."""
     from synth.apply_refiner import refine_pool
-    refine_pool("controlled", "refined", "refiner_fft.pth")
-    refine_pool("controlled", "refined_nofft", "refiner_nofft.pth")
+    refine_pool("controlled", "refined", "refiner_fft_best.pth")
+    refine_pool("controlled", "refined_nofft", "refiner_nofft_best.pth")
 
 
 def stage7_detector(args):

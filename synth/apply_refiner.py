@@ -29,7 +29,7 @@ N_CLASSES = 2
 
 
 def refine_pool(src_pool: str = "controlled", dst_pool: str = "refined",
-                checkpoint: str = "refiner_fft.pth", device: str | None = None,
+                checkpoint: str = "refiner_fft_best.pth", device: str | None = None,
                 batch: int = 4) -> dict:
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     src, dst = SYNTH / src_pool, SYNTH / dst_pool
@@ -96,6 +96,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--src", default="controlled")
     ap.add_argument("--dst", default="refined")
-    ap.add_argument("--checkpoint", default="refiner_fft.pth")
+    ap.add_argument("--checkpoint", default="refiner_fft_best.pth")
     a = ap.parse_args()
     refine_pool(src_pool=a.src, dst_pool=a.dst, checkpoint=a.checkpoint)
