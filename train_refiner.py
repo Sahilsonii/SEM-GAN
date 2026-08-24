@@ -28,6 +28,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+from tqdm import tqdm
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
@@ -137,8 +138,8 @@ def train(epochs: int = 30, batch: int = 16, patch: int = 192, lr_g: float = 2e-
 
     optG = torch.optim.AdamW(G.parameters(), lr=lr_g, betas=(0.5, 0.999))
     optD = torch.optim.AdamW(D.parameters(), lr=lr_d, betas=(0.5, 0.999))
-    scaler_g = torch.cuda.amp.GradScaler(enabled=device == "cuda")
-    scaler_d = torch.cuda.amp.GradScaler(enabled=device == "cuda")
+    scaler_g = torch.amp.GradScaler("cuda", enabled=device == "cuda")
+    scaler_d = torch.amp.GradScaler("cuda", enabled=device == "cuda")
 
     CKPT.mkdir(exist_ok=True)
     print(f"[refiner] {len(ds)} defect patches | patch={patch} batch={batch} "
@@ -150,7 +151,9 @@ def train(epochs: int = 30, batch: int = 16, patch: int = 192, lr_g: float = 2e-
         agg = {"rec": 0.0, "adv": 0.0, "fft": 0.0, "d": 0.0}
         t0 = time.time()
 
-        for b in dl:
+        pbar = tqdm(dl, desc=f"epoch {epoch:>3}/{epochs}", unit="batch",
+                    dynamic_ncols=True, leave=False)
+        for step, b in enumerate(pbar, 1):
             real = b["real"].to(device)
             rendered = b["rendered"].to(device)
             mask = b["mask"].to(device)
@@ -159,7 +162,7 @@ def train(epochs: int = 30, batch: int = 16, patch: int = 192, lr_g: float = 2e-
 
             # ---- discriminator ----
             optD.zero_grad(set_to_none=True)
-            with torch.cuda.amp.autocast(enabled=device == "cuda"):
+            with torch.amp.autocast("cuda", enabled=device == "cuda"):
                 with torch.no_grad():
                     fake = G(rendered, mask, cls, sev)
                 d_real = D(real)
@@ -172,7 +175,7 @@ def train(epochs: int = 30, batch: int = 16, patch: int = 192, lr_g: float = 2e-
 
             # ---- generator ----
             optG.zero_grad(set_to_none=True)
-            with torch.cuda.amp.autocast(enabled=device == "cuda"):
+            with torch.amp.autocast("cuda", enabled=device == "cuda"):
                 fake = G(rendered, mask, cls, sev)
                 d_out = D(fake)
                 loss_adv = -sum(torch.mean(o) for o in d_out)
@@ -187,6 +190,9 @@ def train(epochs: int = 30, batch: int = 16, patch: int = 192, lr_g: float = 2e-
 
             agg["rec"] += float(loss_rec); agg["adv"] += float(loss_adv)
             agg["fft"] += float(loss_fft); agg["d"] += float(loss_d)
+            pbar.set_postfix({"rec": f"{agg['rec']/step:.4f}", "adv": f"{agg['adv']/step:.3f}",
+                              "fft": f"{agg['fft']/step:.4f}", "d": f"{agg['d']/step:.3f}"})
+        pbar.close()
 
         n = len(dl)
         row = {k: round(v / n, 4) for k, v in agg.items()}

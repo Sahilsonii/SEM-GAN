@@ -16,6 +16,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import torch
+from tqdm import tqdm
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -45,8 +46,9 @@ def refine_pool(src_pool: str = "controlled", dst_pool: str = "refined",
                (src / "manifest.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
 
     n = 0
+    pbar = tqdm(entries, desc=f"refine[{dst_pool}]", unit="img", dynamic_ncols=True)
     with torch.no_grad():
-        for e in entries:
+        for e in pbar:
             stem = e["stem"]
             img_p = src / "images" / f"{stem}.jpg"
             msk_p = src / "masks" / f"{stem}.png"
@@ -78,6 +80,7 @@ def refine_pool(src_pool: str = "controlled", dst_pool: str = "refined",
             if lbl_p.exists():
                 shutil.copy2(lbl_p, dst / "labels" / f"{stem}.txt")
             n += 1
+            pbar.set_postfix({"refined": n})
 
     shutil.copy2(src / "manifest.jsonl", dst / "manifest.jsonl")
     summary = {"pool": dst_pool, "source_pool": src_pool, "images": n,

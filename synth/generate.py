@@ -20,6 +20,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+from tqdm import tqdm
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -78,7 +79,9 @@ def generate(n_images: int = 200, render_px: int = 512, seed: int = 42,
     used_groups: set[str] = set()
     n_boxes = 0
     with manifest_path.open("w", encoding="utf-8") as mf:
-        for i in range(n_images):
+        pbar = tqdm(range(n_images), desc=f"render[{pool_name}]", unit="img",
+                    dynamic_ncols=True)
+        for i in pbar:
             bg = backgrounds[i % len(backgrounds)]
             used_groups.add(bg["group"])
 
@@ -117,6 +120,7 @@ def generate(n_images: int = 200, render_px: int = 512, seed: int = 42,
                 "params": res["params"],
             }) + "\n")
             n_boxes += len(res["boxes"])
+            pbar.set_postfix({"boxes": n_boxes, "bg_used": len(used_groups)})
 
     _assert_no_holdout_leak(used_groups)
 

@@ -23,6 +23,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+from tqdm import tqdm
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -107,7 +108,8 @@ def run_baseline(split: str = "val", limit: int | None = None,
         recs = recs[:limit]
 
     samples, t0 = [], time.time()
-    for r in recs:
+    pbar = tqdm(recs, desc=f"microdefectcv[{split}]", unit="img", dynamic_ncols=True)
+    for r in pbar:
         img = cv2.imread(str(CURATED_IMAGES / r["file"]), cv2.IMREAD_COLOR)
         if img is None:
             continue
@@ -115,6 +117,7 @@ def run_baseline(split: str = "val", limit: int | None = None,
         pred, scores = predict_image(img, min_area=min_area, sensitivity=sensitivity)
         samples.append({"gt": r["boxes"], "pred": pred,
                         "scores": scores, "wh": (w, h)})
+        pbar.set_postfix({"preds": len(pred)})
     elapsed = time.time() - t0
 
     metrics = evaluate(samples)
