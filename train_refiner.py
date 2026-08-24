@@ -220,22 +220,31 @@ def train(epochs: int = 30, batch: int = 16, patch: int = 192, lr_g: float = 2e-
         # it is what "best" is judged on - the adversarial terms are exactly
         # the ones prone to the collapse above and are not a trustworthy
         # selection criterion on their own.
+        #
+        # Written to disk THE MOMENT a new best is found, not just at the end
+        # of the loop - training here is not resumable, so a kill (accidental
+        # terminal close, crash, power cut) partway through used to lose the
+        # entire run's progress with nothing to show for it. Now the worst case
+        # is losing only the epochs since the last improvement, and the last
+        # improvement is usually not far behind given how quickly rec falls
+        # early on. History is flushed every epoch for the same reason - so
+        # the destabilisation warnings above are on disk even if the process
+        # never reaches the epochs+1'th line.
+        best_path = CKPT / f"refiner_{tag}_best.pth"
         if row["rec"] < best_rec:
             best_rec = row["rec"]
             best_epoch = epoch
             best_state = {k: v.detach().cpu().clone() for k, v in G.state_dict().items()}
+            torch.save({"model": best_state, "use_fft": use_fft,
+                       "n_classes": N_CLASSES, "patch": patch,
+                       "epoch": best_epoch, "rec": best_rec}, best_path)
+
+        (CKPT / f"refiner_{tag}_history.json").write_text(
+            json.dumps(history, indent=1), encoding="utf-8")
 
     last_path = CKPT / f"refiner_{tag}_last.pth"
     torch.save({"model": G.state_dict(), "use_fft": use_fft,
                 "n_classes": N_CLASSES, "patch": patch, "epoch": epochs}, last_path)
-
-    best_path = CKPT / f"refiner_{tag}_best.pth"
-    torch.save({"model": best_state, "use_fft": use_fft,
-                "n_classes": N_CLASSES, "patch": patch, "epoch": best_epoch,
-                "rec": best_rec}, best_path)
-
-    (CKPT / f"refiner_{tag}_history.json").write_text(
-        json.dumps(history, indent=1), encoding="utf-8")
     print(f"[refiner] last -> {last_path} (epoch {epochs})")
     print(f"[refiner] best -> {best_path} (epoch {best_epoch}, rec={best_rec:.4f})")
     if best_epoch < epochs * 0.7:
