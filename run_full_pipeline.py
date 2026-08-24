@@ -30,6 +30,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "data"))
 
 PY = sys.executable
+EXPERIMENTS = ROOT / "experiments"
+OUT = ROOT / "outputs"
 
 
 # --------------------------------------------------------------------------
@@ -85,9 +87,17 @@ def stage2_bins(args):
 
 
 def stage3_synth(args):
-    from synth.generate import generate, severity_ladder
-    generate(n_images=args.n_synth, pool_name="controlled",
-             seed=args.seed, render_px=args.render_px, pbi2_fraction=0.0)
+    """Renderer pool. --per-class N switches to balanced N-per-class generation
+    (e.g. --per-class 5000 -> 10,000 images, both classes); otherwise --n-synth
+    total, pinhole-only. Measured throughput ~0.61s/image, so 5000/class is
+    ~100 minutes of rendering alone - see the README section on bulk scale."""
+    from synth.generate import generate, generate_balanced, severity_ladder
+    if args.per_class:
+        generate_balanced(per_class=args.per_class, render_px=args.render_px,
+                          seed=args.seed, pool_name="controlled")
+    else:
+        generate(n_images=args.n_synth, pool_name="controlled",
+                seed=args.seed, render_px=args.render_px, pbi2_fraction=0.0)
     severity_ladder(render_px=args.render_px)
 
 
@@ -103,23 +113,54 @@ def stage4_microdefectcv(args):
 
 
 def stage5_refiner(args):
-    raise NotImplementedError(
-        "GAN texture refiner - next to build. Needs torch (present in py3.10).")
+    """Train the conditional GAN texture refiner: FFT-branch ON (main) and
+    OFF (ablation A1/H2), same budget, so the two checkpoints are comparable.
+    Operates on 192px patches from real defect crops - independent of how big
+    the renderer pool from stage 3 is."""
+    from train_refiner import train as train_refiner
+    fft = train_refiner(epochs=args.refiner_epochs, batch=args.refiner_batch,
+                        use_fft=True, tag="fft")
+    nofft = train_refiner(epochs=args.refiner_epochs, batch=args.refiner_batch,
+                          use_fft=False, tag="nofft")
+    print(f"[stage5] fft   final rec={fft['history'][-1]['rec']:.4f}")
+    print(f"[stage5] nofft final rec={nofft['history'][-1]['rec']:.4f}")
 
 
 def stage6_quality(args):
-    raise NotImplementedError("Quality filter + domain-gap regression.")
+    """Repaint the renderer pool's geometry with the two refiner checkpoints,
+    producing data/synthetic/refined and refined_nofft. Labels are copied
+    through unchanged - the refiner cannot move a defect or change its extent,
+    only what it looks like."""
+    from synth.apply_refiner import refine_pool
+    refine_pool("controlled", "refined", "refiner_fft.pth")
+    refine_pool("controlled", "refined_nofft", "refiner_nofft.pth")
 
 
 def stage7_detector(args):
-    """E-A (real only) and E-D (real + synthetic), same budget, same seed."""
+    """E-A (real only) and E-D (real + synthetic), same budget, same seed.
+    --refined uses the GAN-refined pool from stage 6 instead of raw renderer
+    output. --ratios runs the scaling ladder (one seed) instead of the matrix.
+    --target-steps caps wall-clock when the synthetic pool is large - see the
+    docstring on train_detector.train for why a fixed epoch count does not
+    scale sanely with a 5000/class pool."""
     from train_detector import train
-    rows = [train(regime="real_only", seed=args.seed, epochs=args.epochs,
-                  imgsz=args.imgsz, batch=args.batch, p2=args.p2)]
-    if not args.skip_synth_regime:
-        rows.append(train(regime="real_plus_synth", seed=args.seed,
-                          epochs=args.epochs, imgsz=args.imgsz, batch=args.batch,
-                          p2=args.p2, synth_pool="controlled"))
+    pool = "refined" if args.refined else "controlled"
+
+    if args.ratios:
+        rows = []
+        for ratio in (float(r) for r in args.ratios.split(",")):
+            rows.append(train(regime=f"scale_{int(ratio*100):03d}", seed=args.seed,
+                              epochs=args.epochs, imgsz=args.imgsz, batch=args.batch,
+                              p2=args.p2, synth_pool=pool, synth_ratio=ratio,
+                              target_steps=args.target_steps))
+    else:
+        rows = [train(regime="real_only", seed=args.seed, epochs=args.epochs,
+                      imgsz=args.imgsz, batch=args.batch, p2=args.p2,
+                      target_steps=args.target_steps)]
+        if not args.skip_synth_regime:
+            rows.append(train(regime=f"real_plus_{pool}", seed=args.seed,
+                              epochs=args.epochs, imgsz=args.imgsz, batch=args.batch,
+                              p2=args.p2, synth_pool=pool, target_steps=args.target_steps))
     print()
     print("  regime               mAP50    mAP50-95   P       R")
     for r in rows:
@@ -128,12 +169,60 @@ def stage7_detector(args):
 
 
 def stage8_uncertainty(args):
-    raise NotImplementedError("Open-set (PbI2 held out) + calibration.")
+    """Open-set (PbI2 held out) + calibration. Trains a pinhole-only detector
+    if no checkpoint is supplied via --openset-checkpoint."""
+    import cv2
+    import numpy as np
+    from ultralytics import YOLO
+
+    from eval.calibration import calibration_report
+    from eval.open_set import evaluate as openset_evaluate
+    from eval.detection import iou_matrix, xywhn_to_xyxy
+
+    ckpt = args.openset_checkpoint
+    if not ckpt:
+        from train_detector import train
+        r = train(regime="openset_probe", seed=args.seed, epochs=args.epochs,
+                  batch=args.batch, known_classes=(1,))
+        ckpt = str(EXPERIMENTS / r["exp_id"] / "run" / "weights" / "best.pt")
+        print(f"[stage8] trained pinhole-only checkpoint -> {ckpt}")
+
+    openset_evaluate(ckpt, split="val")
+
+    # calibration: per-detection confidence vs IoU-matched correctness, val only
+    net = YOLO(ckpt)
+    recs = json.loads((ROOT / "data" / "splits" / "val.json").read_text(encoding="utf-8"))
+    confs, corrects = [], []
+    for r in recs["records"]:
+        gt = [b for b in r["boxes"] if b[0] == 1]
+        img = cv2.imread(str(ROOT / "data" / "curated" / "images" / r["file"]))
+        if img is None:
+            continue
+        w, h = img.shape[1], img.shape[0]
+        res = net.predict(img, conf=0.05, verbose=False)[0]
+        if not len(res.boxes) or not gt:
+            continue
+        gt_xyxy = np.stack([xywhn_to_xyxy(b, w, h) for b in gt])
+        for box, cf in zip(res.boxes.xywhn.cpu().numpy(), res.boxes.conf.cpu().numpy()):
+            pr_xyxy = xywhn_to_xyxy([1, *box], w, h)[None]
+            best = float(iou_matrix(pr_xyxy, gt_xyxy).max())
+            confs.append(float(cf)); corrects.append(1.0 if best >= 0.5 else 0.0)
+
+    if confs:
+        calibration_report(np.array(confs), np.array(corrects),
+                           out_path=OUT / "calibration_val.json")
+    else:
+        print("[stage8] no detections on val to calibrate against")
 
 
 def stage9_final(args):
-    raise NotImplementedError(
-        "FINAL evaluation on the locked real test split. Runs once, at the end.")
+    print("Stage 9 is deliberately NOT auto-run. It reads the locked test split")
+    print("exactly once, and must be invoked by hand after every checkpoint,")
+    print("hyperparameter, and threshold has been chosen using val only:")
+    print()
+    print('  py -3.10 eval/final_eval.py --checkpoints name=path.pt ... \\')
+    print('      --i-am-sure --confirm "I am done tuning"')
+    raise NotImplementedError("run eval/final_eval.py by hand - see message above")
 
 
 STAGES = [
@@ -149,8 +238,8 @@ STAGES = [
           ("microdefectcv",), stage4_microdefectcv),
     Stage(5, "refiner",   "Conditional GAN texture refiner (H2 FFT ablation)",
           ("torch",), stage5_refiner),
-    Stage(6, "quality",   "Quality filter + domain-gap -> utility regression (N2)",
-          ("torch", "sklearn"), stage6_quality),
+    Stage(6, "quality",   "Build refined synthetic pools from stage-5 checkpoints",
+          ("torch",), stage6_quality),
     Stage(7, "detector",  "Detector matrix E-A..E-E (YOLO11s+P2, RF-DETR)",
           ("ultralytics",), stage7_detector),
     Stage(8, "uncertain", "Open-set PbI2 + calibration (ECE, Brier, risk-coverage)",
@@ -158,8 +247,10 @@ STAGES = [
     Stage(9, "final",     "LOCKED real test-set evaluation + master results table",
           ("ultralytics",), stage9_final),
 ]
-FIRST_UNIMPLEMENTED = 5   # stage 7 is implemented; see IMPLEMENTED below
-IMPLEMENTED = {0, 1, 2, 3, 4, 7}     # stages >= this are declared but not built yet
+FIRST_UNIMPLEMENTED = 5   # kept for reference; superseded by IMPLEMENTED below
+IMPLEMENTED = {0, 1, 2, 3, 4, 5, 6, 7, 8}
+# stage 9 is intentionally excluded: it always raises NotImplementedError here by
+# design and must be run by hand via eval/final_eval.py with its confirmation gate
 BY_KEY = {s.key: s for s in STAGES}
 BY_NUM = {str(s.num): s for s in STAGES}
 
@@ -230,6 +321,9 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="preflight only")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--n-synth", type=int, default=200)
+    ap.add_argument("--per-class", type=int, default=None,
+                    help="stage 3: balanced N-per-class generation (e.g. 5000), "
+                         "instead of --n-synth total")
     ap.add_argument("--render-px", type=int, default=512)
     ap.add_argument("--keep-3class", action="store_true")
     ap.add_argument("--force", action="store_true", help="re-copy the snapshot")
@@ -245,6 +339,19 @@ def main() -> int:
     ap.add_argument("--batch", type=int, default=8)
     ap.add_argument("--p2", action="store_true", help="enable the stride-4 head")
     ap.add_argument("--skip-synth-regime", action="store_true")
+    ap.add_argument("--openset-checkpoint", default=None,
+                    help="stage 8: reuse an existing pinhole-only .pt instead of training one")
+    ap.add_argument("--refiner-epochs", type=int, default=30)
+    ap.add_argument("--refiner-batch", type=int, default=16)
+    ap.add_argument("--refined", action="store_true",
+                    help="stage 7: use the GAN-refined pool (stage 6) instead of raw renderer output")
+    ap.add_argument("--ratios", default=None,
+                    help="stage 7: comma-separated synthetic ratios for the scaling ladder, "
+                         "e.g. 0.25,0.5,1.0,2.0 - runs the ladder instead of E-A/E-D")
+    ap.add_argument("--target-steps", type=int, default=None,
+                    help="stage 7: cap wall-clock by deriving epochs from a step budget - "
+                         "see train_detector.train docstring; important once the synthetic "
+                         "pool is large (e.g. after --per-class 5000)")
     args = ap.parse_args()
 
     if args.check:

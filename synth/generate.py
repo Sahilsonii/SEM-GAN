@@ -197,6 +197,62 @@ def severity_ladder(rungs=(0.0, 0.25, 0.5, 0.75, 1.0), render_px: int = 512,
     return {"background": bg["file"], "rungs": rows}
 
 
+def generate_balanced(per_class: int = 5000, render_px: int = 512, seed: int = 42,
+                      pool_name: str = "bulk") -> dict:
+    """Generate a pool with a TARGET COUNT per class rather than a total.
+
+    Runs the renderer twice, once per class, forcing pbi2_fraction to 0 or 1 so
+    each pass is single-class, then merges the manifests. This is the "N per
+    class" mode - two separate n_images=N calls rather than one call with a
+    fraction, because a fraction only hits the target in expectation and drifts
+    on small pools.
+    """
+    from synth.renderer import fit_priors
+
+    priors = fit_priors("train")
+    n_pinhole_bg = len(background_pool("train"))
+    if n_pinhole_bg == 0:
+        raise RuntimeError("no defect-free train backgrounds available")
+
+    out_dir = OUT_ROOT / pool_name
+    if out_dir.exists():
+        import shutil
+        shutil.rmtree(out_dir)
+
+    pbi2_summary = generate(n_images=per_class, render_px=render_px, seed=seed,
+                            pool_name=f"{pool_name}_pbi2", pbi2_fraction=1.0,
+                            defects_per_image=max(1, int(round(priors["counts"].mean()))))
+    pinhole_summary = generate(n_images=per_class, render_px=render_px, seed=seed + 1,
+                               pool_name=f"{pool_name}_pinhole", pbi2_fraction=0.0,
+                               defects_per_image=max(1, int(round(priors["counts"].mean()))))
+
+    # merge both single-class pools into one pool directory + manifest
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for sub in ("images", "labels", "masks"):
+        (out_dir / sub).mkdir(exist_ok=True)
+    merged_lines = []
+    for src_name in (f"{pool_name}_pbi2", f"{pool_name}_pinhole"):
+        src = OUT_ROOT / src_name
+        for sub in ("images", "labels", "masks"):
+            for f in (src / sub).glob("*"):
+                (out_dir / sub / f.name).write_bytes(f.read_bytes())
+        merged_lines += (src / "manifest.jsonl").read_text(encoding="utf-8").splitlines()
+    (out_dir / "manifest.jsonl").write_text(
+        "\n".join(merged_lines) + "\n", encoding="utf-8")
+
+    summary = {
+        "pool": pool_name, "per_class": per_class,
+        "pbi2_images": pbi2_summary["images"], "pinhole_images": pinhole_summary["images"],
+        "total_images": pbi2_summary["images"] + pinhole_summary["images"],
+        "total_boxes": pbi2_summary["boxes"] + pinhole_summary["boxes"],
+    }
+    (out_dir / "summary.json").write_text(json.dumps(summary, indent=1), encoding="utf-8")
+    print(f"[synth] balanced pool '{pool_name}': {summary['total_images']} images "
+          f"({pbi2_summary['images']} pbi2 + {pinhole_summary['images']} pinhole), "
+          f"{summary['total_boxes']} boxes")
+    return summary
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=200)
@@ -205,9 +261,15 @@ if __name__ == "__main__":
     ap.add_argument("--render-px", type=int, default=512)
     ap.add_argument("--pbi2-fraction", type=float, default=0.0,
                     help="0 keeps PbI2 out of training pools (it is the open-set unknown)")
+    ap.add_argument("--balanced-per-class", type=int, default=None,
+                    help="generate this many images PER CLASS instead of --n total")
     ap.add_argument("--ladder", action="store_true", help="also build the severity ladder")
     a = ap.parse_args()
-    generate(n_images=a.n, pool_name=a.pool, seed=a.seed, render_px=a.render_px,
-             pbi2_fraction=a.pbi2_fraction)
+    if a.balanced_per_class:
+        generate_balanced(per_class=a.balanced_per_class, render_px=a.render_px,
+                          seed=a.seed, pool_name=a.pool)
+    else:
+        generate(n_images=a.n, pool_name=a.pool, seed=a.seed, render_px=a.render_px,
+                 pbi2_fraction=a.pbi2_fraction)
     if a.ladder:
         severity_ladder(render_px=a.render_px)

@@ -40,7 +40,18 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
           imgsz: int = 640, batch: int = 8, model: str = "yolo11s",
           p2: bool = False, synth_pool: str | None = None,
           synth_ratio: float = 1.0, device: str = "0",
-          patience: int = 30, known_classes: tuple = (0, 1)) -> dict:
+          patience: int = 30, known_classes: tuple = (0, 1),
+          target_steps: int | None = None, min_epochs: int = 20) -> dict:
+    """
+    target_steps caps wall-clock at scale. Convergence tracks gradient STEPS
+    seen, not epochs - at 160 real images, 150 epochs is 3000 steps; at 10160
+    images (5000/class synthetic), 150 epochs is 190,000 steps, ~12 hours on
+    this card for one run alone. When target_steps is set, epochs is derived
+    as target_steps / (n_train/batch), floored at min_epochs, so a run's cost
+    stays roughly constant as the synthetic pool grows instead of scaling
+    linearly with it. Leave target_steps=None for the small real-only regime,
+    where a fixed epoch count is what you want.
+    """
     from ultralytics import YOLO
 
     import yolo_export
@@ -50,6 +61,13 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
                                   known_classes=known_classes)
     export = json.loads((data_yaml.parent / "export_manifest.json")
                         .read_text(encoding="utf-8"))
+
+    if target_steps is not None:
+        n_train = export["counts"]["train"]
+        steps_per_epoch = max(1, n_train // batch)
+        epochs = max(min_epochs, round(target_steps / steps_per_epoch))
+        print(f"[train] step-budget: n_train={n_train} steps/epoch={steps_per_epoch} "
+              f"-> epochs={epochs} (target_steps={target_steps})")
 
     exp_id = f"{regime}_{model}{'-p2' if p2 else ''}_seed{seed}"
     exp_dir = EXPERIMENTS / exp_id
@@ -65,7 +83,7 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
         "exp_id": exp_id, "regime": regime, "seed": seed, "epochs": epochs,
         "imgsz": imgsz, "batch": batch, "model": model, "p2_head": p2,
         "weights": weights, "synth_pool": synth_pool, "synth_ratio": synth_ratio,
-        "device": device, "git_sha": git_sha(),
+        "device": device, "git_sha": git_sha(), "target_steps": target_steps,
         "data_yaml": str(data_yaml),
     }
     (exp_dir / "config.json").write_text(json.dumps(config, indent=1), encoding="utf-8")
@@ -175,8 +193,12 @@ if __name__ == "__main__":
     ap.add_argument("--device", default="0")
     ap.add_argument("--known-classes", default="0,1",
                     help="closed-set class ids; '1' alone = open-set (PbI2 held out)")
+    ap.add_argument("--target-steps", type=int, default=None,
+                    help="cap wall-clock: derive epochs from this / steps-per-epoch")
+    ap.add_argument("--min-epochs", type=int, default=20)
     a = ap.parse_args()
     train(regime=a.regime, seed=a.seed, epochs=a.epochs, imgsz=a.imgsz,
           batch=a.batch, model=a.model, p2=a.p2, synth_pool=a.synth_pool,
           synth_ratio=a.synth_ratio, device=a.device,
-          known_classes=tuple(int(x) for x in a.known_classes.split(",")))
+          known_classes=tuple(int(x) for x in a.known_classes.split(",")),
+          target_steps=a.target_steps, min_epochs=a.min_epochs)

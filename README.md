@@ -22,12 +22,18 @@ second predecessor artifact is [**MicroDefectCV**](https://pypi.org/project/micr
 
 ```bash
 py -3.10 run_full_pipeline.py --check          # environment + what is runnable
-py -3.10 run_full_pipeline.py --stage 0-4      # everything implemented today
+py -3.10 run_full_pipeline.py --stage 0-8      # everything implemented today
 py -3.10 -m pytest tests/ -q                   # the guarantees
 ```
 
 Requires **Python 3.10** (`py -3.10`), which is where CUDA torch lives on this
 machine. The default `python` on PATH is 3.14 with CPU-only torch.
+
+`run_full_pipeline.py` is the single entry point for the whole study — there is
+no separate overnight/bulk runner. Every stage is invokable individually
+(`--stage 5`), as a range (`--stage 0-4`), or all at once (`--stage all`); a
+failed stage's dependency is reported by `--check` rather than crashing
+mid-run.
 
 ## Pipeline stages
 
@@ -36,13 +42,28 @@ machine. The default `python` on PATH is 3.14 with CPU-only torch.
 | 0 | `snapshot` | ready | Vendors the external corpus into `data/raw_snapshot/`, write-once, MD5-manifested |
 | 1 | `dataset` | ready | Curates + strips the FESEM banner + builds leakage-safe grouped splits |
 | 2 | `bins` | ready | Profiles defects against pre-registered scale bins |
-| 3 | `synth` | ready | Renders the label-exact synthetic pool + counterfactual severity ladder |
+| 3 | `synth` | ready | Renders the label-exact synthetic pool + counterfactual severity ladder. `--per-class N` switches to balanced N-per-class bulk generation |
 | 4 | `classical` | ready | MicroDefectCV zero-training baseline, tuned on val |
-| 5 | `refiner` | todo | Conditional GAN texture refiner (spatial ⊕ FFT ablation) |
-| 6 | `quality` | todo | Quality filter + does-domain-gap-predict-utility regression |
-| 7 | `detector` | todo | Detector matrix E-A…E-E |
-| 8 | `uncertain` | todo | Open-set (PbI₂ held out) + calibration |
-| 9 | `final` | todo | **Locked** real test-set evaluation — runs once, at the end |
+| 5 | `refiner` | ready | Conditional GAN texture refiner, FFT-on and FFT-off checkpoints (ablation A1 / H2) |
+| 6 | `quality` | ready | Repaints the renderer pool's geometry with both refiner checkpoints → `data/synthetic/refined{,_nofft}` |
+| 7 | `detector` | ready | E-A/E-D matrix, or `--ratios` for the scaling ladder, or `--refined` to train on the GAN-refined pool. `--target-steps` caps wall-clock at bulk scale |
+| 8 | `uncertain` | ready | Open-set (PbI₂ held out) AUROC/AUPR/FPR@95TPR + calibration (ECE, Brier, risk-coverage) |
+| 9 | `final` | **manual only** | `eval/final_eval.py`, gated behind `--i-am-sure --confirm "I am done tuning"` — reads the locked test split exactly once |
+
+### Bulk scale (5000 images/class)
+
+```bash
+py -3.10 run_full_pipeline.py --stage 3 --per-class 5000        # ~100 min, measured 0.61s/image
+py -3.10 run_full_pipeline.py --stage 5                          # refiner, ~30 min/checkpoint
+py -3.10 run_full_pipeline.py --stage 6                          # apply refiner to the bulk pool
+py -3.10 run_full_pipeline.py --stage 7 --refined --target-steps 6000
+```
+
+`--target-steps` matters here: epoch time scales with training-set size, so a
+fixed epoch count that takes 11 minutes on 160 real images takes **hours** on
+10,160 (5000/class + real). `--target-steps` derives epochs from a step budget
+instead, so a run's cost stays bounded as the synthetic pool grows rather than
+scaling linearly with it (measured: ~0.229 s/step on this GPU).
 
 ## What the corpus actually is
 

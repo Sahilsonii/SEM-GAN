@@ -1,0 +1,39 @@
+{
+ "exp_id": "real_only_yolo11s_seed0",
+ "regime": "real_only",
+ "seed": 0,
+ "epochs": 150,
+ "imgsz": 640,
+ "batch": 8,
+ "model": "yolo11s",
+ "p2_head": false,
+ "weights": "yolo11s.pt",
+ "synth_pool": null,
+ "synth_ratio": 1.0,
+ "device": "0",
+ "git_sha": "ea46674",
+ "data_yaml": "C:\\Users\\Sahil\\Downloads\\SEM_GAN_Dissertation\\data\\yolo\\real_only\\data.yaml",
+ "train_seconds": 686.6,
+ "mAP50": 0.0792,
+ "mAP50_95": 0.0352,
+ "precision": 0.1388,
+ "recall": 0.1137,
+ "params_M": 9.41,
+ "per_class": {
+  "pbi2": {
+   "AP50": 0.0,
+   "AP50_95": 0.0,
+   "train_images": 5,
+   "interpretable": false
+  },
+  "pinhole": {
+   "AP50": 0.1584,
+   "AP50_95": 0.0704,
+   "train_images": 45,
+   "interpretable": true
+  }
+ },
+ "low_support_classes": {
+  "pbi2": 5
+ }
+}
