@@ -41,7 +41,8 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
           p2: bool = False, synth_pool: str | None = None,
           synth_ratio: float = 1.0, device: str = "0",
           patience: int = 30, known_classes: tuple = (0, 1),
-          target_steps: int | None = None, min_epochs: int = 20) -> dict:
+          target_steps: int | None = None, min_epochs: int = 20,
+          resume: bool = False) -> dict:
     """
     target_steps caps wall-clock at scale. Convergence tracks gradient STEPS
     seen, not epochs - at 160 real images, 150 epochs is 3000 steps; at 10160
@@ -51,6 +52,10 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
     stays roughly constant as the synthetic pool grows instead of scaling
     linearly with it. Leave target_steps=None for the small real-only regime,
     where a fixed epoch count is what you want.
+
+    resume=True continues from experiments/<exp_id>/run/weights/last.pt
+    (Ultralytics checkpoint). Finished runs with metrics.json are returned
+    as-is so a pipeline re-run skips completed regimes.
     """
     from ultralytics import YOLO
 
@@ -71,53 +76,86 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
 
     exp_id = f"{regime}_{model}{'-p2' if p2 else ''}_seed{seed}"
     exp_dir = EXPERIMENTS / exp_id
-    if exp_dir.exists():
-        shutil.rmtree(exp_dir)
-    exp_dir.mkdir(parents=True, exist_ok=True)
+    last_pt = exp_dir / "run" / "weights" / "last.pt"
+    metrics_path = exp_dir / "metrics.json"
 
-    # yolo11s.pt carries COCO-pretrained weights; the -p2 variant has no
-    # published checkpoint, so it trains from the YAML topology instead.
-    weights = f"{model}-p2.yaml" if p2 else f"{model}.pt"
+    if resume and metrics_path.exists():
+        result = json.loads(metrics_path.read_text(encoding="utf-8"))
+        print(f"[train] {exp_id}: already finished -> skip "
+              f"(mAP50={result.get('mAP50', '?')})")
+        return result
 
-    config = {
-        "exp_id": exp_id, "regime": regime, "seed": seed, "epochs": epochs,
-        "imgsz": imgsz, "batch": batch, "model": model, "p2_head": p2,
-        "weights": weights, "synth_pool": synth_pool, "synth_ratio": synth_ratio,
-        "device": device, "git_sha": git_sha(), "target_steps": target_steps,
-        "data_yaml": str(data_yaml),
-    }
-    (exp_dir / "config.json").write_text(json.dumps(config, indent=1), encoding="utf-8")
+    if resume:
+        if not last_pt.exists():
+            raise FileNotFoundError(
+                f"resume requested but no checkpoint at {last_pt}")
+        # keep exp_dir; Ultralytics resume restores optimizer + epoch from last.pt
+        cfg_path = exp_dir / "config.json"
+        config = (json.loads(cfg_path.read_text(encoding="utf-8"))
+                  if cfg_path.exists() else {
+                      "exp_id": exp_id, "regime": regime, "seed": seed,
+                      "epochs": epochs, "imgsz": imgsz, "model": model,
+                      "p2_head": p2, "synth_pool": synth_pool,
+                      "synth_ratio": synth_ratio, "device": device,
+                      "git_sha": git_sha(), "target_steps": target_steps,
+                      "data_yaml": str(data_yaml),
+                  })
+        config["resumed"] = True
+        config["batch"] = batch  # allow smaller batch after OOM
+        cfg_path.write_text(json.dumps(config, indent=1), encoding="utf-8")
+        print(f"[train] {exp_id}  RESUME from {last_pt}  batch={batch}")
+        t0 = time.time()
+        net = YOLO(str(last_pt))
+        # batch/device overrides help recover from CUDA OOM without a full restart
+        net.train(resume=True, batch=batch, device=device)
+    else:
+        if exp_dir.exists():
+            shutil.rmtree(exp_dir)
+        exp_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"[train] {exp_id}  weights={weights}  imgsz={imgsz} batch={batch} "
-          f"epochs={epochs}")
+        # yolo11s.pt carries COCO-pretrained weights; the -p2 variant has no
+        # published checkpoint, so it trains from the YAML topology instead.
+        weights = f"{model}-p2.yaml" if p2 else f"{model}.pt"
 
-    t0 = time.time()
-    net = YOLO(weights)
-    net.train(
-        data=str(data_yaml),
-        epochs=epochs,
-        imgsz=imgsz,
-        batch=batch,
-        seed=seed,
-        device=device,
-        project=str(exp_dir),
-        name="run",
-        exist_ok=True,
-        patience=patience,
-        amp=True,               # 4 GB card - mixed precision is not optional
-        workers=2,
-        val=True,
-        plots=False,
-        # small-object friendly augmentation; heavy scale jitter destroys 6 px defects
-        scale=0.3,
-        mosaic=0.5,
-        close_mosaic=10,
-        fliplr=0.5,
-        flipud=0.5,
-        degrees=10.0,
-        translate=0.1,
-        erasing=0.0,
-    )
+        config = {
+            "exp_id": exp_id, "regime": regime, "seed": seed, "epochs": epochs,
+            "imgsz": imgsz, "batch": batch, "model": model, "p2_head": p2,
+            "weights": weights, "synth_pool": synth_pool, "synth_ratio": synth_ratio,
+            "device": device, "git_sha": git_sha(), "target_steps": target_steps,
+            "data_yaml": str(data_yaml),
+        }
+        (exp_dir / "config.json").write_text(json.dumps(config, indent=1), encoding="utf-8")
+
+        print(f"[train] {exp_id}  weights={weights}  imgsz={imgsz} batch={batch} "
+              f"epochs={epochs}")
+
+        t0 = time.time()
+        net = YOLO(weights)
+        net.train(
+            data=str(data_yaml),
+            epochs=epochs,
+            imgsz=imgsz,
+            batch=batch,
+            seed=seed,
+            device=device,
+            project=str(exp_dir),
+            name="run",
+            exist_ok=True,
+            patience=patience,
+            amp=True,               # 4 GB card - mixed precision is not optional
+            workers=2,
+            val=True,
+            plots=False,
+            # small-object friendly augmentation; heavy scale jitter destroys 6 px defects
+            scale=0.3,
+            mosaic=0.5,
+            close_mosaic=10,
+            fliplr=0.5,
+            flipud=0.5,
+            degrees=10.0,
+            translate=0.1,
+            erasing=0.0,
+        )
     elapsed = time.time() - t0
 
     metrics = net.val(data=str(data_yaml), split="val", imgsz=imgsz,
@@ -196,9 +234,13 @@ if __name__ == "__main__":
     ap.add_argument("--target-steps", type=int, default=None,
                     help="cap wall-clock: derive epochs from this / steps-per-epoch")
     ap.add_argument("--min-epochs", type=int, default=20)
+    ap.add_argument("--resume", action="store_true",
+                    help="continue from experiments/<exp_id>/run/weights/last.pt "
+                         "(skips wipe; finished runs with metrics.json are skipped)")
     a = ap.parse_args()
     train(regime=a.regime, seed=a.seed, epochs=a.epochs, imgsz=a.imgsz,
           batch=a.batch, model=a.model, p2=a.p2, synth_pool=a.synth_pool,
           synth_ratio=a.synth_ratio, device=a.device,
           known_classes=tuple(int(x) for x in a.known_classes.split(",")),
-          target_steps=a.target_steps, min_epochs=a.min_epochs)
+          target_steps=a.target_steps, min_epochs=a.min_epochs,
+          resume=a.resume)

@@ -157,15 +157,16 @@ def stage7_detector(args):
             rows.append(train(regime=f"scale_{int(ratio*100):03d}", seed=args.seed,
                               epochs=args.epochs, imgsz=args.imgsz, batch=args.batch,
                               p2=args.p2, synth_pool=pool, synth_ratio=ratio,
-                              target_steps=args.target_steps))
+                              target_steps=args.target_steps, resume=args.resume))
     else:
         rows = [train(regime="real_only", seed=args.seed, epochs=args.epochs,
                       imgsz=args.imgsz, batch=args.batch, p2=args.p2,
-                      target_steps=args.target_steps)]
+                      target_steps=args.target_steps, resume=args.resume)]
         if not args.skip_synth_regime:
             rows.append(train(regime=f"real_plus_{pool}", seed=args.seed,
                               epochs=args.epochs, imgsz=args.imgsz, batch=args.batch,
-                              p2=args.p2, synth_pool=pool, target_steps=args.target_steps))
+                              p2=args.p2, synth_pool=pool, target_steps=args.target_steps,
+                              resume=args.resume))
     print()
     print("  regime               mAP50    mAP50-95   P       R")
     for r in rows:
@@ -357,6 +358,9 @@ def main() -> int:
                     help="stage 7: cap wall-clock by deriving epochs from a step budget - "
                          "see train_detector.train docstring; important once the synthetic "
                          "pool is large (e.g. after --per-class 5000)")
+    ap.add_argument("--resume", action="store_true",
+                    help="stage 7: resume from last.pt instead of wiping experiments/; "
+                         "finished regimes (metrics.json) are skipped")
     args = ap.parse_args()
 
     if args.check:
