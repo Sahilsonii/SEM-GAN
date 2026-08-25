@@ -13,6 +13,7 @@ be reproduced from the directory alone.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import shutil
 import subprocess
@@ -36,6 +37,49 @@ def git_sha() -> str:
         return "unknown"
 
 
+class _Tee:
+    """Mirror writes to console + log file. isatty follows the real console."""
+
+    def __init__(self, console, log_fh):
+        self.console = console
+        self.log_fh = log_fh
+
+    def write(self, data):
+        self.console.write(data)
+        self.console.flush()
+        self.log_fh.write(data)
+        self.log_fh.flush()
+
+    def flush(self):
+        self.console.flush()
+        self.log_fh.flush()
+
+    def isatty(self):
+        return self.console.isatty()
+
+    def fileno(self):
+        return self.console.fileno()
+
+
+@contextlib.contextmanager
+def _capture_console(log_path: Path, append: bool = False):
+    """Duplicate stdout/stderr to experiments/<exp_id>/console.log."""
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    mode = "a" if append else "w"
+    fh = open(log_path, mode, encoding="utf-8", errors="replace")
+    fh.write(f"\n===== {time.strftime('%Y-%m-%d %H:%M:%S')} =====\n")
+    fh.flush()
+    old_out, old_err = sys.stdout, sys.stderr
+    sys.stdout = _Tee(old_out, fh)
+    sys.stderr = _Tee(old_err, fh)
+    try:
+        yield log_path
+    finally:
+        sys.stdout = old_out
+        sys.stderr = old_err
+        fh.close()
+
+
 def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
           imgsz: int = 640, batch: int = 8, model: str = "yolo11s",
           p2: bool = False, synth_pool: str | None = None,
@@ -56,6 +100,9 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
     resume=True continues from experiments/<exp_id>/run/weights/last.pt
     (Ultralytics checkpoint). Finished runs with metrics.json are returned
     as-is so a pipeline re-run skips completed regimes.
+
+    Console stdout/stderr is mirrored to experiments/<exp_id>/console.log
+    for the duration of training (appended on --resume).
     """
     from ultralytics import YOLO
 
@@ -78,6 +125,7 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
     exp_dir = EXPERIMENTS / exp_id
     last_pt = exp_dir / "run" / "weights" / "last.pt"
     metrics_path = exp_dir / "metrics.json"
+    console_log = exp_dir / "console.log"
 
     if resume and metrics_path.exists():
         result = json.loads(metrics_path.read_text(encoding="utf-8"))
@@ -85,122 +133,131 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
               f"(mAP50={result.get('mAP50', '?')})")
         return result
 
-    if resume:
-        if not last_pt.exists():
-            raise FileNotFoundError(
-                f"resume requested but no checkpoint at {last_pt}")
-        # keep exp_dir; Ultralytics resume restores optimizer + epoch from last.pt
-        cfg_path = exp_dir / "config.json"
-        config = (json.loads(cfg_path.read_text(encoding="utf-8"))
-                  if cfg_path.exists() else {
-                      "exp_id": exp_id, "regime": regime, "seed": seed,
-                      "epochs": epochs, "imgsz": imgsz, "model": model,
-                      "p2_head": p2, "synth_pool": synth_pool,
-                      "synth_ratio": synth_ratio, "device": device,
-                      "git_sha": git_sha(), "target_steps": target_steps,
-                      "data_yaml": str(data_yaml),
-                  })
-        config["resumed"] = True
-        config["batch"] = batch  # allow smaller batch after OOM
-        cfg_path.write_text(json.dumps(config, indent=1), encoding="utf-8")
-        print(f"[train] {exp_id}  RESUME from {last_pt}  batch={batch}")
-        t0 = time.time()
-        net = YOLO(str(last_pt))
-        # batch/device overrides help recover from CUDA OOM without a full restart
-        net.train(resume=True, batch=batch, device=device)
-    else:
+    do_resume = resume and last_pt.exists()
+    if not do_resume:
+        if resume:
+            print(f"[train] {exp_id}: --resume set but no last.pt -> fresh start")
         if exp_dir.exists():
             shutil.rmtree(exp_dir)
         exp_dir.mkdir(parents=True, exist_ok=True)
 
-        # yolo11s.pt carries COCO-pretrained weights; the -p2 variant has no
-        # published checkpoint, so it trains from the YAML topology instead.
-        weights = f"{model}-p2.yaml" if p2 else f"{model}.pt"
-
-        config = {
-            "exp_id": exp_id, "regime": regime, "seed": seed, "epochs": epochs,
-            "imgsz": imgsz, "batch": batch, "model": model, "p2_head": p2,
-            "weights": weights, "synth_pool": synth_pool, "synth_ratio": synth_ratio,
-            "device": device, "git_sha": git_sha(), "target_steps": target_steps,
-            "data_yaml": str(data_yaml),
-        }
-        (exp_dir / "config.json").write_text(json.dumps(config, indent=1), encoding="utf-8")
-
-        print(f"[train] {exp_id}  weights={weights}  imgsz={imgsz} batch={batch} "
-              f"epochs={epochs}")
-
-        t0 = time.time()
-        net = YOLO(weights)
-        net.train(
-            data=str(data_yaml),
-            epochs=epochs,
-            imgsz=imgsz,
-            batch=batch,
-            seed=seed,
-            device=device,
-            project=str(exp_dir),
-            name="run",
-            exist_ok=True,
-            patience=patience,
-            amp=True,               # 4 GB card - mixed precision is not optional
-            workers=2,
-            val=True,
-            plots=False,
-            # small-object friendly augmentation; heavy scale jitter destroys 6 px defects
-            scale=0.3,
-            mosaic=0.5,
-            close_mosaic=10,
-            fliplr=0.5,
-            flipud=0.5,
-            degrees=10.0,
-            translate=0.1,
-            erasing=0.0,
-        )
-    elapsed = time.time() - t0
-
-    metrics = net.val(data=str(data_yaml), split="val", imgsz=imgsz,
-                      batch=batch, device=device, plots=False)
-    box = metrics.box
-    result = {
-        **config,
-        "train_seconds": round(elapsed, 1),
-        "mAP50": round(float(box.map50), 4),
-        "mAP50_95": round(float(box.map), 4),
-        "precision": round(float(box.mp), 4),
-        "recall": round(float(box.mr), 4),
-        "params_M": round(sum(p.numel() for p in net.model.parameters()) / 1e6, 2),
-    }
-
-    # Per-class AP, carried alongside the training support that produced it.
-    # A class with 5 training images will score near zero; recording the two
-    # together is what stops that number being read as a property of the method.
-    class_names = export["class_names"]
-    support = export["train_images_per_class"]
-    per_class = {}
-    for i, cname in enumerate(class_names):
+    with _capture_console(console_log, append=do_resume):
         try:
-            ap50, ap = float(box.ap50[i]), float(box.ap[i])
-        except (IndexError, TypeError):
-            ap50 = ap = 0.0
-        per_class[cname] = {
-            "AP50": round(ap50, 4),
-            "AP50_95": round(ap, 4),
-            "train_images": support.get(cname, 0),
-            "interpretable": support.get(cname, 0) >= 10,
-        }
-    result["per_class"] = per_class
-    result["low_support_classes"] = export.get("low_support_classes", {})
-    (exp_dir / "metrics.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
+            print(f"[train] console log -> {console_log}")
+            if do_resume:
+                # keep exp_dir; Ultralytics resume restores optimizer + epoch from last.pt
+                cfg_path = exp_dir / "config.json"
+                config = (json.loads(cfg_path.read_text(encoding="utf-8"))
+                          if cfg_path.exists() else {
+                              "exp_id": exp_id, "regime": regime, "seed": seed,
+                              "epochs": epochs, "imgsz": imgsz, "model": model,
+                              "p2_head": p2, "synth_pool": synth_pool,
+                              "synth_ratio": synth_ratio, "device": device,
+                              "git_sha": git_sha(), "target_steps": target_steps,
+                              "data_yaml": str(data_yaml),
+                          })
+                config["resumed"] = True
+                config["batch"] = batch  # allow smaller batch after OOM
+                cfg_path.write_text(json.dumps(config, indent=1), encoding="utf-8")
+                print(f"[train] {exp_id}  RESUME from {last_pt}  batch={batch}")
+                t0 = time.time()
+                net = YOLO(str(last_pt))
+                # batch/device overrides help recover from CUDA OOM without a full restart
+                net.train(resume=True, batch=batch, device=device)
+            else:
+                # yolo11s.pt carries COCO-pretrained weights; the -p2 variant has no
+                # published checkpoint, so it trains from the YAML topology instead.
+                weights = f"{model}-p2.yaml" if p2 else f"{model}.pt"
 
-    _append_master(result)
-    print(f"[train] {exp_id}: mAP50={result['mAP50']:.4f} "
-          f"mAP50-95={result['mAP50_95']:.4f} P={result['precision']:.3f} "
-          f"R={result['recall']:.3f}  ({elapsed/60:.1f} min)")
-    for cname, v in per_class.items():
-        flag = "" if v["interpretable"] else "   <- NOT INTERPRETABLE (low support)"
-        print(f"         {cname:<10} AP50={v['AP50']:.4f} AP50-95={v['AP50_95']:.4f} "
-              f"(train imgs={v['train_images']}){flag}")
-    return result
+                config = {
+                    "exp_id": exp_id, "regime": regime, "seed": seed, "epochs": epochs,
+                    "imgsz": imgsz, "batch": batch, "model": model, "p2_head": p2,
+                    "weights": weights, "synth_pool": synth_pool, "synth_ratio": synth_ratio,
+                    "device": device, "git_sha": git_sha(), "target_steps": target_steps,
+                    "data_yaml": str(data_yaml),
+                }
+                (exp_dir / "config.json").write_text(json.dumps(config, indent=1), encoding="utf-8")
+
+                print(f"[train] {exp_id}  weights={weights}  imgsz={imgsz} batch={batch} "
+                      f"epochs={epochs}")
+
+                t0 = time.time()
+                net = YOLO(weights)
+                net.train(
+                    data=str(data_yaml),
+                    epochs=epochs,
+                    imgsz=imgsz,
+                    batch=batch,
+                    seed=seed,
+                    device=device,
+                    project=str(exp_dir),
+                    name="run",
+                    exist_ok=True,
+                    patience=patience,
+                    amp=True,               # 4 GB card - mixed precision is not optional
+                    workers=2,
+                    val=True,
+                    plots=False,
+                    # small-object friendly augmentation; heavy scale jitter destroys 6 px defects
+                    scale=0.3,
+                    mosaic=0.5,
+                    close_mosaic=10,
+                    fliplr=0.5,
+                    flipud=0.5,
+                    degrees=10.0,
+                    translate=0.1,
+                    erasing=0.0,
+                )
+            elapsed = time.time() - t0
+
+            metrics = net.val(data=str(data_yaml), split="val", imgsz=imgsz,
+                              batch=batch, device=device, plots=False)
+            box = metrics.box
+            result = {
+                **config,
+                "train_seconds": round(elapsed, 1),
+                "mAP50": round(float(box.map50), 4),
+                "mAP50_95": round(float(box.map), 4),
+                "precision": round(float(box.mp), 4),
+                "recall": round(float(box.mr), 4),
+                "params_M": round(sum(p.numel() for p in net.model.parameters()) / 1e6, 2),
+            }
+
+            # Per-class AP, carried alongside the training support that produced it.
+            # A class with 5 training images will score near zero; recording the two
+            # together is what stops that number being read as a property of the method.
+            class_names = export["class_names"]
+            support = export["train_images_per_class"]
+            per_class = {}
+            for i, cname in enumerate(class_names):
+                try:
+                    ap50, ap = float(box.ap50[i]), float(box.ap[i])
+                except (IndexError, TypeError):
+                    ap50 = ap = 0.0
+                per_class[cname] = {
+                    "AP50": round(ap50, 4),
+                    "AP50_95": round(ap, 4),
+                    "train_images": support.get(cname, 0),
+                    "interpretable": support.get(cname, 0) >= 10,
+                }
+            result["per_class"] = per_class
+            result["low_support_classes"] = export.get("low_support_classes", {})
+            (exp_dir / "metrics.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
+
+            _append_master(result)
+            print(f"[train] {exp_id}: mAP50={result['mAP50']:.4f} "
+                  f"mAP50-95={result['mAP50_95']:.4f} P={result['precision']:.3f} "
+                  f"R={result['recall']:.3f}  ({elapsed/60:.1f} min)")
+            for cname, v in per_class.items():
+                flag = "" if v["interpretable"] else "   <- NOT INTERPRETABLE (low support)"
+                print(f"         {cname:<10} AP50={v['AP50']:.4f} AP50-95={v['AP50_95']:.4f} "
+                      f"(train imgs={v['train_images']}){flag}")
+            return result
+        except Exception:
+            # print while still teed so OOM / crashes land in console.log
+            import traceback
+            traceback.print_exc()
+            raise
 
 
 def _append_master(row: dict) -> None:
