@@ -95,9 +95,14 @@ def generate(n_images: int = 200, render_px: int = 512, seed: int = 42,
                  else int(defects_per_image))
             k = max(1, min(k, 60))
             # canvases come from data/curated, where the FESEM banner is already
-            # gone - no placement restriction is needed here any more
+            # gone - no placement restriction is needed here any more. bg_gray
+            # is passed so placement is biased toward this REAL background's
+            # own grain boundaries, per the literature cited in renderer.py
+            # (both defect classes are reported as grain-boundary phenomena).
+            bg_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             params = sample_params(priors, k, rng, render_px=render_px,
-                                   severity=severity, pbi2_fraction=pbi2_fraction)
+                                   severity=severity, pbi2_fraction=pbi2_fraction,
+                                   bg_gray=bg_gray)
             res = render(img, params, seed=int(rng.integers(0, 2**31 - 1)))
             if not res["boxes"]:
                 continue
@@ -153,7 +158,8 @@ def severity_ladder(rungs=(0.0, 0.25, 0.5, 0.75, 1.0), render_px: int = 512,
 
     # identical layout on every rung - only severity changes
     params = sample_params(priors, n_defects, np.random.default_rng(seed),
-                           render_px=render_px)
+                           render_px=render_px,
+                           bg_gray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
     for p in params:
         p.size_px = max(p.size_px, 12.0)
 

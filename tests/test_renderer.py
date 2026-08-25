@@ -15,8 +15,8 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from synth.renderer import (PBI2, PINHOLE, DefectParams, fit_priors, render,
-                            sample_params)
+from synth.renderer import (PBI2, PINHOLE, DefectParams, fit_priors,
+                            grain_boundary_affinity, render, sample_params)
 
 
 def _canvas(size=512, mean=118, noise=9, seed=0):
