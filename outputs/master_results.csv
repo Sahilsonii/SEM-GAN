@@ -1,2 +1,0 @@
-exp_id,regime,seed,model,p2_head,synth_pool,synth_ratio,epochs,imgsz,batch,mAP50,mAP50_95,precision,recall,params_M,train_seconds,git_sha
-real_only_yolo11s_seed0,real_only,0,yolo11s,False,,1.0,150,640,8,0.0792,0.0352,0.1388,0.1137,9.41,686.6,ea46674

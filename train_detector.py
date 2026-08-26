@@ -96,7 +96,7 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
           p2: bool = False, synth_pool: str | None = None,
           synth_ratio: float = 1.0, device: str = "0",
           patience: int = 30, known_classes: tuple = (0, 1),
-          target_steps: int | None = None, min_epochs: int = 20,
+          target_steps: int | None = None, min_epochs: int = 3,
           resume: bool = False) -> dict:
     """
     target_steps caps wall-clock at scale. Convergence tracks gradient STEPS
@@ -129,8 +129,20 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
         n_train = export["counts"]["train"]
         steps_per_epoch = max(1, n_train // batch)
         epochs = max(min_epochs, round(target_steps / steps_per_epoch))
+        actual_steps = epochs * steps_per_epoch
         print(f"[train] step-budget: n_train={n_train} steps/epoch={steps_per_epoch} "
-              f"-> epochs={epochs} (target_steps={target_steps})")
+              f"-> epochs={epochs} (target_steps={target_steps}, "
+              f"actual_steps={actual_steps})")
+        # A min_epochs floor silently breaks the whole point of a step budget:
+        # with 160 real vs 10,160 real+synthetic images the two regimes differ
+        # 63x in steps/epoch, so a floor of 20 gave 6,000 vs 25,400 steps - a
+        # 4.2x mismatch dressed up as a matched comparison. Say so loudly
+        # rather than letting the number look controlled when it is not.
+        if actual_steps > target_steps * 1.25:
+            print(f"[train] WARNING: min_epochs={min_epochs} floor raised this run to "
+                  f"{actual_steps} steps, {actual_steps/target_steps:.1f}x the "
+                  f"{target_steps} budget. It is NOT step-matched against a regime "
+                  f"that hit the budget. Lower --min-epochs to compare fairly.")
 
     exp_id = f"{regime}_{model}{'-p2' if p2 else ''}_seed{seed}"
     exp_dir = EXPERIMENTS / exp_id
@@ -204,6 +216,16 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
 
                 t0 = time.time()
                 net = YOLO(weights)
+                # Epoch-based schedules must scale with the epoch count, or a
+                # step-matched run on a large pool is mostly warmup: at 10,160
+                # images a 6,000-step budget is ~5 epochs, and Ultralytics'
+                # default warmup_epochs=3 would then be 60% of training while
+                # close_mosaic=10 exceeds the run entirely.
+                warmup = min(3.0, max(1.0, epochs / 10.0))
+                close_mosaic = min(10, max(0, epochs // 5))
+                if epochs < 20:
+                    print(f"[train] short run ({epochs} ep): warmup={warmup:.1f} "
+                          f"close_mosaic={close_mosaic}")
                 net.train(
                     data=str(data_yaml),
                     epochs=epochs,
@@ -219,10 +241,11 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
                     workers=2,
                     val=True,
                     plots=False,
+                    warmup_epochs=warmup,
                     # small-object friendly augmentation; heavy scale jitter destroys 6 px defects
                     scale=0.3,
                     mosaic=0.5,
-                    close_mosaic=10,
+                    close_mosaic=close_mosaic,
                     fliplr=0.5,
                     flipud=0.5,
                     degrees=10.0,
@@ -311,7 +334,7 @@ if __name__ == "__main__":
                     help="closed-set class ids; '1' alone = open-set (PbI2 held out)")
     ap.add_argument("--target-steps", type=int, default=None,
                     help="cap wall-clock: derive epochs from this / steps-per-epoch")
-    ap.add_argument("--min-epochs", type=int, default=20)
+    ap.add_argument("--min-epochs", type=int, default=3)
     ap.add_argument("--resume", action="store_true",
                     help="continue from experiments/<exp_id>/run/weights/last.pt "
                          "(skips wipe; finished runs with metrics.json are skipped)")
