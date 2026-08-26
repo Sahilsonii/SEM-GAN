@@ -37,6 +37,17 @@ def git_sha() -> str:
         return "unknown"
 
 
+def _last_completed_epoch(results_csv: Path) -> int:
+    if not results_csv.exists():
+        return 0
+    try:
+        lines = [ln for ln in results_csv.read_text(encoding="utf-8").splitlines()
+                 if ln.strip() and not ln.startswith("epoch")]
+        return int(lines[-1].split(",", 1)[0]) if lines else 0
+    except Exception:
+        return 0
+
+
 class _Tee:
     """Mirror writes to console + log file. isatty follows the real console."""
 
@@ -159,10 +170,20 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
                 config["resumed"] = True
                 config["batch"] = batch  # allow smaller batch after OOM
                 cfg_path.write_text(json.dumps(config, indent=1), encoding="utf-8")
-                print(f"[train] {exp_id}  RESUME from {last_pt}  batch={batch}")
+                done_epochs = _last_completed_epoch(exp_dir / "run" / "results.csv")
+                print(f"[train] {exp_id}  RESUME from {last_pt}  "
+                      f"after epoch {done_epochs}  batch={batch}")
                 t0 = time.time()
+                # 4 GB cards die during Ultralytics' AMP self-check on resume:
+                # last.pt is already on GPU, then check_amp loads yolo11n on top.
+                # Original run already validated AMP; skip the re-check.
+                import torch
+                import ultralytics.engine.trainer as _ul_trainer
+                import ultralytics.utils.checks as _ul_checks
+                torch.cuda.empty_cache()
+                _ul_checks.check_amp = lambda model: True
+                _ul_trainer.check_amp = lambda model: True
                 net = YOLO(str(last_pt))
-                # batch/device overrides help recover from CUDA OOM without a full restart
                 net.train(resume=True, batch=batch, device=device)
             else:
                 # yolo11s.pt carries COCO-pretrained weights; the -p2 variant has no

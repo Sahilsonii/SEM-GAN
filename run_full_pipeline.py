@@ -4,6 +4,7 @@ run_full_pipeline.py - single entry point for the whole study.
 
     py -3.10 run_full_pipeline.py --check      # environment + what is runnable
     py -3.10 run_full_pipeline.py --stage all  # everything currently implemented
+    py -3.10 run_full_pipeline.py --stage all --resume  # skip finished stages, continue
     py -3.10 run_full_pipeline.py --stage 2    # one stage
 
 Stages run in dependency order and each refuses to start unless its inputs
@@ -189,7 +190,7 @@ def stage8_uncertainty(args):
     if not ckpt:
         from train_detector import train
         r = train(regime="openset_probe", seed=args.seed, epochs=args.epochs,
-                  batch=args.batch, known_classes=(1,))
+                  batch=args.batch, known_classes=(1,), resume=args.resume)
         ckpt = str(EXPERIMENTS / r["exp_id"] / "run" / "weights" / "best.pt")
         print(f"[stage8] trained pinhole-only checkpoint -> {ckpt}")
 
@@ -259,6 +260,109 @@ IMPLEMENTED = {0, 1, 2, 3, 4, 5, 6, 7, 8}
 # design and must be run by hand via eval/final_eval.py with its confirmation gate
 BY_KEY = {s.key: s for s in STAGES}
 BY_NUM = {str(s.num): s for s in STAGES}
+CKPT = ROOT / "checkpoints"
+SYNTH = ROOT / "data" / "synthetic"
+RAW_SNAPSHOT = ROOT / "data" / "raw_snapshot"
+CURATED = ROOT / "data" / "curated"
+SPLITS = ROOT / "data" / "splits"
+
+
+def _detector_exp_ids(args) -> list[str]:
+    """Experiment dirs stage 7 must finish for the current CLI flags."""
+    pool = "refined" if args.refined else "controlled"
+    suffix = "-p2" if args.p2 else ""
+    tail = f"_yolo11s{suffix}_seed{args.seed}"
+    if args.ratios:
+        return [f"scale_{int(float(r) * 100):03d}{tail}"
+                for r in args.ratios.split(",")]
+    ids = [f"real_only{tail}"]
+    if not args.skip_synth_regime:
+        ids.append(f"real_plus_{pool}{tail}")
+    return ids
+
+
+def stage_is_done(s: Stage, args) -> tuple[bool, str]:
+    """True when this stage's expected outputs for *args* already exist."""
+    if s.num == 0:
+        if (RAW_SNAPSHOT / "SNAPSHOT.json").exists():
+            return True, "data/raw_snapshot/SNAPSHOT.json"
+        return False, "snapshot manifest missing"
+
+    if s.num == 1:
+        need = (CURATED / "curated.json", SPLITS / "splits_manifest.json",
+                SPLITS / "train.json", SPLITS / "val.json", SPLITS / "test.json")
+        if not all(p.exists() for p in need):
+            return False, "curated.json or split files missing"
+        manifest = json.loads((SPLITS / "splits_manifest.json")
+                              .read_text(encoding="utf-8"))
+        if manifest.get("seed") != args.seed:
+            return False, f"splits seed={manifest.get('seed')} != --seed {args.seed}"
+        return True, f"splits (seed={args.seed})"
+
+    if s.num == 2:
+        p = OUT / "defect_scale_profile.json"
+        return (True, str(p.relative_to(ROOT))) if p.exists() else (False, "defect_scale_profile.json missing")
+
+    if s.num == 3:
+        ladder = SYNTH / "counterfactual" / "ladder.json"
+        summary_path = SYNTH / "controlled" / "summary.json"
+        if not ladder.exists():
+            return False, "counterfactual/ladder.json missing"
+        if not summary_path.exists():
+            return False, "controlled/summary.json missing"
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        if args.per_class:
+            want = args.per_class * 2
+            got = summary.get("total_images", 0)
+            if got < want:
+                return False, f"controlled pool {got}/{want} images (--per-class {args.per_class})"
+        else:
+            want = args.n_synth
+            got = summary.get("images") or summary.get("total_images", 0)
+            if got < want:
+                return False, f"controlled pool {got}/{want} images (--n-synth {want})"
+        return True, f"controlled ({got} imgs) + counterfactual ladder"
+
+    if s.num == 4:
+        if args.sweep:
+            p = OUT / "microdefectcv_sweep_val.json"
+        else:
+            p = OUT / "microdefectcv_baseline_val.json"
+        return ((True, str(p.relative_to(ROOT))) if p.exists()
+                else (False, f"{p.name} missing"))
+
+    if s.num == 5:
+        fft = CKPT / "refiner_fft_best.pth"
+        nofft = CKPT / "refiner_nofft_best.pth"
+        if fft.exists() and nofft.exists():
+            return True, "refiner_fft_best.pth + refiner_nofft_best.pth"
+        missing = [p.name for p in (fft, nofft) if not p.exists()]
+        return False, ", ".join(missing) + " missing"
+
+    if s.num == 6:
+        refined = SYNTH / "refined" / "summary.json"
+        nofft = SYNTH / "refined_nofft" / "summary.json"
+        if refined.exists() and nofft.exists():
+            return True, "refined + refined_nofft pools"
+        missing = [p.parent.name for p in (refined, nofft) if not p.exists()]
+        return False, f"summary.json missing in {', '.join(missing)}"
+
+    if s.num == 7:
+        missing = [e for e in _detector_exp_ids(args)
+                   if not (EXPERIMENTS / e / "metrics.json").exists()]
+        if missing:
+            return False, "incomplete: " + ", ".join(missing)
+        return True, f"detector matrix ({len(_detector_exp_ids(args))} experiments)"
+
+    if s.num == 8:
+        need = OUT / "open_set_val.json", OUT / "calibration_val.json"
+        if all(p.exists() for p in need):
+            return True, "open_set_val.json + calibration_val.json"
+        missing = [p.name for p in need if not p.exists()]
+        return False, ", ".join(missing) + " missing"
+
+    # stage 9 is manual-only; never auto-skip via --resume
+    return False, "not auto-runnable"
 
 
 # --------------------------------------------------------------------------
@@ -332,7 +436,9 @@ def main() -> int:
                          "instead of --n-synth total")
     ap.add_argument("--render-px", type=int, default=512)
     ap.add_argument("--keep-3class", action="store_true")
-    ap.add_argument("--force", action="store_true", help="re-copy the snapshot")
+    ap.add_argument("--force", action="store_true",
+                    help="re-run requested stages even if --resume would skip them; "
+                         "also re-copy the snapshot (stage 0)")
     ap.add_argument("--skip-tests", action="store_true")
     ap.add_argument("--sweep", action="store_true",
                     help="stage 4: hyperparameter search for MicroDefectCV on val")
@@ -359,8 +465,9 @@ def main() -> int:
                          "see train_detector.train docstring; important once the synthetic "
                          "pool is large (e.g. after --per-class 5000)")
     ap.add_argument("--resume", action="store_true",
-                    help="stage 7: resume from last.pt instead of wiping experiments/; "
-                         "finished regimes (metrics.json) are skipped")
+                    help="skip pipeline stages whose outputs already exist; "
+                         "within stage 7/8 resume detector training from last.pt "
+                         "and skip finished experiments (metrics.json)")
     args = ap.parse_args()
 
     if args.check:
@@ -384,8 +491,17 @@ def main() -> int:
         return 2
 
     preflight()
-    ran, skipped = [], []
+    ran, skipped, skipped_done = [], [], []
     for s in chosen:
+        if args.resume and not args.force and s.num in IMPLEMENTED:
+            done, marker = stage_is_done(s, args)
+            if done:
+                print("\n" + "-" * 74)
+                print(f"[{s.num}] {s.title}")
+                print("-" * 74)
+                print(f"    SKIP (already done: {marker})")
+                skipped_done.append(s)
+                continue
         (ran if run_stage(s, args) else skipped).append(s)
 
     if not args.skip_tests and any(s.num <= 3 for s in ran):
@@ -399,6 +515,9 @@ def main() -> int:
 
     print("\n" + "=" * 74)
     print(f"  completed {len(ran)} stage(s): {', '.join(s.key for s in ran) or '-'}")
+    if skipped_done:
+        print(f"  skipped   {len(skipped_done)} (already done): "
+              f"{', '.join(s.key for s in skipped_done)}")
     if skipped:
         print(f"  not run   {len(skipped)}: {', '.join(s.key for s in skipped)}")
     print("=" * 74)
