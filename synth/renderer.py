@@ -115,16 +115,31 @@ def fit_priors(split: str = "train") -> dict:
     """Empirical size/count distribution from human annotations on a split."""
     recs = json.loads((SPLITS / (split + ".json")).read_text(encoding="utf-8"))
     sides = {0: [], 1: []}
+    aspects = {0: [], 1: []}
     per_image = []
     for r in recs["records"]:
         if not r["boxes"]:
             continue
         per_image.append(len(r["boxes"]))
+        W, H = r.get("size", (1.0, 1.0))
         for c, _, _, w, h in r["boxes"]:
             sides[c].append(math.sqrt(w * h))          # normalised side
+            # PIXEL-space aspect of the annotated box. Sampling this from data
+            # instead of a hardcoded U(0.9,1.3) is what closes the residual
+            # aspect gap: the real distribution is far broader (p10 0.65,
+            # p50 1.08, p90 1.89) and mildly biased wide (58% > 1), which a
+            # narrow symmetric guess cannot reproduce.
+            if h > 0 and w > 0:
+                aspects[c].append((w * float(W)) / (h * float(H)))
+
+    def _arr(v, fallback):
+        return np.array(v) if v else np.array([fallback])
+
     return {
-        "side_pbi2": np.array(sides[0]) if sides[0] else np.array([0.01]),
-        "side_pinhole": np.array(sides[1]) if sides[1] else np.array([0.01]),
+        "side_pbi2": _arr(sides[0], 0.01),
+        "side_pinhole": _arr(sides[1], 0.01),
+        "aspect_pbi2": _arr(aspects[0], 1.0),
+        "aspect_pinhole": _arr(aspects[1], 1.0),
         "counts": np.array(per_image) if per_image else np.array([10]),
     }
 
@@ -426,10 +441,28 @@ def sample_params(priors: dict, n: int, rng: np.random.Generator,
         probs = np.array([probs_map[c] for c in choices], dtype=float)
         morph = str(rng.choice(choices, p=probs / probs.sum()))
 
+        # Aspect from the empirical per-class pixel-space distribution of the
+        # real annotations, not a hardcoded range.
+        #
+        # The angle matters as much as the aspect. The measured distribution is
+        # of AXIS-ALIGNED bounding boxes of real defects at their real
+        # orientations, so if a sampled aspect is then rotated by a uniform
+        # angle, the resulting bbox aspect regresses to the canvas ratio and the
+        # statistic is destroyed - that was the residual gap (synthetic 0.688 vs
+        # real 0.786). Keeping non-elongated shapes near axis-aligned makes the
+        # emitted bbox aspect equal the sampled one. Needles keep a free angle:
+        # their orientation is visually salient and their large aspect comes
+        # from the literature (ACS Omega needle-shaped chunks), not from this
+        # bbox prior.
+        apool = priors.get("aspect_pbi2" if kind == PBI2 else "aspect_pinhole")
         if morph == "elongated":
             aspect = float(rng.uniform(2.0, 4.5))
+            angle = float(rng.uniform(0, math.pi))
         else:
-            aspect = float(rng.uniform(0.9, 1.3))
+            aspect = (float(rng.choice(apool)) if apool is not None and len(apool)
+                      else float(rng.uniform(0.9, 1.3)))
+            aspect = float(np.clip(aspect, 0.35, 3.0))
+            angle = float(rng.normal(0.0, math.radians(8.0)))
 
         margin = 0.04
         cy_hi = max(margin + 1e-3, min(1.0, cy_max) - margin)
@@ -451,7 +484,7 @@ def sample_params(priors: dict, n: int, rng: np.random.Generator,
             severity=sev,
             morphology=morph,
             aspect=aspect,
-            angle=float(rng.uniform(0, math.pi)),
+            angle=angle,
         ))
     return out
 
