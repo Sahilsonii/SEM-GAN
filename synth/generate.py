@@ -96,11 +96,40 @@ def generate(n_images: int = 200, render_px: int = 512, seed: int = 42,
     (out_dir / "masks").mkdir(parents=True, exist_ok=True)
     manifest_path = out_dir / "manifest.jsonl"
 
-    used_groups: set[str] = set()
+    # Resume: a 5000/class pool is ~90 min per class, and mode "w" on the
+    # manifest meant any interruption threw away every image already rendered.
+    # Keep whatever is on disk and continue from the first missing index.
+    done_stems = {p.stem for p in (out_dir / "images").glob("*.jpg")}
+    resume_from = 0
+    if done_stems:
+        while f"syn_{pool_name}_{resume_from:05d}" in done_stems:
+            resume_from += 1
     n_boxes = 0
-    with manifest_path.open("w", encoding="utf-8") as mf:
-        pbar = tqdm(range(n_images), desc=f"render[{pool_name}]", unit="img",
-                    dynamic_ncols=True)
+    used_groups: set[str] = set()
+    if resume_from:
+        # replay the manifest so counts, and the val/test leak check, still
+        # cover the images written before the interruption
+        if manifest_path.exists():
+            keep = []
+            for line in manifest_path.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                e = json.loads(line)
+                if e["stem"] in done_stems:
+                    keep.append(line)
+                    n_boxes += e.get("n_defects", 0)
+                    used_groups.add(e["background_group"])
+            manifest_path.write_text("\n".join(keep) + ("\n" if keep else ""),
+                                     encoding="utf-8")
+        print(f"[synth] resuming '{pool_name}' at index {resume_from} "
+              f"({len(done_stems)} images, {n_boxes} boxes already on disk)")
+        # advance the RNG so resumed images are not byte-identical to what the
+        # interrupted run would have produced from this point onward
+        rng = np.random.default_rng(seed + resume_from)
+    with manifest_path.open("a" if resume_from else "w", encoding="utf-8") as mf:
+        pbar = tqdm(range(resume_from, n_images), desc=f"render[{pool_name}]",
+                    unit="img", dynamic_ncols=True, initial=resume_from,
+                    total=n_images)
         for i in pbar:
             bg = backgrounds[i % len(backgrounds)]
             used_groups.add(bg["group"])
