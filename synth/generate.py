@@ -32,6 +32,26 @@ SPLITS = ROOT / "data" / "splits"
 OUT_ROOT = ROOT / "data" / "synthetic"
 
 
+def _fit_long_side(img, target: int):
+    """Scale so the LONG side is `target`, PRESERVING aspect ratio.
+
+    Previously this forced (target, target), which squashed every 1024x705
+    real background into a square - a 1.45x vertical stretch of the grain
+    texture, and worse, it changed the box statistics the detector learns:
+    a round defect on a 1024x705 canvas has normalised w/h = 705/1024 = 0.69,
+    but on a square canvas it is exactly 1.0. Measured on the generated pool,
+    real boxes had median normalised w/h 0.786 while synthetic boxes had
+    1.000 - a trivially learnable giveaway that biases the box-regression head
+    away from real geometry. Aspect must match the real corpus.
+    """
+    h0, w0 = img.shape[:2]
+    if max(h0, w0) == target:
+        return img
+    s = target / max(h0, w0)
+    return cv2.resize(img, (max(1, round(w0 * s)), max(1, round(h0 * s))),
+                      interpolation=cv2.INTER_AREA)
+
+
 def _load_split(name: str) -> dict:
     return json.loads((SPLITS / (name + ".json")).read_text(encoding="utf-8"))
 
@@ -88,8 +108,7 @@ def generate(n_images: int = 200, render_px: int = 512, seed: int = 42,
             img = cv2.imread(str(CURATED_IMAGES / bg["file"]), cv2.IMREAD_COLOR)
             if img is None:
                 continue
-            if img.shape[:2] != (render_px, render_px):
-                img = cv2.resize(img, (render_px, render_px), interpolation=cv2.INTER_AREA)
+            img = _fit_long_side(img, render_px)
 
             k = (int(rng.choice(priors["counts"])) if defects_per_image is None
                  else int(defects_per_image))
@@ -154,7 +173,7 @@ def severity_ladder(rungs=(0.0, 0.25, 0.5, 0.75, 1.0), render_px: int = 512,
     bg = backgrounds[0]
     priors = fit_priors("train")
     img = cv2.imread(str(CURATED_IMAGES / bg["file"]), cv2.IMREAD_COLOR)
-    img = cv2.resize(img, (render_px, render_px), interpolation=cv2.INTER_AREA)
+    img = _fit_long_side(img, render_px)
 
     # identical layout on every rung - only severity changes
     params = sample_params(priors, n_defects, np.random.default_rng(seed),

@@ -183,7 +183,17 @@ def _blob_mask(h: int, w: int, p: DefectParams, rng: np.random.Generator) -> np.
     # crystal facets are atomically abrupt, whereas a pinhole rim is a
     # rounded grain shoulder.
     edge = 1.6 if p.morphology == "faceted" else 0.65
-    local = np.clip(1.0 - rad, 0.0, 1.0) ** edge
+
+    # The emitted box is derived from the mask thresholded at MASK_THRESHOLD, so
+    # the soft falloff silently shrinks it: (1-rad)**edge crosses 0.5 at
+    # rad = 1 - 0.5**(1/edge), i.e. 0.656 of nominal for edge=0.65 and only
+    # 0.352 for edge=1.6. Defect sizes are sampled from the real expert-box
+    # distribution, so emitting 35-66% of the sampled size means the synthetic
+    # size prior does not match the real one it was fitted to - and it skews the
+    # stride-anchored tiny-defect bins. Rescaling rad puts the threshold
+    # crossing back at the nominal radius for any edge exponent.
+    rad_at_threshold = 1.0 - 0.5 ** (1.0 / edge)
+    local = np.clip(1.0 - rad * rad_at_threshold, 0.0, 1.0) ** edge
     out[y0c:y1c, x0c:x1c] = local
     return out
 
@@ -372,6 +382,17 @@ def sample_params(priors: dict, n: int, rng: np.random.Generator,
     boundary_px = (grain_boundary_affinity(bg_gray) if bg_gray is not None
                   else np.zeros((0, 2), np.int64))
 
+    # side_norm is sqrt(w_norm * h_norm), so converting it to pixels needs the
+    # canvas GEOMETRIC MEAN sqrt(W*H), not one edge length. On a square canvas
+    # they coincide, which is why this was invisible until backgrounds stopped
+    # being force-resized to square: with a 512x352 canvas, render_px=512 would
+    # oversize every defect by sqrt(512/352) = 1.21x.
+    if bg_gray is not None:
+        H_c, W_c = bg_gray.shape[:2]
+        size_ref = math.sqrt(float(H_c) * float(W_c))
+    else:
+        size_ref = float(render_px)
+
     out = []
     for _ in range(n):
         kind = PBI2 if rng.random() < pbi2_fraction else PINHOLE
@@ -426,7 +447,7 @@ def sample_params(priors: dict, n: int, rng: np.random.Generator,
             kind=kind,
             cx=cx,
             cy=cy,
-            size_px=max(3.0, side_norm * render_px),
+            size_px=max(3.0, side_norm * size_ref),
             severity=sev,
             morphology=morph,
             aspect=aspect,
