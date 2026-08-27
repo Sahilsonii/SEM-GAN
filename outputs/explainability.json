@@ -1,0 +1,37 @@
+{
+ "checkpoint": "experiments/scale_005_yolo11s_seed1/run/weights/best.pt",
+ "n_images": 3,
+ "patch": 96,
+ "stride": 64,
+ "pointing_game_accuracy": 0.3333,
+ "mean_explanation_iou": 0.0427,
+ "mean_background_attribution_ratio": 0.6472,
+ "mean_gt_area_fraction": 0.3518,
+ "mean_attribution_concentration": 2.026,
+ "per_image": [
+  {
+   "file": "class0_pbI2/04-09.jpg",
+   "pointing_hit": false,
+   "explanation_iou": 0.0063,
+   "background_attribution_ratio": 0.9518,
+   "gt_area_fraction": 0.0549,
+   "attribution_concentration": 0.878
+  },
+  {
+   "file": "class1_3D_pinholes/11-04.jpg",
+   "pointing_hit": true,
+   "explanation_iou": 0.1009,
+   "background_attribution_ratio": 0.0008,
+   "gt_area_fraction": 0.9978,
+   "attribution_concentration": 1.001
+  },
+  {
+   "file": "class2_3D-2D_pinholes/0411.jpg",
+   "pointing_hit": false,
+   "explanation_iou": 0.021,
+   "background_attribution_ratio": 0.989,
+   "gt_area_fraction": 0.0026,
+   "attribution_concentration": 4.199
+  }
+ ]
+}

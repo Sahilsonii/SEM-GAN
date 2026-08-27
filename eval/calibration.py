@@ -95,3 +95,77 @@ if __name__ == "__main__":
     print("\noverconfident (conf pushed toward 1):")
     overconf = np.clip(true_p * 1.4, 0, 1)
     calibration_report(overconf, correct)
+
+
+# --------------------------------------------------------------- driver ----
+
+def from_checkpoint(checkpoint: str, split: str = "val", conf: float = 0.05,
+                    iou_thr: float = 0.5, device: str = "0") -> dict:
+    """Per-detection (confidence, correct) pairs from a trained detector.
+
+    Correctness is IoU>=iou_thr against a same-class ground-truth box, greedily
+    matched in descending confidence - the same convention as eval/detection.py,
+    so a detection counted as a hit here is a hit there too.
+
+    Refuses the test split: calibration is a diagnostic and must not consume
+    the locked set.
+    """
+    import json
+    from pathlib import Path
+
+    import cv2
+    from ultralytics import YOLO
+
+    from eval.detection import iou_matrix, xywhn_to_xyxy
+
+    if split == "test":
+        raise RuntimeError("calibration is a diagnostic - do not read the locked "
+                           "test split; use 'val'")
+
+    root = Path(__file__).resolve().parents[1]
+    recs = json.loads((root / "data" / "splits" / f"{split}.json")
+                      .read_text(encoding="utf-8"))["records"]
+    recs = [r for r in recs if r["n_boxes"] > 0]
+    net = YOLO(checkpoint)
+
+    confs, corrects = [], []
+    for r in recs:
+        im = cv2.imread(str(root / "data" / "curated" / "images" / r["file"]),
+                        cv2.IMREAD_COLOR)
+        if im is None:
+            continue
+        H, W = im.shape[:2]
+        gt = r["boxes"]
+        gt_xyxy = (np.stack([xywhn_to_xyxy(b, W, H) for b in gt])
+                   if gt else np.zeros((0, 4), np.float32))
+        res = net.predict(im, conf=conf, verbose=False, device=device)[0]
+        if not len(res.boxes):
+            continue
+        pred, sc = [], []
+        for (cx, cy, bw, bh), c, s in zip(res.boxes.xywhn.cpu().numpy(),
+                                          res.boxes.cls.cpu().numpy().astype(int),
+                                          res.boxes.conf.cpu().numpy()):
+            pred.append([int(c), float(cx), float(cy), float(bw), float(bh)])
+            sc.append(float(s))
+        pr_xyxy = np.stack([xywhn_to_xyxy(b, W, H) for b in pred])
+        ious = iou_matrix(pr_xyxy, gt_xyxy)
+        taken = set()
+        for pi in np.argsort(-np.array(sc)):
+            best, bj = 0.0, -1
+            for gj in range(len(gt)):
+                if gj in taken or gt[gj][0] != pred[pi][0]:
+                    continue
+                if ious[pi, gj] > best:
+                    best, bj = ious[pi, gj], gj
+            hit = best >= iou_thr
+            if hit:
+                taken.add(bj)
+            confs.append(sc[pi])
+            corrects.append(1.0 if hit else 0.0)
+
+    out_path = Path(__file__).resolve().parents[1] / "outputs" / f"calibration_{split}.json"
+    rep = calibration_report(np.array(confs), np.array(corrects), out_path=out_path)
+    rep["checkpoint"] = checkpoint
+    rep["split"] = split
+    out_path.write_text(json.dumps(rep, indent=1), encoding="utf-8")
+    return rep
