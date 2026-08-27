@@ -1,0 +1,20 @@
+{
+ "checkpoint": "experiments/scale_005_yolo11s_seed1/run/weights/best.pt",
+ "conf_threshold": 0.1,
+ "iou_threshold": 0.5,
+ "images": 12,
+ "total_gt": 640,
+ "total_false_positives": 449,
+ "counts": {
+  "missed_sub_stride": 177,
+  "missed_tiny": 164,
+  "missed_low_contrast": 59,
+  "missed_dense_cluster": 50,
+  "missed_other": 22,
+  "fp_on_grain_boundary": 212,
+  "fp_high_contrast_spot": 13,
+  "fp_near_miss": 218,
+  "fp_other": 6
+ },
+ "crops_dir": "C:\\Users\\Sahil\\Downloads\\SEM_GAN_Dissertation\\outputs\\failures"
+}
