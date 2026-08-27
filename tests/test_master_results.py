@@ -143,3 +143,33 @@ def test_h2_block_uses_regimes_that_actually_exist(tmp_path, monkeypatch):
     text = make_report.build()
     assert "## H2" in text, "H2 block did not render for the real regime names"
     assert "+0.0400 mAP50" in text  # FFT-on minus FFT-off
+
+
+def test_agg_does_not_pool_across_architectures(tmp_path, monkeypatch):
+    """regime carries no model, so real_only_yolo11s_* and real_only_rtdetr-l_*
+    both have regime="real_only". Averaging them into one n=2 seed mean and
+    calling it the baseline is silent and wrong."""
+    import make_report
+
+    p = tmp_path / "master_results.csv"
+    a = _row("real_only_yolo11s_seed1", mAP50="0.10", seed="1")
+    b = _row("real_only_rtdetr-l_seed1", mAP50="0.90", seed="1")
+    b["model"] = "rtdetr-l"
+    b["regime"] = "real_only"          # same regime, different architecture
+    with p.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(a))
+        w.writeheader()
+        w.writerows([a, b])
+    monkeypatch.setattr(make_report, "OUT", tmp_path)
+
+    rows = make_report._rows()
+    primary = make_report._agg(rows)
+    assert primary["real_only"]["n"] == 1, "architectures pooled into one mean"
+    assert primary["real_only"]["mAP50_mean"] == pytest.approx(0.10)
+
+    pooled = make_report._agg(rows, model=None)
+    assert pooled["real_only"]["n"] == 2, "model=None must pool on request"
+
+    text = make_report.build()
+    assert "## Cross-paradigm comparison" in text
+    assert "rtdetr-l" in text

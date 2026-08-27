@@ -39,10 +39,22 @@ def _rows() -> list[dict]:
     return [latest[k] for k in sorted(latest)]
 
 
-def _agg(rows: list[dict]) -> dict:
-    """regime -> mean/sd over seeds."""
+PRIMARY_MODEL = "yolo11s"
+
+
+def _agg(rows: list[dict], model: str | None = PRIMARY_MODEL) -> dict:
+    """regime -> mean/sd over seeds, for ONE architecture.
+
+    regime does not encode the model, so real_only_yolo11s_seed1 and
+    real_only_rtdetr-l_seed1 both carry regime="real_only". Grouping on regime
+    alone would average two architectures into a single seed mean and report it
+    as n=4 - the same silent collapse the ladder had. Cross-paradigm rows get
+    their own table instead; pass model=None to pool deliberately.
+    """
     by = defaultdict(list)
     for r in rows:
+        if model is not None and r.get("model") != model:
+            continue
         try:
             by[r["regime"]].append((float(r["mAP50"]), float(r["mAP50_95"])))
         except (ValueError, KeyError):
@@ -153,6 +165,18 @@ def build() -> str:
               "", "| scale bin | n gt | recall | AP |", "|---|---|---|---|"]
         for bn, v in d.get("per_bin_at50", {}).items():
             L.append(f"| {bn} | {v['n_gt']} | {v['recall']:.3f} | {v['ap']:.4f} |")
+
+    # Cross-paradigm comparison (plan 7.4). Every architecture present in the
+    # CSV, at whatever regimes it was run - the full matrix is yolo11s only, so
+    # these are single points and are labelled with their seed count.
+    models = sorted({r.get("model", "") for r in rows} - {"", PRIMARY_MODEL})
+    if models:
+        L += ["", "## Cross-paradigm comparison", "",
+              "| model | regime | seeds | mAP50 | mAP50-95 |", "|---|---|---|---|---|"]
+        for m in [PRIMARY_MODEL] + models:
+            for regime, a in sorted(_agg(rows, model=m).items()):
+                L.append(f"| `{m}` | `{regime}` | {a['n']} | "
+                         f"{a['mAP50_mean']:.4f} | {a['mAP5095_mean']:.4f} |")
 
     L += ["", "## Caveats that travel with these numbers", "",
           "- Validation carries 12 defect-bearing images, so run-to-run spread is wide; "

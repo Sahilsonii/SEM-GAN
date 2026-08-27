@@ -115,7 +115,15 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
     Console stdout/stderr is mirrored to experiments/<exp_id>/console.log
     for the duration of training (appended on --resume).
     """
-    from ultralytics import YOLO
+    from ultralytics import RTDETR, YOLO
+
+    # Paradigm comparison (plan 7.4) without new dependencies: the installed
+    # ultralytics already ships RT-DETR, so the "does a DETR-family model handle
+    # sub-stride defects better than an anchor-free CNN?" row costs an argument
+    # rather than a pip install that could move torch mid-project.
+    Net = RTDETR if model.startswith("rtdetr") else YOLO
+    if p2 and Net is RTDETR:
+        raise ValueError("--p2 is a YOLO topology; rtdetr has no -p2 variant")
 
     import yolo_export
 
@@ -195,7 +203,7 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
                 torch.cuda.empty_cache()
                 _ul_checks.check_amp = lambda model: True
                 _ul_trainer.check_amp = lambda model: True
-                net = YOLO(str(last_pt))
+                net = Net(str(last_pt))
                 net.train(resume=True, batch=batch, device=device)
             else:
                 # yolo11s.pt carries COCO-pretrained weights; the -p2 variant has no
@@ -215,7 +223,7 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
                       f"epochs={epochs}")
 
                 t0 = time.time()
-                net = YOLO(weights)
+                net = Net(weights)
                 # Epoch-based schedules must scale with the epoch count, or a
                 # step-matched run on a large pool is mostly warmup: at 10,160
                 # images a 6,000-step budget is ~5 epochs, and Ultralytics'
