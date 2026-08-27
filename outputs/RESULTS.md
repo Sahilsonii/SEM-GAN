@@ -1,6 +1,6 @@
 # Results
 
-Generated 2026-08-27 12:21 from `outputs/master_results.csv` (9 runs).
+Generated 2026-08-27 12:44 from `outputs/master_results.csv` (9 runs).
 
 All numbers are on the **validation** split. The test split is locked until the final evaluation stage and has not been read.
 
@@ -49,6 +49,18 @@ PbI2 is reported with the training support behind it. With single-digit training
 | 5% | 0.1249 | 0.0525 |
 | 10% | 0.1010 | 0.0442 |
 | 25% | 0.1002 | 0.0437 |
+
+## R1 - MicroDefectCV classical baseline
+
+- mAP50 0.0270, mAP50-95 0.0112, P 0.058, R 0.114
+- 3.73 s/image on CPU, 0 trainable parameters
+
+| scale bin | n gt | recall | AP |
+|---|---|---|---|
+| T1_sub_stride | 183 | 0.000 | 0.0000 |
+| T2_tiny | 233 | 0.129 | 0.0457 |
+| T3_small | 150 | 0.247 | 0.0670 |
+| T4_medium_up | 74 | 0.081 | 0.0303 |
 
 ## Caveats that travel with these numbers
 

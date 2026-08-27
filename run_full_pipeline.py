@@ -223,6 +223,66 @@ def stage8_uncertainty(args):
         print("[stage8] no detections on val to calibrate against")
 
 
+def _best_ckpt(args) -> str:
+    """Checkpoint the diagnostic stages operate on."""
+    if args.diag_checkpoint:
+        return args.diag_checkpoint
+    pool = args.pool or ("refined" if args.refined else "controlled")
+    cand = [EXPERIMENTS / f"scale_005_yolo11s_seed{args.seed}" / "run" / "weights" / "best.pt",
+            EXPERIMENTS / f"real_plus_{pool}_yolo11s_seed{args.seed}" / "run" / "weights" / "best.pt",
+            EXPERIMENTS / f"real_only_yolo11s_seed{args.seed}" / "run" / "weights" / "best.pt"]
+    for c in cand:
+        if c.exists():
+            return str(c)
+    raise RuntimeError("no trained checkpoint found - run stage 7, or pass "
+                       "--diag-checkpoint")
+
+
+def stage10_domaingap(args):
+    """N2: real-vs-synthetic gap at 4 levels, per pool."""
+    from eval.domain_gap import measure
+    for pool in (args.gap_pools or "controlled,refined,refined_nofft").split(","):
+        measure(pool.strip(), n_real=args.gap_n, n_synth=args.gap_n,
+                skip_l4=args.skip_l4)
+
+
+def stage11_counterfactual(args):
+    """N4: monotonic response to severity on a fixed background."""
+    from eval.counterfactual import probe
+    probe(_best_ckpt(args), conf=max(args.diag_conf, 0.10))
+
+
+def stage12_robustness(args):
+    """Section 14: does confidence fall when the image degrades?"""
+    from eval.robustness import sweep
+    sweep(_best_ckpt(args), conf=args.diag_conf)
+
+
+def stage13_failures(args):
+    """Section 15: pre-declared failure taxonomy + representative crops."""
+    from eval.failure_analysis import analyse
+    analyse(_best_ckpt(args), conf=max(args.diag_conf, 0.10))
+
+
+def stage14_explain(args):
+    """Section 12: attribution faithfulness, not heatmap pictures."""
+    from eval.explain import evaluate
+    evaluate(_best_ckpt(args), n_images=args.explain_images,
+             patch=96, stride=64, conf=args.diag_conf)
+
+
+def stage15_interpret(args):
+    """Section 13: image-derived morphology indices (NOT measurements)."""
+    from interpret.run_interpretation import run
+    run(_best_ckpt(args), split="val", conf=max(args.diag_conf, 0.10),
+        use_ground_truth=args.interpret_gt)
+
+
+def stage16_report(args):
+    import make_report
+    make_report.build()
+
+
 def stage9_final(args):
     print("Stage 9 is deliberately NOT auto-run. It reads the locked test split")
     print("exactly once, and must be invoked by hand after every checkpoint,")
@@ -254,9 +314,23 @@ STAGES = [
           ("ultralytics", "sklearn"), stage8_uncertainty),
     Stage(9, "final",     "LOCKED real test-set evaluation + master results table",
           ("ultralytics",), stage9_final),
+    Stage(10, "domaingap", "Domain gap real vs synthetic, 4 levels (N2)",
+          ("cv2",), stage10_domaingap),
+    Stage(11, "counterfact", "Counterfactual severity monotonicity (N4)",
+          ("ultralytics",), stage11_counterfactual),
+    Stage(12, "robustness", "Perturbation sweep: does confidence track degradation",
+          ("ultralytics",), stage12_robustness),
+    Stage(13, "failures",  "Pre-declared failure taxonomy + crops (section 15)",
+          ("ultralytics",), stage13_failures),
+    Stage(14, "explain",   "Attribution faithfulness (section 12)",
+          ("ultralytics",), stage14_explain),
+    Stage(15, "interpret", "Image-derived morphology indices (section 13)",
+          ("cv2",), stage15_interpret),
+    Stage(16, "report",    "Assemble outputs/RESULTS.md",
+          (), stage16_report),
 ]
 FIRST_UNIMPLEMENTED = 5   # kept for reference; superseded by IMPLEMENTED below
-IMPLEMENTED = {0, 1, 2, 3, 4, 5, 6, 7, 8}
+IMPLEMENTED = {0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16}
 # stage 9 is intentionally excluded: it always raises NotImplementedError here by
 # design and must be run by hand via eval/final_eval.py with its confirmation gate
 BY_KEY = {s.key: s for s in STAGES}
@@ -456,6 +530,16 @@ def main() -> int:
                     help="stage 8: reuse an existing pinhole-only .pt instead of training one")
     ap.add_argument("--refiner-epochs", type=int, default=30)
     ap.add_argument("--refiner-batch", type=int, default=16)
+    ap.add_argument("--diag-checkpoint", default=None,
+                    help="checkpoint for the diagnostic stages 11-15")
+    ap.add_argument("--diag-conf", type=float, default=0.05)
+    ap.add_argument("--gap-pools", default=None)
+    ap.add_argument("--gap-n", type=int, default=40)
+    ap.add_argument("--skip-l4", action="store_true",
+                    help="stage 10: skip the DINOv2 feature level")
+    ap.add_argument("--explain-images", type=int, default=4)
+    ap.add_argument("--interpret-gt", action="store_true",
+                    help="stage 15: interpret expert boxes instead of detections")
     ap.add_argument("--pool", default=None,
                     help="explicit synthetic pool name, e.g. refined_nofft for the H2 ablation")
     ap.add_argument("--refined", action="store_true",
