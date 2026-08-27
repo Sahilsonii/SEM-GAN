@@ -374,6 +374,12 @@ if __name__ == "__main__":
     ap.add_argument("--target-steps", type=int, default=None,
                     help="cap wall-clock: derive epochs from this / steps-per-epoch")
     ap.add_argument("--min-epochs", type=int, default=3)
+    ap.add_argument("--patience", type=int, default=30,
+                    help="Ultralytics early-stop patience. RAISE THIS above the "
+                         "epoch count for a step-matched run: at 160 images a "
+                         "8,300-step budget is 415 epochs, and the default 30 "
+                         "would stop it early and silently un-match the "
+                         "comparison it exists to make.")
     ap.add_argument("--resume", action="store_true",
                     help="continue from experiments/<exp_id>/run/weights/last.pt "
                          "(skips wipe; finished runs with metrics.json are skipped)")
@@ -383,4 +389,4 @@ if __name__ == "__main__":
           synth_ratio=a.synth_ratio, device=a.device,
           known_classes=tuple(int(x) for x in a.known_classes.split(",")),
           target_steps=a.target_steps, min_epochs=a.min_epochs,
-          resume=a.resume)
+          patience=a.patience, resume=a.resume)
