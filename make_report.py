@@ -152,8 +152,7 @@ def build() -> str:
           ""]
 
     text = "\n".join(L)
-    (OUT / "RESULTS.md").write_text(text, encoding="utf-8")
-    print(f"[report] wrote {OUT/'RESULTS.md'} ({len(rows)} runs, {len(agg)} regimes)")
+    print(f"[report] built table ({len(rows)} runs, {len(agg)} regimes)")
     return text
 
 

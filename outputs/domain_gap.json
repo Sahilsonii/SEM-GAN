@@ -1,0 +1,29 @@
+{
+ "controlled": {
+  "pool": "controlled",
+  "n_real": 40,
+  "n_synth": 40,
+  "L1_pixel": 6.87109,
+  "L2_frequency": 0.21826,
+  "L3_morphology": 1.18529,
+  "L4_feature": NaN
+ },
+ "refined": {
+  "pool": "refined",
+  "n_real": 40,
+  "n_synth": 40,
+  "L1_pixel": 5.12891,
+  "L2_frequency": 0.20338,
+  "L3_morphology": 1.21018,
+  "L4_feature": NaN
+ },
+ "refined_nofft": {
+  "pool": "refined_nofft",
+  "n_real": 40,
+  "n_synth": 40,
+  "L1_pixel": 4.55498,
+  "L2_frequency": 0.52961,
+  "L3_morphology": 1.1804,
+  "L4_feature": NaN
+ }
+}

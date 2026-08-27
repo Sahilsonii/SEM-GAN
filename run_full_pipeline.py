@@ -239,11 +239,14 @@ def _best_ckpt(args) -> str:
 
 
 def stage10_domaingap(args):
-    """N2: real-vs-synthetic gap at 4 levels, per pool."""
+    """N2: real-vs-synthetic gap at 4 levels, per pool. Persists the result so
+    the report can read it - measure() alone only prints."""
     from eval.domain_gap import measure
-    for pool in (args.gap_pools or "controlled,refined,refined_nofft").split(","):
-        measure(pool.strip(), n_real=args.gap_n, n_synth=args.gap_n,
-                skip_l4=args.skip_l4)
+    pools = (args.gap_pools or "controlled,refined,refined_nofft").split(",")
+    res = {p.strip(): measure(p.strip(), n_real=args.gap_n, n_synth=args.gap_n,
+                              skip_l4=args.skip_l4) for p in pools}
+    (OUT / "domain_gap.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
+    print(f"[gap] wrote {OUT / 'domain_gap.json'}")
 
 
 def stage11_counterfactual(args):
@@ -279,8 +282,19 @@ def stage15_interpret(args):
 
 
 def stage16_report(args):
+    """Regenerates the auto-table only.
+
+    outputs/RESULTS.md is HAND-WRITTEN and holds the narrative, caveats and the
+    analyses from stages 10-15 that make_report does not know about. Writing it
+    from make_report would silently discard all of that, so the generated table
+    goes to a separate file and RESULTS.md is left alone.
+    """
     import make_report
-    make_report.build()
+    make_report.OUT = OUT
+    text = make_report.build()
+    (OUT / "auto_table.md").write_text(text, encoding="utf-8")
+    print(f"[report] auto table -> {OUT / 'auto_table.md'} "
+          f"(RESULTS.md is hand-written and was not touched)")
 
 
 def stage9_final(args):
