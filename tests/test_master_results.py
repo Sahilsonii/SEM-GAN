@@ -95,3 +95,51 @@ def test_live_file_has_no_duplicates():
     ids = [r["exp_id"] for r in _read(p) if r.get("exp_id")]
     dupes = {i for i in ids if ids.count(i) > 1}
     assert not dupes, f"duplicate exp_ids in the live results file: {dupes}"
+
+
+# --- make_report: the scaling ladder must not absorb ablation arms -----------
+#
+# The ladder used to select regimes with startswith("scale_"), which matches
+# scale_005_refined_nofft - an H2 ablation arm at the SAME 5% ratio, not another
+# point on the ratio curve. It would have printed a second "5%" row indexed by
+# split("_")[1], reading as a replicate of the 5% point when it is a different
+# generator. Wrong table, no error raised.
+
+def test_ladder_excludes_pooled_ablation_arms(tmp_path, monkeypatch):
+    import make_report
+
+    p = tmp_path / "master_results.csv"
+    rows = [_row("scale_002_yolo11s_seed42", mAP50="0.10", seed="42"),
+            _row("scale_005_yolo11s_seed42", mAP50="0.12", seed="42"),
+            # same ratio, different generator - must NOT appear in the ladder
+            _row("scale_005_refined_nofft_yolo11s_seed1", mAP50="0.99", seed="1")]
+    with p.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    monkeypatch.setattr(make_report, "OUT", tmp_path)
+
+    text = make_report.build()
+    ladder = text.split("## Synthetic scaling")[1].split("##")[0]
+    assert "| 2% |" in ladder and "| 5% |" in ladder
+    assert ladder.count("| 5% |") == 1, "ablation arm listed as a ratio point"
+    assert "0.99" not in ladder, "nofft arm leaked into the ratio curve"
+
+
+def test_h2_block_uses_regimes_that_actually_exist(tmp_path, monkeypatch):
+    """The old keys real_plus_refined* were never written by train_detector, so
+    the H2 section silently never rendered."""
+    import make_report
+
+    p = tmp_path / "master_results.csv"
+    rows = [_row("scale_005_yolo11s_seed42", mAP50="0.12", seed="42"),
+            _row("scale_005_refined_nofft_yolo11s_seed1", mAP50="0.08", seed="1")]
+    with p.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    monkeypatch.setattr(make_report, "OUT", tmp_path)
+
+    text = make_report.build()
+    assert "## H2" in text, "H2 block did not render for the real regime names"
+    assert "+0.0400 mAP50" in text  # FFT-on minus FFT-off

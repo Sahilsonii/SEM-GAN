@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import statistics as st
 from collections import defaultdict
 from datetime import datetime
@@ -107,27 +108,39 @@ def build() -> str:
                 L.append(f"| `{exp}` | {cname} | {v['AP50']:.4f} | "
                          f"{v.get('train_images','?')} | {mark} |")
 
-    # scaling ladder
-    scale = {r["regime"]: r for r in rows if r["regime"].startswith("scale_")}
-    if scale:
+    # Scaling ladder - ONLY the bare ratio regimes. A pooled variant such as
+    # scale_005_refined_nofft is an H2 arm at the same ratio, not another point
+    # on the curve; startswith("scale_") would list it as a second "5%" row and
+    # it would read as a replicate. Aggregate over seeds rather than picking one.
+    ladder = sorted((k for k in agg if re.fullmatch(r"scale_\d+", k)),
+                    key=lambda k: int(k.split("_")[1]))
+    if ladder:
         L += ["", "## Synthetic scaling", "",
-              "| synthetic ratio | mAP50 | mAP50-95 |", "|---|---|---|"]
-        for regime in sorted(scale, key=lambda k: float(k.split("_")[1])):
-            r = scale[regime]
-            L.append(f"| {int(regime.split('_')[1])}% | {float(r['mAP50']):.4f} "
-                     f"| {float(r['mAP50_95']):.4f} |")
+              "| synthetic ratio | seeds | mAP50 | mAP50-95 |", "|---|---|---|---|"]
+        for regime in ladder:
+            a = agg[regime]
+            L.append(f"| {int(regime.split('_')[1])}% | {a['n']} "
+                     f"| {a['mAP50_mean']:.4f} | {a['mAP5095_mean']:.4f} |")
+        L += ["",
+              "The `seeds` column is load-bearing: points with n=1 and n=3 are "
+              "not seed-matched, so the curve SHAPE is single-seed even where one "
+              "point is replicated. Read shape from the n=1 points alone."]
 
-    # H2 ablation
-    if "real_plus_refined" in agg and "real_plus_refined_nofft" in agg:
-        a, b = agg["real_plus_refined"], agg["real_plus_refined_nofft"]
-        d = a["mAP5095_mean"] - b["mAP5095_mean"]
+    # H2 ablation. The arms are scale_005 (refined pool, FFT discriminator on)
+    # and scale_005_refined_nofft (same ratio, FFT branch removed). The earlier
+    # keys real_plus_refined* were never emitted by train_detector, so this block
+    # could not fire.
+    if "scale_005" in agg and "scale_005_refined_nofft" in agg:
+        a, b = agg["scale_005"], agg["scale_005_refined_nofft"]
         L += ["", "## H2 - does the Fourier discriminator branch matter?", "",
-              f"- with FFT: mAP50-95 {a['mAP5095_mean']:.4f} ± {a['mAP5095_sd']:.4f}",
-              f"- without : mAP50-95 {b['mAP5095_mean']:.4f} ± {b['mAP5095_sd']:.4f}",
-              f"- difference: {d:+.4f}",
+              f"- FFT on : mAP50 {a['mAP50_mean']:.4f} ± {a['mAP50_sd']:.4f} "
+              f"(n={a['n']}), mAP50-95 {a['mAP5095_mean']:.4f}",
+              f"- FFT off: mAP50 {b['mAP50_mean']:.4f} ± {b['mAP50_sd']:.4f} "
+              f"(n={b['n']}), mAP50-95 {b['mAP5095_mean']:.4f}",
+              f"- difference: {a['mAP50_mean'] - b['mAP50_mean']:+.4f} mAP50",
               "",
-              "Read against the seed spread above before treating this as support "
-              "for or against H2."]
+              "Unequal seed counts - read the difference against the FFT-on seed "
+              "spread, not as a paired result."]
 
     # classical baseline
     mdcv = OUT / "microdefectcv_baseline_val.json"
