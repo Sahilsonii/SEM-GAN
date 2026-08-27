@@ -1,0 +1,75 @@
+{
+ "checkpoint": "experiments/scale_005_yolo11s_seed1/run/weights/best.pt",
+ "conf_threshold": 0.1,
+ "rungs": [
+  {
+   "severity": 0.0,
+   "gt_boxes": 0,
+   "gt_mask_area": 0.0,
+   "gt_contrast": 0.0,
+   "n_detections": 0,
+   "mean_conf": 0.0,
+   "max_conf": 0.0,
+   "pred_area": 0.0
+  },
+  {
+   "severity": 0.25,
+   "gt_boxes": 12,
+   "gt_mask_area": 0.06037486683238636,
+   "gt_contrast": 15.303,
+   "n_detections": 0,
+   "mean_conf": 0.0,
+   "max_conf": 0.0,
+   "pred_area": 0.0
+  },
+  {
+   "severity": 0.5,
+   "gt_boxes": 12,
+   "gt_mask_area": 0.06037486683238636,
+   "gt_contrast": 32.097,
+   "n_detections": 0,
+   "mean_conf": 0.0,
+   "max_conf": 0.0,
+   "pred_area": 0.0
+  },
+  {
+   "severity": 0.75,
+   "gt_boxes": 12,
+   "gt_mask_area": 0.06037486683238636,
+   "gt_contrast": 48.719,
+   "n_detections": 4,
+   "mean_conf": 0.2289,
+   "max_conf": 0.4317,
+   "pred_area": 0.00245
+  },
+  {
+   "severity": 1.0,
+   "gt_boxes": 12,
+   "gt_mask_area": 0.06037486683238636,
+   "gt_contrast": 65.19,
+   "n_detections": 14,
+   "mean_conf": 0.2492,
+   "max_conf": 0.4666,
+   "pred_area": 0.17328
+  }
+ ],
+ "monotonicity": {
+  "n_detections": {
+   "spearman_rho": 0.8944,
+   "exact_p": 0.1
+  },
+  "mean_conf": {
+   "spearman_rho": 0.8944,
+   "exact_p": 0.1
+  },
+  "max_conf": {
+   "spearman_rho": 0.8944,
+   "exact_p": 0.1
+  },
+  "pred_area": {
+   "spearman_rho": 0.8944,
+   "exact_p": 0.1
+  }
+ },
+ "false_positives_on_clean_rung": 0
+}
