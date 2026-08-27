@@ -116,6 +116,30 @@ def synth_label_boxes(pool: str, limit: int = 600) -> list[tuple[int, float, flo
     return out
 
 
+def synth_geometry(limit: int = 600) -> tuple[list, str]:
+    """Synthetic box geometry, drawn ONCE across pools.
+
+    The refiner rewrites texture inside the mask and never touches the label,
+    so every pool built from the same renderer output carries byte-identical
+    boxes. Plotting three overlapping curves hid that invariant instead of
+    stating it; this collapses them and reports if the assumption ever breaks
+    (which would itself be a bug worth seeing).
+    """
+    per = {p: synth_label_boxes(p, limit) for p in POOLS}
+    per = {k: v for k, v in per.items() if v}
+    if not per:
+        return [], ""
+    keys = list(per)
+    base = per[keys[0]]
+    same = [k for k in keys if per[k] == base]
+    if len(same) == len(keys):
+        return base, (f"synthetic, all {len(keys)} pools identical "
+                      f"(refiner preserves geometry)")
+    print(f"  NOTE geometry differs across pools; matching {same} only - "
+          f"the refiner is not supposed to move a box")
+    return base, f"synthetic ({keys[0]})"
+
+
 def _bin_of(side: float) -> int:
     return int(np.searchsorted(BIN_EDGES, side, side="right"))
 
@@ -147,21 +171,19 @@ def fig_size_distribution() -> None:
     ax.hist(r, bins=bins, density=True, histtype="stepfilled", alpha=0.45,
             color=C["real"], label=f"real expert boxes (n={len(r):,})")
 
-    for pool in POOLS:
-        lab = synth_label_boxes(pool)
-        if not lab:
-            continue
-        s = np.array([v for _, v, _ in lab])
-        ax.hist(s, bins=bins, density=True, histtype="step", linewidth=1.6,
-                color=POOL_COLOR[pool],
-                label=f"{POOL_LABEL[pool]} (n={len(s):,})")
+    geom, glab = synth_geometry()
+    if geom:
+        s = np.array([v for _, v, _ in geom])
+        ax.hist(s, bins=bins, density=True, histtype="step", linewidth=1.8,
+                color=C["synth"], label=f"{glab} (n={len(s):,})")
 
     for e in BIN_EDGES:
         ax.axvline(e, color="#7a7a7a", ls="--", lw=0.8, zorder=0)
     ax.set_xscale("log")
-    for x, t in zip([4.5, 11, 22, 70], ["T1", "T2", "T3", "T4"]):
-        ax.text(x, ax.get_ylim()[1] * 0.93, t, ha="center", fontsize=8,
-                color="#5a5a5a")
+    top = ax.get_ylim()[1]
+    ax.set_ylim(0, top * 1.14)                 # headroom so T-labels clear the legend
+    for x, t in zip([4.2, 11, 22, 62], ["T1", "T2", "T3", "T4"]):
+        ax.text(x, top * 1.04, t, ha="center", fontsize=8, color="#5a5a5a")
     ax.set_xlabel("defect side length at 640 px detector input  (sqrt(w*h), pixels)")
     ax.set_ylabel("density")
     ax.set_title("Did the renderer reproduce the real defect scale distribution?")
@@ -179,12 +201,10 @@ def fig_scale_bin_balance() -> None:
         print("  skip scale_bin_balance: no train.json")
         return
     sources = [("real", np.array([_bin_of(s) for _, s, _ in real]), C["real"])]
-    for pool in POOLS:
-        lab = synth_label_boxes(pool)
-        if lab:
-            sources.append((POOL_LABEL[pool],
-                            np.array([_bin_of(s) for _, s, _ in lab]),
-                            POOL_COLOR[pool]))
+    geom, glab = synth_geometry()
+    if geom:
+        sources.append((glab, np.array([_bin_of(s) for _, s, _ in geom]),
+                        C["synth"]))
 
     fig, ax = plt.subplots(figsize=(7.2, 3.4))
     w = 0.8 / len(sources)
@@ -222,15 +242,16 @@ def fig_aspect_distribution() -> None:
             ax.text(np.median(r), ax.get_ylim()[1] * 0.88,
                     f" real med {np.median(r):.3f}", fontsize=7, color=C["real"])
             drew = True
-        for pool in POOLS:
-            lab = [a for c, _, a in synth_label_boxes(pool) if c == cls]
-            if not lab:
-                continue
+        geom, glab = synth_geometry()
+        lab = [a for c, _, a in geom if c == cls]
+        if lab:
             s = np.array(lab)
-            ax.hist(s, bins=bins, density=True, histtype="step", linewidth=1.5,
-                    color=POOL_COLOR[pool],
-                    label=f"{POOL_LABEL[pool]} (n={len(s):,})")
-            ax.axvline(np.median(s), color=POOL_COLOR[pool], lw=1.0, ls=":")
+            ax.hist(s, bins=bins, density=True, histtype="step", linewidth=1.7,
+                    color=C["synth"], label=f"synthetic (n={len(s):,})")
+            ax.axvline(np.median(s), color=C["synth"], lw=1.2, ls=":")
+            ax.text(np.median(s), ax.get_ylim()[1] * 0.78,
+                    f" synth med {np.median(s):.3f}", fontsize=7,
+                    color=C["synth"])
             drew = True
         ax.axvline(1.0, color="#9a9a9a", lw=0.8, ls="--", zorder=0)
         ax.set_title(CLS_NAME[cls])

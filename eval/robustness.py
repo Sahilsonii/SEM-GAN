@@ -127,23 +127,47 @@ def sweep(checkpoint: str, conf: float = 0.05, device: str = "0") -> dict:
             mp, mc, nd = _run(net, records, fn, mag, conf, device)
             d_map = (mp / base_map - 1) * 100 if base_map else 0.0
             d_conf = (mc / base_conf - 1) * 100 if base_conf else 0.0
-            # the desired behaviour: when mAP falls, confidence falls too
-            ok = (d_map >= -5) or (d_conf < 0)
+            # The desired behaviour: when mAP falls, confidence falls TOO, and by
+            # an amount that is not trivial next to the accuracy loss.
+            #
+            # This was `(d_map >= -5) or (d_conf < 0)` - direction only - which
+            # passed noise@0.02 as well-behaved because confidence fell 13.5%
+            # while mAP fell 96.1%. A flag that reports the single worst failure
+            # mode in the sweep as fine is worse than no flag. Requiring the
+            # confidence drop to reach a third of the accuracy drop separates
+            # "noticed" from "technically moved in the right direction".
+            rose = d_conf > 0
+            ok = (d_map >= -5) or (d_conf <= d_map / 3.0)
             rows.append({"perturbation": name, "magnitude": mag,
                          "mAP50": round(mp, 4), "mean_conf": round(mc, 4),
                          "delta_mAP_pct": round(d_map, 1),
                          "delta_conf_pct": round(d_conf, 1),
-                         "confidence_tracks_degradation": bool(ok)})
-            flag = "" if ok else "   <- OVERCONFIDENT: mAP fell but confidence did not"
+                         "confidence_tracks_degradation": bool(ok),
+                         "confidence_rose": bool(rose)})
+            flag = ("" if ok else
+                    "   <- CONFIDENCE ROSE while mAP fell" if rose else
+                    "   <- SILENT FAILURE: mAP collapsed, confidence barely moved")
             print(f"  {name:16} m={mag:<6} mAP50={mp:.4f} ({d_map:+6.1f}%)  "
                   f"conf={mc:.4f} ({d_conf:+6.1f}%){flag}")
 
     bad = [r for r in rows if not r["confidence_tracks_degradation"]]
+    rose = [r for r in bad if r["confidence_rose"]]
+    silent = [r for r in bad if not r["confidence_rose"]]
+    tag = lambda rs: [f"{r['perturbation']}@{r['magnitude']}" for r in rs]
     out = {"checkpoint": checkpoint, "conf_threshold": conf,
            "baseline": {"mAP50": round(base_map, 4), "mean_conf": round(base_conf, 4)},
            "rows": rows,
+           "criterion": ("well-behaved if mAP loss <= 5% OR the confidence drop "
+                         "reaches a third of the mAP drop; direction alone is "
+                         "not enough"),
+           "n_unnoticed_cases": len(bad),
+           "n_confidence_rose": len(rose),
+           "n_silent_failure": len(silent),
+           "confidence_rose": tag(rose),
+           "silent_failure": tag(silent),
+           # kept so older readers of this file do not break
            "n_overconfident_cases": len(bad),
-           "overconfident": [f"{r['perturbation']}@{r['magnitude']}" for r in bad]}
+           "overconfident": tag(bad)}
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "robustness.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
     print(f"[robust] {len(bad)}/{len(rows)} conditions where accuracy fell but "

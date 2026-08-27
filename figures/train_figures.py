@@ -118,7 +118,7 @@ def fig_headline_test():
               "3 + 3 seed keys it needs")
         return
 
-    fig, axes = plt.subplots(1, 2, figsize=(7.6, 4.2))
+    fig, axes = plt.subplots(1, 2, figsize=(9.4, 4.4))
     off = np.array([-0.13, 0.0, 0.13])
     n_gt = d[REAL_KEYS[0]].get("n_gt")
     n_img = d[REAL_KEYS[0]].get("images")
@@ -149,18 +149,22 @@ def fig_headline_test():
         ax.axhspan(gap_lo, gap_hi, color=C["accent"], alpha=0.07, zorder=0)
         ax.axhline(gap_lo, color=C["real"], lw=0.8, ls=":", zorder=1)
         ax.axhline(gap_hi, color=C["synth"], lw=0.8, ls=":", zorder=1)
-        ax.annotate(f"seed ranges disjoint:\nworst +5% ({gap_hi:.4f})\n"
-                    f"beats best real-only ({gap_lo:.4f})",
-                    (0.5, (gap_lo + gap_hi) / 2), ha="center", va="center",
-                    fontsize=6.8, color="#5a5a5a")
+        # This sat at x=0.5 in DATA coords - i.e. in the gap between the two
+        # bars - so it printed straight over them. Parked in reserved margin.
+        ax.annotate(f"seed ranges\ndisjoint\n\nworst +5%\n{gap_hi:.4f}\n"
+                    f"beats best\nreal-only\n{gap_lo:.4f}",
+                    (1.44, (gap_lo + gap_hi) / 2), ha="left", va="center",
+                    fontsize=6.4, color="#4a4a4a", linespacing=1.3)
+        ax.set_xlim(-0.55, 2.3)          # reserve the right margin for it
 
         for x, m, s in ((0, rm, rs), (1, sm, ss)):
             ax.annotate(f"{m:.4f}", (x, m + (s if np.isfinite(s) else 0)),
                         xytext=(0, 8), textcoords="offset points", ha="center",
                         fontsize=8, fontweight="semibold")
-            ax.annotate(f"sd {s:.4f}\nn=3 seeds", (x, 0), xytext=(0, 4),
-                        textcoords="offset points", ha="center", va="bottom",
-                        fontsize=7.0, color="white")
+            # pinned to y=0 this rendered half outside the axes; place it inside
+            # the bar at a fraction of the bar's own height instead
+            ax.annotate(f"sd {s:.4f}\nn=3 seeds", (x, m * 0.08),
+                        ha="center", va="bottom", fontsize=6.8, color="white")
 
         t, p = stats.ttest_ind(syn, real, equal_var=False)
         ax.set_title(f"{label}   {sm / rm:.2f}$\\times$\n"
@@ -171,14 +175,22 @@ def fig_headline_test():
         despine(ax)
 
     axes[0].legend(loc="upper left", fontsize=7)
-    note(axes[0],
-         f"LOCKED TEST SPLIT ({n_img} images, {n_gt} ground-truth boxes), never used for tuning "
-         f"or model selection. Bars = mean of n=3 seeds (1, 2, 42); error bars =\n"
-         f"sample sd (ddof=1); open dots = the three individual seed values. Welch two-sided "
-         f"t-test, unequal variance, n=3 per arm - at three seeds a p-value is a\n"
-         f"weak instrument and it is quoted only because the two seed ranges do not overlap at "
-         f"all (shaded gap). Ratios are ratios of the seed means.")
-    fig.tight_layout()
+
+    # Three very long caption lines made savefig(bbox="tight") widen the canvas
+    # to fit them, which flung the two axes to the outer edges. Wrap instead.
+    import textwrap
+    fig.tight_layout(rect=(0, 0.19, 1, 1))
+    fig.text(0.012, 0.155, "\n".join(textwrap.wrap(
+        f"LOCKED TEST SPLIT ({n_img} images, {n_gt} ground-truth boxes), never used for "
+        f"tuning or model selection. Bars = mean of n=3 seeds (1, 2, 42); error bars = "
+        f"sample sd (ddof=1); open dots are the three individual seed values. Welch "
+        f"two-sided t-test, unequal variance, n=3 per arm - at three seeds a p-value is a "
+        f"weak instrument, and it is quoted only because the two seed ranges do not "
+        f"overlap at all (shaded band). Ratios are ratios of the seed means.  "
+        f"CONFOUND: both arms ran 100 epochs, but the synthetic arm has 660 training "
+        f"images against 160, so it took 8,300 gradient steps against 2,000. This "
+        f"comparison is not step-matched and a step-matched baseline is outstanding.",
+        158)), fontsize=6.6, color="#5a5a5a", va="top", ha="left")
     save(fig, "headline_test_real_vs_synth", subdir="training")
 
 

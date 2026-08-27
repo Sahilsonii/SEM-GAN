@@ -287,8 +287,31 @@ Baseline mAP50 = 0.1773, mean conf = 0.1585 (val defect images).
 FESEM this is an operational limit, not a curiosity — low-dwell-time
 acquisition is noisy.
 
-4/21 conditions were overconfident: brightness_up@0.4, brightness_up@0.6,
-blur@0.2, downscale@0.5.
+### How many conditions does the model fail to notice? 10 of 21
+
+The flag in `eval/robustness.py` originally tested only the *direction* of the
+confidence change, so any drop at all counted as "tracking". That passed
+noise@0.02 — the worst failure in the sweep — as well-behaved, because
+confidence did fall, by 13.5%, while mAP fell 96.1%.
+
+The criterion now requires the confidence drop to reach **at least a third** of
+the mAP drop, and separates the two distinct failure modes:
+
+| mode | n | conditions |
+|---|---|---|
+| **confidence rose** while mAP fell | 4 | brightness_up@0.4, brightness_up@0.6, blur@0.2, downscale@0.5 |
+| **silent failure** — mAP collapsed, confidence barely moved | 6 | contrast_down@−0.3, **noise@0.02**, **noise@0.05**, blur@0.4, blur@0.6, downscale@0.7 |
+| well-behaved | 11 | — |
+
+So **10 of 21 perturbations degrade the detector without it registering the
+degradation**, not 4 as previously reported. For a triage tool whose value rests
+on knowing when to defer to a human, this is the most operationally serious
+finding in this document.
+
+> The earlier "4/21 overconfident" figure was not wrong about those 4 — it was
+> incomplete, because the test could not see a case where confidence moved the
+> right way by a negligible amount. Recomputed from the stored deltas; no
+> re-inference was needed.
 
 ---
 
