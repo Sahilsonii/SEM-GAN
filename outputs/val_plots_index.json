@@ -1,0 +1,206 @@
+[
+ {
+  "exp_id": "real_only_yolo11s_seed1",
+  "status": "ok",
+  "mAP50": 0.0724,
+  "mAP50_95": 0.0309,
+  "plots": [
+   "confusion_matrix.png",
+   "confusion_matrix_normalized.png",
+   "BoxPR_curve.png",
+   "BoxP_curve.png",
+   "BoxR_curve.png",
+   "BoxF1_curve.png"
+  ],
+  "dir": "experiments\\real_only_yolo11s_seed1\\val_plots",
+  "pred_visuals": [
+   "val_batch0_pred.jpg",
+   "val_batch1_pred.jpg",
+   "val_batch2_pred.jpg"
+  ]
+ },
+ {
+  "exp_id": "real_only_yolo11s_seed2",
+  "status": "ok",
+  "mAP50": 0.0652,
+  "mAP50_95": 0.0276,
+  "plots": [
+   "confusion_matrix.png",
+   "confusion_matrix_normalized.png",
+   "BoxPR_curve.png",
+   "BoxP_curve.png",
+   "BoxR_curve.png",
+   "BoxF1_curve.png"
+  ],
+  "dir": "experiments\\real_only_yolo11s_seed2\\val_plots",
+  "pred_visuals": [
+   "val_batch0_pred.jpg",
+   "val_batch1_pred.jpg",
+   "val_batch2_pred.jpg"
+  ]
+ },
+ {
+  "exp_id": "real_only_yolo11s_seed42",
+  "status": "ok",
+  "mAP50": 0.0513,
+  "mAP50_95": 0.0203,
+  "plots": [
+   "confusion_matrix.png",
+   "confusion_matrix_normalized.png",
+   "BoxPR_curve.png",
+   "BoxP_curve.png",
+   "BoxR_curve.png",
+   "BoxF1_curve.png"
+  ],
+  "dir": "experiments\\real_only_yolo11s_seed42\\val_plots",
+  "pred_visuals": [
+   "val_batch0_pred.jpg",
+   "val_batch1_pred.jpg",
+   "val_batch2_pred.jpg"
+  ]
+ },
+ {
+  "exp_id": "real_plus_controlled_yolo11s_seed42",
+  "status": "skipped: data yaml missing (C:\\Users\\Sahil\\Downloads\\SEM_GAN_Dissertation\\data\\yolo\\real_plus_controlled\\data.yaml)"
+ },
+ {
+  "exp_id": "scale_002_yolo11s_seed42",
+  "status": "ok",
+  "mAP50": 0.102,
+  "mAP50_95": 0.0427,
+  "plots": [
+   "confusion_matrix.png",
+   "confusion_matrix_normalized.png",
+   "BoxPR_curve.png",
+   "BoxP_curve.png",
+   "BoxR_curve.png",
+   "BoxF1_curve.png"
+  ],
+  "dir": "experiments\\scale_002_yolo11s_seed42\\val_plots",
+  "pred_visuals": [
+   "val_batch0_pred.jpg",
+   "val_batch1_pred.jpg",
+   "val_batch2_pred.jpg"
+  ]
+ },
+ {
+  "exp_id": "scale_005_refined_nofft_yolo11s_seed1",
+  "status": "ok",
+  "mAP50": 0.1065,
+  "mAP50_95": 0.0464,
+  "plots": [
+   "confusion_matrix.png",
+   "confusion_matrix_normalized.png",
+   "BoxPR_curve.png",
+   "BoxP_curve.png",
+   "BoxR_curve.png",
+   "BoxF1_curve.png"
+  ],
+  "dir": "experiments\\scale_005_refined_nofft_yolo11s_seed1\\val_plots",
+  "pred_visuals": [
+   "val_batch0_pred.jpg",
+   "val_batch1_pred.jpg",
+   "val_batch2_pred.jpg"
+  ]
+ },
+ {
+  "exp_id": "scale_005_yolo11s_seed1",
+  "status": "ok",
+  "mAP50": 0.1015,
+  "mAP50_95": 0.0419,
+  "plots": [
+   "confusion_matrix.png",
+   "confusion_matrix_normalized.png",
+   "BoxPR_curve.png",
+   "BoxP_curve.png",
+   "BoxR_curve.png",
+   "BoxF1_curve.png"
+  ],
+  "dir": "experiments\\scale_005_yolo11s_seed1\\val_plots",
+  "pred_visuals": [
+   "val_batch0_pred.jpg",
+   "val_batch1_pred.jpg",
+   "val_batch2_pred.jpg"
+  ]
+ },
+ {
+  "exp_id": "scale_005_yolo11s_seed2",
+  "status": "ok",
+  "mAP50": 0.1033,
+  "mAP50_95": 0.0438,
+  "plots": [
+   "confusion_matrix.png",
+   "confusion_matrix_normalized.png",
+   "BoxPR_curve.png",
+   "BoxP_curve.png",
+   "BoxR_curve.png",
+   "BoxF1_curve.png"
+  ],
+  "dir": "experiments\\scale_005_yolo11s_seed2\\val_plots",
+  "pred_visuals": [
+   "val_batch0_pred.jpg",
+   "val_batch1_pred.jpg",
+   "val_batch2_pred.jpg"
+  ]
+ },
+ {
+  "exp_id": "scale_005_yolo11s_seed42",
+  "status": "ok",
+  "mAP50": 0.1249,
+  "mAP50_95": 0.0525,
+  "plots": [
+   "confusion_matrix.png",
+   "confusion_matrix_normalized.png",
+   "BoxPR_curve.png",
+   "BoxP_curve.png",
+   "BoxR_curve.png",
+   "BoxF1_curve.png"
+  ],
+  "dir": "experiments\\scale_005_yolo11s_seed42\\val_plots",
+  "pred_visuals": [
+   "val_batch0_pred.jpg",
+   "val_batch1_pred.jpg",
+   "val_batch2_pred.jpg"
+  ]
+ },
+ {
+  "exp_id": "scale_010_yolo11s_seed42",
+  "status": "ok",
+  "mAP50": 0.101,
+  "mAP50_95": 0.0442,
+  "plots": [
+   "confusion_matrix.png",
+   "confusion_matrix_normalized.png",
+   "BoxPR_curve.png",
+   "BoxP_curve.png",
+   "BoxR_curve.png",
+   "BoxF1_curve.png"
+  ],
+  "dir": "experiments\\scale_010_yolo11s_seed42\\val_plots",
+  "pred_visuals": [
+   "val_batch0_pred.jpg",
+   "val_batch1_pred.jpg",
+   "val_batch2_pred.jpg"
+  ]
+ },
+ {
+  "exp_id": "scale_025_yolo11s_seed42",
+  "status": "ok",
+  "mAP50": 0.1002,
+  "mAP50_95": 0.0437,
+  "plots": [
+   "confusion_matrix.png",
+   "confusion_matrix_normalized.png",
+   "BoxPR_curve.png",
+   "BoxP_curve.png",
+   "BoxR_curve.png",
+   "BoxF1_curve.png"
+  ],
+  "dir": "experiments\\scale_025_yolo11s_seed42\\val_plots",
+  "pred_visuals": [
+   "val_batch0_pred.jpg",
+   "val_batch1_pred.jpg",
+   "val_batch2_pred.jpg"
+  ]
+ }
+]

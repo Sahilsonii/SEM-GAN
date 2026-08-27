@@ -26,8 +26,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 EXP = ROOT / "experiments"
+# Ultralytics 8.4 prefixes the curve plots "Box" (BoxPR_curve.png, not
+# PR_curve.png). Getting this list wrong does not lose any file, it only
+# undercounts them in the index, which is exactly how it went unnoticed.
 WANTED = ["confusion_matrix.png", "confusion_matrix_normalized.png",
-          "PR_curve.png", "P_curve.png", "R_curve.png", "F1_curve.png"]
+          "BoxPR_curve.png", "BoxP_curve.png", "BoxR_curve.png",
+          "BoxF1_curve.png"]
 
 
 def regen_one(exp_dir: Path, device: str, imgsz: int | None = None) -> dict:

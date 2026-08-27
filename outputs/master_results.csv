@@ -3,6 +3,7 @@ real_only_yolo11s_seed1,real_only,1,yolo11s,False,,1.0,100,640,8,0.0724,0.0309,0
 real_only_yolo11s_seed2,real_only,2,yolo11s,False,,1.0,100,640,8,0.0652,0.0276,0.1582,0.1053,9.41,635.2,4c64164
 real_only_yolo11s_seed42,real_only,42,yolo11s,False,,1.0,100,640,8,0.0513,0.0203,0.1261,0.0987,9.41,639.1,4c64164
 scale_002_yolo11s_seed42,scale_002,42,yolo11s,False,refined,0.02,100,640,8,0.102,0.0427,0.1511,0.1598,9.41,897.8,4c64164
+scale_005_refined_nofft_yolo11s_seed1,scale_005_refined_nofft,1,yolo11s,False,refined_nofft,0.05,100,640,8,0.1065,0.0464,0.1961,0.1297,9.41,2245.1,8c33216
 scale_005_yolo11s_seed1,scale_005,1,yolo11s,False,refined,0.05,100,640,8,0.1015,0.0419,0.2025,0.1183,9.41,2226.4,4c64164
 scale_005_yolo11s_seed2,scale_005,2,yolo11s,False,refined,0.05,100,640,8,0.1033,0.0438,0.1577,0.1391,9.41,2213.8,4c64164
 scale_005_yolo11s_seed42,scale_005,42,yolo11s,False,refined,0.05,100,640,8,0.1249,0.0525,0.2538,0.1325,9.41,1539.1,4c64164

@@ -23,45 +23,111 @@ best baseline seed (0.0794).
 Test exceeded validation (1.94× vs 1.74×), and validation is where every tuning
 decision was made — so the gain is transfer, not val overfitting.
 
+> ### ⚠ This comparison is confounded with optimisation steps
+>
+> Both arms ran **100 epochs**, but the synthetic arm has 660 training images
+> against 160, so at batch 8 it took **8,300 gradient steps vs 2,000** — 4.15×
+> more. Adding data to a fixed epoch budget silently adds compute.
+>
+> The claim that survives without qualification is therefore: *at a matched
+> **epoch** budget, adding 5% synthetic data doubles test mAP50.* Whether it
+> survives at a matched **step** budget is **not yet tested** — no step-matched
+> run exists (every 100-epoch run has `target_steps=None`).
+>
+> The control is cheap: `real_only` takes 10.6 min for 100 epochs, so a
+> step-matched baseline is ~415 epochs ≈ 44 min/seed, ~2.2 h for 3 seeds. It is
+> the single most important outstanding experiment in this project, because it
+> is the one that could overturn the headline. See §13.
+
 ### Gain is concentrated in small defects
 
-| scale bin | real only | + 5% synth | change |
-|---|---|---|---|
-| T1 sub-stride (<8 px) | 0.039 | 0.044 | +14% |
-| **T2 tiny (8–16 px)** | 0.316 | **0.398** | **+26%** |
-| T3 small (16–32 px) | 0.384 | 0.409 | +6% |
-| T4 medium+ (≥32 px) | 0.315 | 0.302 | −4% |
+Mean over the 3 seeds, on the locked test split. **AP50 is the metric**; recall
+is shown beside it because the two tell different stories at T4.
 
-Not a uniform lift — it is targeted at the bins where the real corpus is
-thinnest, and it disappears at T4.
+| scale bin | n gt | AP50 real | AP50 +5% | Δ AP | recall real | recall +5% |
+|---|---|---|---|---|---|---|
+| T1 sub-stride (<8 px) | 249 | 0.0096 | **0.0205** | **+114%** | 0.039 | 0.044 |
+| **T2 tiny (8–16 px)** | 561 | 0.0561 | **0.1410** | **+151%** | 0.316 | 0.398 |
+| T3 small (16–32 px) | 340 | 0.1084 | **0.1971** | **+82%** | 0.384 | 0.409 |
+| T4 medium+ (≥32 px) | 181 | 0.1187 | **0.1523** | **+28%** | 0.315 | 0.302 |
+
+The AP gain **decreases monotonically with defect size** — +151% at T2 down to
++28% at T4. That is the pattern the plan pre-registered as the strongest
+available finding, and it is cleaner than the recall column, which is
+non-monotonic.
+
+Note T4: AP rose 28% while **recall fell** (0.315 → 0.302). Synthetic data made
+the detector more precise on large defects without finding more of them.
+
+> **Correction.** An earlier version of this table printed the recall column
+> under an `AP50` header, giving +14/+26/+6/−4%. Those were recall deltas. The
+> mislabelling *understated* the effect and hid its monotonicity.
 
 ---
 
 ## 2. Scaling ladder — the optimum is low
 
+Seed 42, 100 epochs, batch 8 throughout. Step counts are
+`ceil(train_imgs / 8) × 100`, verified against each export manifest.
+
 | synthetic ratio | synth imgs | train imgs | steps | mAP50 | vs base |
 |---|---|---|---|---|---|
-| 0% | 0 | 160 | 6,000 | 0.0583 | 1.00× |
-| 2% | 200 | 360 | 4,500 | 0.1020 | 1.75× |
-| **5%** | **500** | **660** | **8,200** | **0.1249** | **2.14×** |
-| 10% | 1,000 | 1,160 | 14,500 | 0.1010 | 1.73× |
-| 25% | 2,500 | 2,660 | 33,200 | 0.1002 | 1.72× |
+| 0% | 0 | 160 | 2,000 | 0.0513 | 1.00× |
+| 2% | 200 | 360 | 4,500 | 0.1020 | 1.99× |
+| **5%** | **500** | **660** | **8,300** | **0.1249** | **2.44×** |
+| 10% | 1,000 | 1,160 | 14,500 | 0.1010 | 1.97× |
+| 25% | 2,500 | 2,660 | 33,300 | 0.1002 | 1.95× |
 
 *(single seed — the 5% point is n=3 elsewhere; the curve **shape** is n=1)*
 
-**Not a compute artifact**, in two independent directions:
-- 2% used **fewer** steps than baseline (4,500 vs 6,000) and still gained 1.75×
-- 25% used **5.5× more** steps than 5% (33,200 vs 8,200) and performed **worse**
+### What the shape does and does not prove
 
-An optimum in the middle that degrades as compute rises cannot be explained by
-optimisation budget. This also explains the early failures in this project: at
-98% synthetic (10,000 vs 160 real) the setup sat ~20× past the optimum.
+The **falling limb is clean.** 25% used **4.0× more** steps than 5% (33,300 vs
+8,300) and performed **worse** (0.1002 vs 0.1249). More data *and* more compute
+producing a worse detector cannot be a compute artifact, and it is the direct
+evidence that this project's early failure — 98% synthetic, ~20× past the
+optimum — was a ratio problem rather than a synthesis-quality problem.
+
+The **rising limb is confounded.** Steps climb monotonically with ratio
+(2,000 → 4,500 → 8,300) exactly as mAP50 climbs (0.0513 → 0.1020 → 0.1249), so
+0%→5% cannot be separated from optimisation budget by this table alone. The
+step-matched baseline in §13 is what settles it.
+
+> **Corrections to an earlier version of this table.** The 0% row read
+> `0.0583 / 6,000 steps`; both belonged to a superseded 300-epoch run that the
+> append-only CSV had left behind. The 100-epoch value is **0.0513 / 2,000
+> steps**, which raises every ratio. It also invalidates a claim made here
+> earlier — that 2% used *fewer* steps than baseline. It used 2.25× **more**.
+> That argument is withdrawn; the falling-limb argument above is unaffected and
+> was always the stronger of the two.
 
 ---
 
 ## 3. H2 — does the FFT discriminator branch help?
 
-Two independent lines of evidence, both favourable:
+**Short answer: it helps the generator on the axis it targets, and that does
+not reach the detector.** Three lines of evidence, and the one ranked highest by
+the pre-declared metric hierarchy is null.
+
+### The line that matters most — detection utility (null)
+
+Same pool ratio, same seed, same 100-epoch protocol; the FFT branch of the
+refiner discriminator is the only difference.
+
+| refiner discriminator | val mAP50 | val mAP50-95 |
+|---|---|---|
+| spatial ⊕ **FFT** (`scale_005_seed1`) | 0.1015 | 0.0419 |
+| spatial only (`scale_005_refined_nofft_seed1`) | **0.1065** | **0.0464** |
+| difference | **+0.0050 in favour of NO FFT** | +0.0045 |
+
+The FFT branch did **not** improve detection, and the sign is against it. The
+difference is far inside seed noise — the three `scale_005` seeds span
+0.1015–0.1249 (Δ 0.023), i.e. **4.7× the size of this effect** — so the honest
+reading is **no measurable detection-level effect**, not a win for spatial-only.
+n=1 per arm; a 3-seed replication would cost ~2 h and is not worth it to
+resolve an effect this far below the noise floor.
+
+### The lines that favour it — generator-side only
 
 **Frequency-domain gap** (`stage 10`, 40 real vs 40 synthetic per pool):
 
@@ -80,6 +146,27 @@ FFT-off had **11/30**. Consistent across all four refiner runs this session.
 > Caveat: FFT-off achieved *lower* reconstruction loss (rec 0.0402 vs 0.0458).
 > `rec` is pixel reconstruction, not frequency realism, so it is the wrong
 > metric for H2 — but it is reported rather than omitted.
+
+### What this means for the domain-gap → utility question
+
+This is a clean instance of the effect §8.2 of the plan was built to detect. The
+FFT branch cut the **L2 frequency gap by 62%** and the detector did not care.
+
+**A large, targeted, measurable reduction in a distribution distance produced no
+downstream utility gain.** The metric hierarchy was declared before any of these
+numbers existed and puts real detection gain above frequency consistency
+precisely so this could not be reported the other way round. So:
+
+- H2 is **not supported** at the level that matters.
+- The FFT branch is retained anyway for a different, defensible reason: it
+  eliminated discriminator saturation (0/30 vs 11/30 epochs), which is a
+  training-stability argument, not a realism one.
+- More broadly, this is evidence **against** the common practice of selecting a
+  generative model by distribution distance to real data. On this corpus the
+  frequency gap was actively misleading.
+
+One honest limit on that inference: with a single seed per arm this shows the
+*absence of a detectable* effect, not the absence of an effect.
 
 ---
 
@@ -260,12 +347,69 @@ them as negatives would have injected 65 confident false negatives.
   unlabelled PbI₂ images are the unlock.
 - **Curve shape is single-seed** at 2%/10%/25%. Only the 5%-vs-baseline contrast
   is replicated.
+- **The headline is step-confounded.** Equal epochs, unequal steps (8,300 vs
+  2,000). Untested until §13 runs — this is the largest live threat to the
+  central claim, not a footnote.
+- **H2 is not supported at the detection level** (§3). Frequency realism
+  improved 62% and detection did not move.
 - **Explainability is not yet usable:** defect density ranges 0.3%–99.8% of frame
   across val images, so background-attribution ratio measures annotation density
   rather than model attention. n=3 cannot support a pointing-game estimate.
 - **T1 remains unsolved:** best sub-stride recall is 0.044. This is the honest
   limit of a P3-stride detector on <8 px objects; the P2 ablation was never run.
 - **Sizes are in pixels only** — see §10.
+
+---
+
+## 13. Outstanding: the step-matched baseline
+
+The only experiment that could overturn §1. Both headline arms ran 100 epochs,
+but 660 vs 160 training images means 8,300 vs 2,000 gradient steps, so the
+synthetic arm received 4.15× the optimisation. Nothing in this document
+separates *synthetic data helped* from *more steps helped*.
+
+```bash
+# real-only at the synthetic arm's step budget (~415 epochs, ~44 min/seed)
+for s in 1 2 42; do
+  py -3.10 train_detector.py --regime real_only --seed $s --target-steps 8300
+done
+```
+
+Reading, fixed in advance so it cannot be fitted afterwards:
+
+| step-matched real-only test mAP50 | conclusion |
+|---|---|
+| stays near 0.069 | the 1.94× is **synthetic data**. Headline stands as written. |
+| rises to ~0.09–0.11 | the gain is **part data, part compute**. Report the matched ratio, not 1.94×. |
+| reaches ~0.13 | the gain was **compute**. §1 must be rewritten and the paper's central claim becomes the scaling optimum plus the negative transfer result. |
+
+The third outcome is a real possibility and the experiment is being run to find
+out, not to confirm. `--target-steps` already exists and is tested.
+
+---
+
+## 14. Figures
+
+All regenerated by `py -3.10 figures/<module>.py`; none hand-edited.
+
+| directory | n | module | content |
+|---|---|---|---|
+| `outputs/figures/generation/` | 8 | `figures/gen_figures.py` | size distribution vs pre-registered bins, scale balance, aspect (bug regression evidence), severity/morphology, defect conspicuity, radial power spectrum, domain gap 4 levels, sample grid |
+| `outputs/figures/training/` | 8 | `figures/train_figures.py` | headline test bars with per-seed scatter, scaling ladder, training/loss curves, per-bin gain, classical-vs-deep, efficiency, per-class AP |
+| `outputs/figures/diagnostics/` | 6 | `figures/eval_figures.py` | reliability diagram, risk–coverage, robustness Δ-mAP vs Δ-confidence, failure taxonomy, counterfactual severity, explainability |
+| `experiments/*/val_plots/` | 60+30 | `figures/regen_val_plots.py` | confusion matrix (raw + normalised), PR/P/R/F1 curves, and label-vs-prediction visuals for 10 runs |
+
+`figures/style.py` holds the shared palette and rcParams so the four families
+read as one document. No seaborn — matplotlib covers it and a new dependency on
+a working 4 GB CUDA environment is a bad trade.
+
+> Two figure-code bugs found and fixed while building these, both of the
+> silent-wrong kind: (1) `train_detector` passed `plots=False` to its final
+> `val()`, so **no run had ever produced a confusion matrix or PR curve** — the
+> files were simply absent, with no error. Recovered from saved weights by
+> re-validating, no retraining. (2) The synthetic samplers took the *first* N
+> sorted files, and `syn_*_pbi2_*` sorts before `syn_*_pinhole_*`, so every
+> synthetic distribution plotted was silently PbI₂-only. Now an even stride.
 
 ---
 
