@@ -262,8 +262,14 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
                 )
             elapsed = time.time() - t0
 
+            # plots=True here, not during training. Ultralytics re-renders its
+            # plot set every epoch when train(plots=True), which is wasteful on a
+            # 4 GB laptop; but this val pass runs ONCE and is the only thing that
+            # emits confusion_matrix.png, PR_curve.png, F1_curve.png and
+            # P/R_curve.png into experiments/<exp_id>/run/. Those were silently
+            # absent from every run because this said plots=False.
             metrics = net.val(data=str(data_yaml), split="val", imgsz=imgsz,
-                              batch=batch, device=device, plots=False)
+                              batch=batch, device=device, plots=True)
             box = metrics.box
             result = {
                 **config,

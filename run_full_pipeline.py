@@ -322,7 +322,7 @@ STAGES = [
           ("torch",), stage5_refiner),
     Stage(6, "quality",   "Build refined synthetic pools from stage-5 checkpoints",
           ("torch",), stage6_quality),
-    Stage(7, "detector",  "Detector matrix E-A..E-E (YOLO11s+P2, RF-DETR)",
+    Stage(7, "detector",  "Detector matrix E-A..E-E (YOLO11s+P2; RT-DETR via --model)",
           ("ultralytics",), stage7_detector),
     Stage(8, "uncertain", "Open-set PbI2 + calibration (ECE, Brier, risk-coverage)",
           ("ultralytics", "sklearn"), stage8_uncertainty),
@@ -340,7 +340,7 @@ STAGES = [
           ("ultralytics",), stage14_explain),
     Stage(15, "interpret", "Image-derived morphology indices (section 13)",
           ("cv2",), stage15_interpret),
-    Stage(16, "report",    "Assemble outputs/RESULTS.md",
+    Stage(16, "report",    "Assemble outputs/auto_table.md (RESULTS.md is hand-written)",
           (), stage16_report),
 ]
 FIRST_UNIMPLEMENTED = 5   # kept for reference; superseded by IMPLEMENTED below
@@ -480,7 +480,13 @@ def preflight() -> None:
     print("=" * 74)
     for s in STAGES:
         miss = _missing(s.needs)
-        if s.num not in IMPLEMENTED:
+        if s.num == 9:
+            # Deliberately outside IMPLEMENTED so --stage all can never touch the
+            # locked test set. "TODO" read as "never evaluated", which is the
+            # opposite of the truth once the manual gate has been used, so the
+            # status reports whether the gated artifact exists.
+            status = "DONE" if (OUT / "final_test_results.json").exists() else "GATED"
+        elif s.num not in IMPLEMENTED:
             status = "TODO"
         elif miss:
             status = "BLOCKED"
