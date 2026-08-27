@@ -393,10 +393,18 @@ separates *synthetic data helped* from *more steps helped*.
 
 ```bash
 # real-only at the synthetic arm's step budget (~415 epochs, ~44 min/seed)
+# --patience is NOT optional here: the default is 30, which would early-stop
+# a 415-epoch run and silently un-match the very thing being matched.
 for s in 1 2 42; do
-  py -3.10 train_detector.py --regime real_only --seed $s --target-steps 8300
+  py -3.10 train_detector.py --regime real_only --seed $s \
+      --target-steps 8300 --patience 500
 done
 ```
+
+Verify before trusting the result: the console must print
+`step-budget: n_train=160 steps/epoch=20 -> epochs=415`, and
+`experiments/real_only_yolo11s_seed<N>/run/results.csv` must contain 415 rows.
+Fewer rows means it early-stopped and the run is not step-matched.
 
 Reading, fixed in advance so it cannot be fitted afterwards:
 
