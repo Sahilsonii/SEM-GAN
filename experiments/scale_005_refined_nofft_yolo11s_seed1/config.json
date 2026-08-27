@@ -1,0 +1,17 @@
+{
+ "exp_id": "scale_005_refined_nofft_yolo11s_seed1",
+ "regime": "scale_005_refined_nofft",
+ "seed": 1,
+ "epochs": 100,
+ "imgsz": 640,
+ "batch": 8,
+ "model": "yolo11s",
+ "p2_head": false,
+ "weights": "yolo11s.pt",
+ "synth_pool": "refined_nofft",
+ "synth_ratio": 0.05,
+ "device": "0",
+ "git_sha": "8c33216",
+ "target_steps": null,
+ "data_yaml": "C:\\Users\\Sahil\\Downloads\\SEM_GAN_Dissertation\\data\\yolo\\scale_005_refined_nofft\\data.yaml"
+}

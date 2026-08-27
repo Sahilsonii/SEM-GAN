@@ -1,0 +1,31 @@
+{
+ "source": "expert_boxes",
+ "checkpoint": null,
+ "split": "val",
+ "images": 12,
+ "boxes_interpreted": 640,
+ "relative_depression_index_RDI": {
+  "n": 198,
+  "mean": 0.8033,
+  "median": 1.0,
+  "p10": 0.5,
+  "p90": 1.0
+ },
+ "regions_flagged_by_RDI_criterion": 118,
+ "RDI_flag_threshold": 0.75,
+ "boundary_proximity_index_BPI": {
+  "n": 1,
+  "mean": 0.9305,
+  "median": 0.9305,
+  "p10": 0.9305,
+  "p90": 0.9305
+ },
+ "intensity_proxy_dVoc_index_au": {
+  "n": 12,
+  "mean": 8.0678,
+  "median": 3.9199,
+  "p10": 2.9804,
+  "p90": 17.2271
+ },
+ "UNITS_WARNING": "All quantities are IMAGE-DERIVED INDICES, not measurements. RDI is dimensionless (shape-from-shading min-max normalised to a hard-coded 500 nm assumption). Flagged regions are threshold crossings on that index, NOT electrically confirmed shunts. BPI is a mean Gaussian distance weight to Canny ridges, NOT a passivation fraction. The dVoc index is derived from an intensity-based PL surrogate - no photoluminescence was measured - so it is in arbitrary units, not millivolts. No nm-per-pixel calibration exists for this corpus: the FESEM pixel-size headers were destroyed by JPEG re-encoding in all 440 source images and no TIF originals survive."
+}

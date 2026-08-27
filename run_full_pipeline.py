@@ -150,12 +150,13 @@ def stage7_detector(args):
     docstring on train_detector.train for why a fixed epoch count does not
     scale sanely with a 5000/class pool."""
     from train_detector import train
-    pool = "refined" if args.refined else "controlled"
+    pool = args.pool or ("refined" if args.refined else "controlled")
 
     if args.ratios:
         rows = []
         for ratio in (float(r) for r in args.ratios.split(",")):
-            rows.append(train(regime=f"scale_{int(ratio*100):03d}", seed=args.seed,
+            tag = "" if pool in ("refined", "controlled") else f"_{pool}"
+            rows.append(train(regime=f"scale_{int(ratio*100):03d}{tag}", seed=args.seed,
                               epochs=args.epochs, imgsz=args.imgsz, batch=args.batch,
                               p2=args.p2, synth_pool=pool, synth_ratio=ratio,
                               target_steps=args.target_steps, resume=args.resume))
@@ -269,7 +270,7 @@ SPLITS = ROOT / "data" / "splits"
 
 def _detector_exp_ids(args) -> list[str]:
     """Experiment dirs stage 7 must finish for the current CLI flags."""
-    pool = "refined" if args.refined else "controlled"
+    pool = args.pool or ("refined" if args.refined else "controlled")
     suffix = "-p2" if args.p2 else ""
     tail = f"_yolo11s{suffix}_seed{args.seed}"
     if args.ratios:
@@ -455,6 +456,8 @@ def main() -> int:
                     help="stage 8: reuse an existing pinhole-only .pt instead of training one")
     ap.add_argument("--refiner-epochs", type=int, default=30)
     ap.add_argument("--refiner-batch", type=int, default=16)
+    ap.add_argument("--pool", default=None,
+                    help="explicit synthetic pool name, e.g. refined_nofft for the H2 ablation")
     ap.add_argument("--refined", action="store_true",
                     help="stage 7: use the GAN-refined pool (stage 6) instead of raw renderer output")
     ap.add_argument("--ratios", default=None,
