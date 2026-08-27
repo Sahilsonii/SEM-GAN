@@ -304,18 +304,43 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
             raise
 
 
+MASTER_FIELDS = ["exp_id", "regime", "seed", "model", "p2_head", "synth_pool",
+                 "synth_ratio", "epochs", "imgsz", "batch", "mAP50", "mAP50_95",
+                 "precision", "recall", "params_M", "train_seconds", "git_sha"]
+
+
 def _append_master(row: dict) -> None:
+    """UPSERT by exp_id - a re-run REPLACES its row rather than stacking a duplicate.
+
+    This was append-only, which quietly corrupted every aggregate. exp_id is
+    deterministic (regime_model_seed), so re-running an experiment - after a
+    crash, a resume, or a protocol change - appended a second row for the same
+    experiment. The file reached 14 rows for 10 distinct experiments, and
+    real_only_seed42 appeared twice with DIFFERENT values (0.0583 at 300 epochs,
+    0.0513 at 100). Naive grouping then reported real_only as n=4 over
+    "seeds 1,2,42,42", averaging a stale 300-epoch result into a 100-epoch mean.
+    Silent, and exactly the kind of thing that survives into a results table.
+    """
     import csv
+
     MASTER_CSV.parent.mkdir(parents=True, exist_ok=True)
-    fields = ["exp_id", "regime", "seed", "model", "p2_head", "synth_pool",
-              "synth_ratio", "epochs", "imgsz", "batch", "mAP50", "mAP50_95",
-              "precision", "recall", "params_M", "train_seconds", "git_sha"]
-    exists = MASTER_CSV.exists()
-    with MASTER_CSV.open("a", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
-        if not exists:
-            w.writeheader()
-        w.writerow(row)
+    existing: dict[str, dict] = {}
+    if MASTER_CSV.exists():
+        with MASTER_CSV.open(newline="", encoding="utf-8") as fh:
+            for r in csv.DictReader(fh):
+                if r.get("exp_id"):
+                    existing[r["exp_id"]] = r          # later row wins on read too
+
+    existing[row["exp_id"]] = {k: row.get(k, "") for k in MASTER_FIELDS}
+
+    tmp = MASTER_CSV.with_suffix(".csv.tmp")
+    with tmp.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=MASTER_FIELDS, extrasaction="ignore")
+        w.writeheader()
+        for eid in sorted(existing):
+            w.writerow(existing[eid])
+    tmp.replace(MASTER_CSV)                            # atomic, so a crash mid-write
+                                                       # cannot truncate the results
 
 
 if __name__ == "__main__":

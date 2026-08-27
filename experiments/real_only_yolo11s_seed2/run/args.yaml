@@ -12,14 +12,14 @@ save_period: -1
 cache: false
 device: '0'
 workers: 2
-project: C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\experiments\real_only_yolo11s_seed42
+project: C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\experiments\real_only_yolo11s_seed2
 name: run
 exist_ok: true
 pretrained: true
 cls_remap: true
 optimizer: auto
 verbose: true
-seed: 42
+seed: 2
 deterministic: true
 single_cls: false
 rect: false
@@ -113,4 +113,4 @@ auto_augment: randaugment
 erasing: 0.0
 cfg: null
 tracker: tracktrack.yaml
-save_dir: C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\experiments\real_only_yolo11s_seed42\run
+save_dir: C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\experiments\real_only_yolo11s_seed2\run

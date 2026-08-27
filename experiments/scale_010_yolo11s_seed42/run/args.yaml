@@ -1,7 +1,7 @@
 task: detect
 mode: train
 model: yolo11s.pt
-data: C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\data\yolo\real_only\data.yaml
+data: C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\data\yolo\scale_010\data.yaml
 epochs: 100
 time: null
 patience: 30
@@ -12,7 +12,7 @@ save_period: -1
 cache: false
 device: '0'
 workers: 2
-project: C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\experiments\real_only_yolo11s_seed42
+project: C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\experiments\scale_010_yolo11s_seed42
 name: run
 exist_ok: true
 pretrained: true
@@ -113,4 +113,4 @@ auto_augment: randaugment
 erasing: 0.0
 cfg: null
 tracker: tracktrack.yaml
-save_dir: C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\experiments\real_only_yolo11s_seed42\run
+save_dir: C:\Users\Sahil\Downloads\SEM_GAN_Dissertation\experiments\scale_010_yolo11s_seed42\run

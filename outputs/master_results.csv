@@ -1,3 +1,10 @@
 exp_id,regime,seed,model,p2_head,synth_pool,synth_ratio,epochs,imgsz,batch,mAP50,mAP50_95,precision,recall,params_M,train_seconds,git_sha
-real_only_yolo11s_seed42,real_only,42,yolo11s,False,,1.0,300,640,8,0.0583,0.0225,0.6123,0.0996,9.41,497.1,30a3c42
-real_plus_controlled_yolo11s_seed42,real_plus_controlled,42,yolo11s,False,controlled,1.0,5,640,8,0.0078,0.0021,0.036,0.0301,9.41,1164.0,30a3c42
+real_only_yolo11s_seed1,real_only,1,yolo11s,False,,1.0,100,640,8,0.0724,0.0309,0.1472,0.0987,9.41,634.7,4c64164
+real_only_yolo11s_seed2,real_only,2,yolo11s,False,,1.0,100,640,8,0.0652,0.0276,0.1582,0.1053,9.41,635.2,4c64164
+real_only_yolo11s_seed42,real_only,42,yolo11s,False,,1.0,100,640,8,0.0513,0.0203,0.1261,0.0987,9.41,639.1,4c64164
+scale_002_yolo11s_seed42,scale_002,42,yolo11s,False,refined,0.02,100,640,8,0.102,0.0427,0.1511,0.1598,9.41,897.8,4c64164
+scale_005_yolo11s_seed1,scale_005,1,yolo11s,False,refined,0.05,100,640,8,0.1015,0.0419,0.2025,0.1183,9.41,2226.4,4c64164
+scale_005_yolo11s_seed2,scale_005,2,yolo11s,False,refined,0.05,100,640,8,0.1033,0.0438,0.1577,0.1391,9.41,2213.8,4c64164
+scale_005_yolo11s_seed42,scale_005,42,yolo11s,False,refined,0.05,100,640,8,0.1249,0.0525,0.2538,0.1325,9.41,1539.1,4c64164
+scale_010_yolo11s_seed42,scale_010,42,yolo11s,False,refined,0.1,100,640,8,0.101,0.0442,0.199,0.1269,9.41,2610.9,4c64164
+scale_025_yolo11s_seed42,scale_025,42,yolo11s,False,refined,0.25,100,640,8,0.1002,0.0437,0.1917,0.1269,9.41,7698.2,4c64164

@@ -1,7 +1,7 @@
 {
- "exp_id": "real_only_yolo11s_seed42",
+ "exp_id": "real_only_yolo11s_seed2",
  "regime": "real_only",
- "seed": 42,
+ "seed": 2,
  "epochs": 100,
  "imgsz": 640,
  "batch": 8,

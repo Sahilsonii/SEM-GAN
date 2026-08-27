@@ -20,11 +20,22 @@ EXP = ROOT / "experiments"
 
 
 def _rows() -> list[dict]:
+    """Latest row per exp_id.
+
+    train_detector now upserts, so the file should already be unique - but
+    dedup on READ as well, because a hand-edited or older file can still carry
+    duplicates, and averaging a stale run into a seed mean is silent and ends
+    up in a results table. Belt and braces on the one number that matters.
+    """
     p = OUT / "master_results.csv"
     if not p.exists():
         return []
     with p.open(encoding="utf-8") as fh:
-        return list(csv.DictReader(fh))
+        latest: dict[str, dict] = {}
+        for r in csv.DictReader(fh):
+            if r.get("exp_id"):
+                latest[r["exp_id"]] = r
+    return [latest[k] for k in sorted(latest)]
 
 
 def _agg(rows: list[dict]) -> dict:
