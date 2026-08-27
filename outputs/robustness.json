@@ -1,0 +1,206 @@
+{
+ "checkpoint": "experiments/scale_005_yolo11s_seed1/run/weights/best.pt",
+ "conf_threshold": 0.05,
+ "baseline": {
+  "mAP50": 0.1773,
+  "mean_conf": 0.1585
+ },
+ "rows": [
+  {
+   "perturbation": "brightness_up",
+   "magnitude": 0.2,
+   "mAP50": 0.1732,
+   "mean_conf": 0.1699,
+   "delta_mAP_pct": -2.3,
+   "delta_conf_pct": 7.2,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "brightness_up",
+   "magnitude": 0.4,
+   "mAP50": 0.1579,
+   "mean_conf": 0.1737,
+   "delta_mAP_pct": -10.9,
+   "delta_conf_pct": 9.6,
+   "confidence_tracks_degradation": false
+  },
+  {
+   "perturbation": "brightness_up",
+   "magnitude": 0.6,
+   "mAP50": 0.1258,
+   "mean_conf": 0.1641,
+   "delta_mAP_pct": -29.0,
+   "delta_conf_pct": 3.5,
+   "confidence_tracks_degradation": false
+  },
+  {
+   "perturbation": "brightness_down",
+   "magnitude": -0.2,
+   "mAP50": 0.1314,
+   "mean_conf": 0.1405,
+   "delta_mAP_pct": -25.9,
+   "delta_conf_pct": -11.3,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "brightness_down",
+   "magnitude": -0.4,
+   "mAP50": 0.0806,
+   "mean_conf": 0.1235,
+   "delta_mAP_pct": -54.5,
+   "delta_conf_pct": -22.1,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "brightness_down",
+   "magnitude": -0.6,
+   "mAP50": 0.0294,
+   "mean_conf": 0.0991,
+   "delta_mAP_pct": -83.4,
+   "delta_conf_pct": -37.4,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "contrast_down",
+   "magnitude": -0.3,
+   "mAP50": 0.1214,
+   "mean_conf": 0.145,
+   "delta_mAP_pct": -31.5,
+   "delta_conf_pct": -8.5,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "contrast_down",
+   "magnitude": -0.5,
+   "mAP50": 0.0409,
+   "mean_conf": 0.1032,
+   "delta_mAP_pct": -76.9,
+   "delta_conf_pct": -34.9,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "contrast_down",
+   "magnitude": -0.7,
+   "mAP50": 0.0017,
+   "mean_conf": 0.0728,
+   "delta_mAP_pct": -99.0,
+   "delta_conf_pct": -54.0,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "noise",
+   "magnitude": 0.02,
+   "mAP50": 0.007,
+   "mean_conf": 0.1371,
+   "delta_mAP_pct": -96.1,
+   "delta_conf_pct": -13.5,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "noise",
+   "magnitude": 0.05,
+   "mAP50": 0.0006,
+   "mean_conf": 0.1356,
+   "delta_mAP_pct": -99.7,
+   "delta_conf_pct": -14.4,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "noise",
+   "magnitude": 0.1,
+   "mAP50": 0.0025,
+   "mean_conf": 0.1063,
+   "delta_mAP_pct": -98.6,
+   "delta_conf_pct": -32.9,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "blur",
+   "magnitude": 0.2,
+   "mAP50": 0.1664,
+   "mean_conf": 0.1799,
+   "delta_mAP_pct": -6.1,
+   "delta_conf_pct": 13.5,
+   "confidence_tracks_degradation": false
+  },
+  {
+   "perturbation": "blur",
+   "magnitude": 0.4,
+   "mAP50": 0.1224,
+   "mean_conf": 0.1529,
+   "delta_mAP_pct": -31.0,
+   "delta_conf_pct": -3.5,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "blur",
+   "magnitude": 0.6,
+   "mAP50": 0.0758,
+   "mean_conf": 0.1462,
+   "delta_mAP_pct": -57.2,
+   "delta_conf_pct": -7.7,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "jpeg",
+   "magnitude": 0.3,
+   "mAP50": 0.1768,
+   "mean_conf": 0.1491,
+   "delta_mAP_pct": -0.3,
+   "delta_conf_pct": -5.9,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "jpeg",
+   "magnitude": 0.6,
+   "mAP50": 0.1767,
+   "mean_conf": 0.1685,
+   "delta_mAP_pct": -0.3,
+   "delta_conf_pct": 6.4,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "jpeg",
+   "magnitude": 0.85,
+   "mAP50": 0.1698,
+   "mean_conf": 0.1726,
+   "delta_mAP_pct": -4.2,
+   "delta_conf_pct": 8.9,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "downscale",
+   "magnitude": 0.25,
+   "mAP50": 0.1745,
+   "mean_conf": 0.179,
+   "delta_mAP_pct": -1.6,
+   "delta_conf_pct": 13.0,
+   "confidence_tracks_degradation": true
+  },
+  {
+   "perturbation": "downscale",
+   "magnitude": 0.5,
+   "mAP50": 0.1653,
+   "mean_conf": 0.1827,
+   "delta_mAP_pct": -6.8,
+   "delta_conf_pct": 15.3,
+   "confidence_tracks_degradation": false
+  },
+  {
+   "perturbation": "downscale",
+   "magnitude": 0.7,
+   "mAP50": 0.1386,
+   "mean_conf": 0.1584,
+   "delta_mAP_pct": -21.8,
+   "delta_conf_pct": -0.0,
+   "confidence_tracks_degradation": true
+  }
+ ],
+ "n_overconfident_cases": 4,
+ "overconfident": [
+  "brightness_up@0.4",
+  "brightness_up@0.6",
+  "blur@0.2",
+  "downscale@0.5"
+ ]
+}
