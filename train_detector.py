@@ -127,6 +127,18 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
     Net = RTDETR if model.startswith("rtdetr") else YOLO
     if p2 and Net is RTDETR:
         raise ValueError("--p2 is a YOLO topology; rtdetr has no -p2 variant")
+    if p2:
+        # Resolve the topology NOW, before the experiment dir is wiped. The
+        # first attempt at this arm learned from a traceback, after rmtree,
+        # that ultralytics 8.4 ships P2 configs for yolov8 and yolo26 only.
+        from ultralytics.nn.tasks import yaml_model_load
+        try:
+            yaml_model_load(f"{model}-p2.yaml")
+        except FileNotFoundError:
+            raise SystemExit(
+                f"[train] '{model}-p2.yaml' does not exist in this ultralytics; "
+                f"P2 heads ship for yolov8*/yolo26* only. Use --model yolov8s --p2 "
+                f"and pair it with a plain --model yolov8s run for the ablation.")
 
     if synth_only and not synth_pool:
         raise ValueError("--synth-only needs --synth-pool")
