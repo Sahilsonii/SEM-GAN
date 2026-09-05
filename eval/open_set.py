@@ -151,17 +151,23 @@ def image_level(net, split: str, conf_floor: float = 0.001) -> dict:
     return res
 
 
-def box_level(net, split: str, conf: float = 0.25, iou_thr: float = 0.5) -> dict:
-    """Per ground-truth-box hit rate at an operating threshold.
+THRESHOLDS = (0.05, 0.10, 0.25)
 
-    A GT box is 'hit' if any detection overlaps it at IoU >= iou_thr. On PbI2
-    boxes a hit is a false alarm on the unknown class; on pinhole boxes it is
-    recall on the known class. No assignment ambiguity, no dependence on
-    which class the detector *called* it (a pinhole-only detector has one
-    class anyway).
+
+def box_level(net, split: str, iou_thr: float = 0.5,
+              conf_floor: float = 0.001, thresholds=THRESHOLDS) -> dict:
+    """Per ground-truth-box score: the confidence of the best detection that
+    overlaps it at IoU >= iou_thr, or 0 if nothing does.
+
+    Every one of the 735 pinhole and 596 PbI2 boxes in test gets a score, so
+    the open-set question becomes an AUROC over 1,331 samples - pinhole boxes
+    positive, PbI2 boxes negative - instead of three images. Rates at a few
+    thresholds are kept beside it because AUROC alone hides the operating
+    point: a first draft reported a 0.0 false-alarm rate at conf=0.25 that
+    looked like perfect rejection and was actually a detector that fired on
+    2% of pinholes too. Silence is not discrimination.
     """
-    hits = {PBI2: 0, PINHOLE: 0}
-    totals = {PBI2: 0, PINHOLE: 0}
+    scores = {PBI2: [], PINHOLE: []}
     n_images = 0
     for r in _records(split):
         if r["n_boxes"] == 0:
@@ -171,44 +177,58 @@ def box_level(net, split: str, conf: float = 0.25, iou_thr: float = 0.5) -> dict
             continue
         n_images += 1
         H, W = img.shape[:2]
-        res = net.predict(img, conf=conf, verbose=False)[0]
-        pred = (res.boxes.xyxy.cpu().numpy().astype(np.float32)
-                if len(res.boxes) else np.zeros((0, 4), np.float32))
+        res = net.predict(img, conf=conf_floor, verbose=False)[0]
+        if len(res.boxes):
+            pred = res.boxes.xyxy.cpu().numpy().astype(np.float32)
+            conf = res.boxes.conf.cpu().numpy().astype(np.float32)
+        else:
+            pred, conf = np.zeros((0, 4), np.float32), np.zeros(0, np.float32)
         gt = np.stack([xywhn_to_xyxy(b, W, H) for b in r["boxes"]])
         ious = iou_matrix(pred, gt)                     # (n_pred, n_gt)
-        hit = ious.max(axis=0) >= iou_thr if len(pred) else np.zeros(len(gt), bool)
-        for b, h in zip(r["boxes"], hit):
-            totals[b[0]] += 1
-            hits[b[0]] += int(h)
+        for j, b in enumerate(r["boxes"]):
+            over = ious[:, j] >= iou_thr if len(pred) else np.zeros(0, bool)
+            scores[b[0]].append(float(conf[over].max()) if over.any() else 0.0)
 
-    def rate(c):
-        return round(hits[c] / totals[c], 4) if totals[c] else None
-
-    return {
-        "conf": conf, "iou_thr": iou_thr, "images": n_images,
-        "n_pbi2_boxes": totals[PBI2], "n_pinhole_boxes": totals[PINHOLE],
-        "unknown_box_false_alarm_rate": rate(PBI2),
-        "known_box_recall": rate(PINHOLE),
+    pin, pb = np.array(scores[PINHOLE]), np.array(scores[PBI2])
+    allsc = np.concatenate([pin, pb])
+    labels = np.concatenate([np.ones(len(pin)), np.zeros(len(pb))])
+    out = {
+        "iou_thr": iou_thr, "images": n_images,
+        "n_pinhole_boxes": int(len(pin)), "n_pbi2_boxes": int(len(pb)),
+        "box_auroc": round(_roc_auc(allsc, labels), 4),
+        "box_fpr_at_95tpr": round(_fpr_at_tpr(allsc, labels, 0.95), 4),
+        "box_fpr_at_50tpr": round(_fpr_at_tpr(allsc, labels, 0.50), 4),
+        "at_threshold": {},
     }
+    for t in thresholds:
+        out["at_threshold"][str(t)] = {
+            "known_box_recall": round(float((pin >= t).mean()), 4) if len(pin) else None,
+            "unknown_box_false_alarm_rate": round(float((pb >= t).mean()), 4) if len(pb) else None,
+        }
+    return out
 
 
 def evaluate(checkpoint: str, split: str = "val", save: bool = True,
-             conf: float = 0.25) -> dict:
+             tag: str | None = None) -> dict:
+    """tag distinguishes seeds in the output filename; without it every seed
+    overwrites open_set_<split>.json."""
     net = load_net(checkpoint)
     result = {"checkpoint": checkpoint, "split": split,
               "image_level": image_level(net, split),
-              "box_level": box_level(net, split, conf=conf)}
+              "box_level": box_level(net, split)}
     if save:
-        (OUT / f"open_set_{split}.json").write_text(json.dumps(result, indent=1),
-                                                     encoding="utf-8")
+        name = f"open_set_{split}{'_' + tag if tag else ''}.json"
+        (OUT / name).write_text(json.dumps(result, indent=1), encoding="utf-8")
     im, bx = result["image_level"], result["box_level"]
     print(f"[open-set] image-level  known n={im['n_known']} mean_conf={im['known_mean_conf']} | "
           f"unknown(pbi2) n={im['n_unknown']} mean_conf={im['unknown_mean_conf']}")
     print(f"[open-set]   AUROC={im['auroc']}  AUPR={im['aupr']}  FPR@95TPR={im['fpr_at_95tpr']}"
           + (f"\n[open-set]   CAVEAT: {im['caveat']}" if "caveat" in im else ""))
-    print(f"[open-set] box-level @conf={bx['conf']}  "
-          f"false-alarm on {bx['n_pbi2_boxes']} PbI2 boxes = {bx['unknown_box_false_alarm_rate']}  |  "
-          f"recall on {bx['n_pinhole_boxes']} pinhole boxes = {bx['known_box_recall']}")
+    print(f"[open-set] box-level  {bx['n_pinhole_boxes']} pinhole vs {bx['n_pbi2_boxes']} PbI2 boxes: "
+          f"AUROC={bx['box_auroc']}  FPR@95TPR={bx['box_fpr_at_95tpr']}  FPR@50TPR={bx['box_fpr_at_50tpr']}")
+    for t, v in bx["at_threshold"].items():
+        print(f"[open-set]   @{t}: known recall={v['known_box_recall']}  "
+              f"unknown false-alarm={v['unknown_box_false_alarm_rate']}")
     return result
 
 
@@ -217,7 +237,7 @@ if __name__ == "__main__":
     ap.add_argument("--checkpoint", required=True,
                     help="path to a .pt trained with --known-classes 1")
     ap.add_argument("--split", default="val")
-    ap.add_argument("--conf", type=float, default=0.25,
-                    help="operating threshold for the box-level rates")
+    ap.add_argument("--tag", default=None,
+                    help="suffix for the output file, e.g. seed1")
     a = ap.parse_args()
-    evaluate(a.checkpoint, split=a.split, conf=a.conf)
+    evaluate(a.checkpoint, split=a.split, tag=a.tag)

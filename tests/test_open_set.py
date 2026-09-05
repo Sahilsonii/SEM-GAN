@@ -35,33 +35,38 @@ def test_known_images_exclude_backgrounds(monkeypatch):
     assert [p.name for p in unknown] == ["pb.jpg"]
 
 
-class _FakeBoxes:
-    def __init__(self, xyxy):
-        self._x = np.asarray(xyxy, np.float32).reshape(-1, 4)
-        self.xyxy = self
-    def __len__(self):
-        return len(self._x)
+class _Arr:
+    def __init__(self, a):
+        self._a = np.asarray(a, np.float32)
     def cpu(self):
         return self
     def numpy(self):
-        return self._x
+        return self._a
+
+
+class _FakeBoxes:
+    def __init__(self, xyxy, conf):
+        self.xyxy, self.conf = _Arr(np.reshape(xyxy, (-1, 4))), _Arr(conf)
+    def __len__(self):
+        return len(self.conf._a)
 
 
 class _FakeNet:
-    """Fires exactly one box on every PbI2 GT, nothing on pinholes."""
+    """Fires on every PbI2 GT at conf 0.9 and on every pinhole GT at conf 0.2."""
     def __init__(self, recs, W, H):
-        self.recs, self.W, self.H = {r["file"]: r for r in recs}, W, H
+        self.recs, self.W, self.H = list(recs), W, H
         self.calls = 0
     def predict(self, img, conf, verbose):
-        r = list(self.recs.values())[self.calls]
+        r = self.recs[self.calls]
         self.calls += 1
-        preds = [open_set.xywhn_to_xyxy(b, self.W, self.H) for b in r["boxes"] if b[0] == open_set.PBI2]
+        xyxy = [open_set.xywhn_to_xyxy(b, self.W, self.H) for b in r["boxes"]]
+        cf = [0.9 if b[0] == open_set.PBI2 else 0.2 for b in r["boxes"]]
         res = type("R", (), {})()
-        res.boxes = _FakeBoxes(preds if preds else np.zeros((0, 4)))
+        res.boxes = _FakeBoxes(xyxy, cf)
         return [res]
 
 
-def test_box_level_is_class_separated(monkeypatch):
+def test_box_level_scores_every_gt_box_by_class(monkeypatch):
     W = H = 100
     recs = [
         {"file": "x.jpg", "n_boxes": 3, "boxes": [[0, .2, .2, .1, .1], [0, .7, .7, .1, .1], [1, .5, .5, .1, .1]]},
@@ -69,9 +74,12 @@ def test_box_level_is_class_separated(monkeypatch):
     ]
     monkeypatch.setattr(open_set, "_records", lambda split: recs)
     monkeypatch.setattr(open_set.cv2, "imread", lambda p: np.zeros((H, W, 3), np.uint8))
-    net = _FakeNet(recs, W, H)
 
-    out = open_set.box_level(net, "val", conf=0.25)
+    out = open_set.box_level(_FakeNet(recs, W, H), "val")
     assert out["n_pbi2_boxes"] == 3 and out["n_pinhole_boxes"] == 2
-    assert out["unknown_box_false_alarm_rate"] == 1.0   # fired on every PbI2 box
-    assert out["known_box_recall"] == 0.0                # never fired on a pinhole
+    # every PbI2 box scored 0.9, every pinhole 0.2 -> pinholes rank BELOW
+    # unknowns, so this detector is anti-discriminating: AUROC 0
+    assert out["box_auroc"] == 0.0
+    at = out["at_threshold"]
+    assert at["0.25"] == {"known_box_recall": 0.0, "unknown_box_false_alarm_rate": 1.0}
+    assert at["0.1"] == {"known_box_recall": 1.0, "unknown_box_false_alarm_rate": 1.0}

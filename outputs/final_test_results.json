@@ -349,5 +349,119 @@
    0,
    1
   ]
+ },
+ "openset_probe_s1": {
+  "mAP50": 0.1212,
+  "mAP50_95": 0.0409,
+  "precision": 0.0269,
+  "recall": 0.4381,
+  "f1": 0.0507,
+  "n_gt": 735,
+  "n_pred": 11969,
+  "per_bin_at50": {
+   "T1_sub_stride": {
+    "ap": 0.0718,
+    "n_gt": 48,
+    "recall": 0.1458
+   },
+   "T2_tiny": {
+    "ap": 0.0984,
+    "n_gt": 377,
+    "recall": 0.4324
+   },
+   "T3_small": {
+    "ap": 0.166,
+    "n_gt": 192,
+    "recall": 0.5365
+   },
+   "T4_medium_up": {
+    "ap": 0.1802,
+    "n_gt": 118,
+    "recall": 0.4153
+   }
+  },
+  "checkpoint_name": "openset_probe_s1",
+  "checkpoint_path": "experiments/openset_probe_yolo11s_seed1/run/weights/best.pt",
+  "images": 70,
+  "seconds": 2.9,
+  "known_classes": [
+   1
+  ]
+ },
+ "openset_probe_s2": {
+  "mAP50": 0.0757,
+  "mAP50_95": 0.0239,
+  "precision": 0.0222,
+  "recall": 0.4136,
+  "f1": 0.0421,
+  "n_gt": 735,
+  "n_pred": 13705,
+  "per_bin_at50": {
+   "T1_sub_stride": {
+    "ap": 0.0182,
+    "n_gt": 48,
+    "recall": 0.1875
+   },
+   "T2_tiny": {
+    "ap": 0.0582,
+    "n_gt": 377,
+    "recall": 0.4058
+   },
+   "T3_small": {
+    "ap": 0.1062,
+    "n_gt": 192,
+    "recall": 0.4844
+   },
+   "T4_medium_up": {
+    "ap": 0.1182,
+    "n_gt": 118,
+    "recall": 0.4153
+   }
+  },
+  "checkpoint_name": "openset_probe_s2",
+  "checkpoint_path": "experiments/openset_probe_yolo11s_seed2/run/weights/best.pt",
+  "images": 70,
+  "seconds": 1.1,
+  "known_classes": [
+   1
+  ]
+ },
+ "openset_probe_s42": {
+  "mAP50": 0.0888,
+  "mAP50_95": 0.0251,
+  "precision": 0.0287,
+  "recall": 0.4327,
+  "f1": 0.0538,
+  "n_gt": 735,
+  "n_pred": 11092,
+  "per_bin_at50": {
+   "T1_sub_stride": {
+    "ap": 0.0456,
+    "n_gt": 48,
+    "recall": 0.1458
+   },
+   "T2_tiny": {
+    "ap": 0.0871,
+    "n_gt": 377,
+    "recall": 0.4324
+   },
+   "T3_small": {
+    "ap": 0.1255,
+    "n_gt": 192,
+    "recall": 0.5625
+   },
+   "T4_medium_up": {
+    "ap": 0.1097,
+    "n_gt": 118,
+    "recall": 0.339
+   }
+  },
+  "checkpoint_name": "openset_probe_s42",
+  "checkpoint_path": "experiments/openset_probe_yolo11s_seed42/run/weights/best.pt",
+  "images": 70,
+  "seconds": 1.2,
+  "known_classes": [
+   1
+  ]
  }
 }

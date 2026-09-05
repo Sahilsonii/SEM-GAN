@@ -1,4 +1,7 @@
 exp_id,regime,seed,model,p2_head,synth_pool,synth_ratio,epochs,imgsz,batch,mAP50,mAP50_95,precision,recall,params_M,train_seconds,git_sha
+openset_probe_yolo11s_seed1,openset_probe,1,yolo11s,False,,1.0,100,640,8,0.1199,0.0466,0.2809,0.1898,9.41,613.9,30264ce
+openset_probe_yolo11s_seed2,openset_probe,2,yolo11s,False,,1.0,100,640,8,0.0774,0.0268,0.1955,0.1974,9.41,609.8,30264ce
+openset_probe_yolo11s_seed42,openset_probe,42,yolo11s,False,,1.0,100,640,8,0.1067,0.039,0.2686,0.1823,9.41,607.5,30264ce
 real_only_yolo11s_seed1,real_only,1,yolo11s,False,,1.0,100,640,8,0.0724,0.0309,0.1472,0.0987,9.41,634.7,4c64164
 real_only_yolo11s_seed2,real_only,2,yolo11s,False,,1.0,100,640,8,0.0652,0.0276,0.1582,0.1053,9.41,635.2,4c64164
 real_only_yolo11s_seed42,real_only,42,yolo11s,False,,1.0,100,640,8,0.0513,0.0203,0.1261,0.0987,9.41,639.1,4c64164
