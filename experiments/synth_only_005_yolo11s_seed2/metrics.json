@@ -1,0 +1,41 @@
+{
+ "exp_id": "synth_only_005_yolo11s_seed2",
+ "regime": "synth_only_005",
+ "seed": 2,
+ "epochs": 100,
+ "imgsz": 640,
+ "batch": 8,
+ "model": "yolo11s",
+ "p2_head": false,
+ "weights": "yolo11s.pt",
+ "synth_pool": "refined",
+ "synth_ratio": 0.05,
+ "synth_only": true,
+ "device": "0",
+ "git_sha": "cb34f00",
+ "target_steps": null,
+ "data_yaml": "C:\\Users\\Sahil\\Downloads\\SEM_GAN_Dissertation\\data\\yolo\\synth_only_005\\data.yaml",
+ "train_seconds": 1679.2,
+ "mAP50": 0.0001,
+ "mAP50_95": 0.0,
+ "precision": 0.0073,
+ "recall": 0.0046,
+ "params_M": 9.41,
+ "per_class": {
+  "pbi2": {
+   "AP50": 0.0001,
+   "AP50_95": 0.0,
+   "train_images": 5,
+   "interpretable": false
+  },
+  "pinhole": {
+   "AP50": 0.0,
+   "AP50_95": 0.0,
+   "train_images": 45,
+   "interpretable": true
+  }
+ },
+ "low_support_classes": {
+  "pbi2": 5
+ }
+}

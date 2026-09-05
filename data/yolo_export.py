@@ -148,7 +148,16 @@ def build(regime: str = "real_only", synth_pool: str | None = None,
                 f"synthetic image {e['stem']} was built on background group "
                 f"'{e['background_group']}', which is not in train")
 
-        keep = entries[: max(0, int(len(entries) * synth_ratio))]
+        # Even stride through the manifest, NOT a prefix. The merged pool lists
+        # every pbi2 image before every pinhole image, so entries[:500] was 500
+        # PbI2 images and zero pinholes - and that is what every scale_* run in
+        # this project trained on until this line changed. The class mix of
+        # what was actually kept is written to the manifest below so the next
+        # person can see it without reading label files.
+        n_keep = max(0, int(len(entries) * synth_ratio))
+        step = len(entries) / n_keep if n_keep else 0.0
+        keep = [entries[int(i * step)] for i in range(n_keep)]
+        syn_mix = {n: 0 for n in names}
         for e in keep:
             src_lbl = pool / "labels" / f"{e['stem']}.txt"
             if not src_lbl.exists():
@@ -160,6 +169,8 @@ def build(regime: str = "real_only", synth_pool: str | None = None,
                     boxes.append([remap[int(q[0])]] + [float(v) for v in q[1:5]])
             if not boxes:
                 continue      # synthetic image of an unknown class - not for training
+            for b in boxes:
+                syn_mix[names[b[0]]] += 1
             img_dst = out / "images" / "train" / f"{e['stem']}.jpg"
             lbl_dst = out / "labels" / "train" / f"{e['stem']}.txt"
             # the real-image loop used to be the only thing creating these
@@ -197,6 +208,7 @@ def build(regime: str = "real_only", synth_pool: str | None = None,
         "synthetic_pool": synth_pool,
         "synthetic_ratio": synth_ratio,
         "synthetic_images": n_synth,
+        "synthetic_boxes_per_class": syn_mix if synth_pool else {},
         "include_real": include_real,
         "include_test": include_test,
         "known_classes": sorted(known),
@@ -213,6 +225,11 @@ def build(regime: str = "real_only", synth_pool: str | None = None,
           f"val={counts['val']}" + (f" test={counts['test']}" if include_test else "")
           + f"  | known={names}"
           + (f" held-out={unknown_names} ({n_held} imgs reserved)" if unknown_names else ""))
+    if synth_pool:
+        print(f"[yolo] synthetic boxes per class: {syn_mix}")
+        if any(v == 0 for v in syn_mix.values()):
+            print("[yolo] WARNING: a known class has ZERO synthetic boxes - "
+                  "this run adds no synthetic data for it")
     print(f"[yolo] train images per class: {train_per_class}")
     for k, v in low_support.items():
         print(f"[yolo] WARNING low support: '{k}' has {v} training images - "

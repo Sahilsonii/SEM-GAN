@@ -47,6 +47,23 @@ def test_synth_only_drops_real_train_keeps_real_val(cleanup):
     assert all(n.startswith("syn_") for n in train_imgs)
 
 
+@pytest.mark.skipif(not (POOL / "manifest.jsonl").exists(),
+                    reason="refined pool not generated")
+def test_synthetic_sample_carries_both_classes(cleanup):
+    """The merged pool manifest lists all pbi2 before all pinhole. A prefix
+    slice therefore gave 500 PbI2 images and zero pinholes, silently, for
+    every scale_* run in the project. The sample must stride the manifest."""
+    yaml = yolo_export.build(regime=REGIME, synth_pool="refined", synth_ratio=0.05)
+    m = json.loads((yaml.parent / "export_manifest.json").read_text())
+    mix = m["synthetic_boxes_per_class"]
+    assert set(mix) == {"pbi2", "pinhole"}
+    assert min(mix.values()) > 0, f"a class got no synthetic boxes: {mix}"
+    # roughly balanced: the pool is 5000/5000 images, so neither class should
+    # be more than ~3x the other by box count
+    lo, hi = sorted(mix.values())
+    assert hi / lo < 3, mix
+
+
 def test_synth_only_without_pool_is_refused():
     with pytest.raises(ValueError):
         yolo_export.build(regime=REGIME, synth_pool=None, include_real=False)
