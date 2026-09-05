@@ -697,5 +697,44 @@
    0,
    1
   ]
+ },
+ "real_only_rtdetr-l_seed42": {
+  "mAP50": 0.0381,
+  "mAP50_95": 0.0144,
+  "precision": 0.017,
+  "recall": 0.2795,
+  "f1": 0.032,
+  "n_gt": 1331,
+  "n_pred": 21900,
+  "per_bin_at50": {
+   "T1_sub_stride": {
+    "ap": 0.0083,
+    "n_gt": 249,
+    "recall": 0.0241
+   },
+   "T2_tiny": {
+    "ap": 0.0608,
+    "n_gt": 561,
+    "recall": 0.3262
+   },
+   "T3_small": {
+    "ap": 0.0408,
+    "n_gt": 340,
+    "recall": 0.4118
+   },
+   "T4_medium_up": {
+    "ap": 0.0311,
+    "n_gt": 181,
+    "recall": 0.2376
+   }
+  },
+  "checkpoint_name": "real_only_rtdetr-l_seed42",
+  "checkpoint_path": "experiments/real_only_rtdetr-l_seed42/run/weights/best.pt",
+  "images": 73,
+  "seconds": 7.6,
+  "known_classes": [
+   0,
+   1
+  ]
  }
 }
