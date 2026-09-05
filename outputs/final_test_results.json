@@ -232,5 +232,122 @@
    0,
    1
   ]
+ },
+ "scale005_steps2000_s1": {
+  "mAP50": 0.0677,
+  "mAP50_95": 0.0247,
+  "precision": 0.0211,
+  "recall": 0.2855,
+  "f1": 0.0393,
+  "n_gt": 1331,
+  "n_pred": 18024,
+  "per_bin_at50": {
+   "T1_sub_stride": {
+    "ap": 0.0036,
+    "n_gt": 249,
+    "recall": 0.0161
+   },
+   "T2_tiny": {
+    "ap": 0.0624,
+    "n_gt": 561,
+    "recall": 0.3137
+   },
+   "T3_small": {
+    "ap": 0.1271,
+    "n_gt": 340,
+    "recall": 0.4088
+   },
+   "T4_medium_up": {
+    "ap": 0.093,
+    "n_gt": 181,
+    "recall": 0.337
+   }
+  },
+  "checkpoint_name": "scale005_steps2000_s1",
+  "checkpoint_path": "experiments/scale_005_steps2000_yolo11s_seed1/run/weights/best.pt",
+  "images": 73,
+  "seconds": 3.5,
+  "known_classes": [
+   0,
+   1
+  ]
+ },
+ "scale005_steps2000_s2": {
+  "mAP50": 0.0468,
+  "mAP50_95": 0.02,
+  "precision": 0.0192,
+  "recall": 0.269,
+  "f1": 0.0359,
+  "n_gt": 1331,
+  "n_pred": 18640,
+  "per_bin_at50": {
+   "T1_sub_stride": {
+    "ap": 0.0066,
+    "n_gt": 249,
+    "recall": 0.008
+   },
+   "T2_tiny": {
+    "ap": 0.0325,
+    "n_gt": 561,
+    "recall": 0.2638
+   },
+   "T3_small": {
+    "ap": 0.1028,
+    "n_gt": 340,
+    "recall": 0.3853
+   },
+   "T4_medium_up": {
+    "ap": 0.0832,
+    "n_gt": 181,
+    "recall": 0.4254
+   }
+  },
+  "checkpoint_name": "scale005_steps2000_s2",
+  "checkpoint_path": "experiments/scale_005_steps2000_yolo11s_seed2/run/weights/best.pt",
+  "images": 73,
+  "seconds": 1.3,
+  "known_classes": [
+   0,
+   1
+  ]
+ },
+ "scale005_steps2000_s42": {
+  "mAP50": 0.084,
+  "mAP50_95": 0.0312,
+  "precision": 0.0226,
+  "recall": 0.278,
+  "f1": 0.0418,
+  "n_gt": 1331,
+  "n_pred": 16361,
+  "per_bin_at50": {
+   "T1_sub_stride": {
+    "ap": 0.0099,
+    "n_gt": 249,
+    "recall": 0.0161
+   },
+   "T2_tiny": {
+    "ap": 0.0817,
+    "n_gt": 561,
+    "recall": 0.3155
+   },
+   "T3_small": {
+    "ap": 0.1314,
+    "n_gt": 340,
+    "recall": 0.3676
+   },
+   "T4_medium_up": {
+    "ap": 0.1239,
+    "n_gt": 181,
+    "recall": 0.3536
+   }
+  },
+  "checkpoint_name": "scale005_steps2000_s42",
+  "checkpoint_path": "experiments/scale_005_steps2000_yolo11s_seed42/run/weights/best.pt",
+  "images": 73,
+  "seconds": 1.5,
+  "known_classes": [
+   0,
+   1
+  ]
  }
 }
