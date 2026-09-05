@@ -4,8 +4,10 @@ Detector training for one regime x seed.
 YOLO11s at 640 px on a 4 GB card. The one architectural choice that matters here
 is the P2 head: the default P3/P4/P5 pyramid starts at stride 8, and ~21% of
 train boxes are smaller than 8 px at 640 - i.e. smaller than a single cell of
-the finest default detection level. `--p2` swaps in the yolo11-p2 topology, and
-running with and without it is ablation A4.
+the finest default detection level. `--p2` swaps in the <model>-p2 topology
+(ultralytics ships one for yolov8/yolo26 only, so the ablation pairs
+`--model yolov8s` with `--model yolov8s --p2`), and running with and without it
+is ablation A4.
 
 Everything lands in experiments/<exp_id>/ with its resolved config, so a run can
 be reproduced from the directory alone.
@@ -226,8 +228,12 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
                 net = Net(str(last_pt))
                 net.train(resume=True, batch=batch, device=device)
             else:
-                # yolo11s.pt carries COCO-pretrained weights; the -p2 variant has no
-                # published checkpoint, so it trains from the YAML topology instead.
+                # The -p2 variant has no published checkpoint: it is built from
+                # the YAML topology and then the COCO weights of the plain
+                # model are transferred into every layer whose name and shape
+                # match (backbone + most of the neck). Without that transfer
+                # the P2 arm would train from scratch on 160 images and the
+                # ablation would measure pretraining, not the stride-4 head.
                 weights = f"{model}-p2.yaml" if p2 else f"{model}.pt"
 
                 config = {
@@ -245,6 +251,8 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
 
                 t0 = time.time()
                 net = Net(weights)
+                if p2:
+                    net.load(f"{model}.pt")
                 # Epoch-based schedules must scale with the epoch count, or a
                 # step-matched run on a large pool is mostly warmup: at 10,160
                 # images a 6,000-step budget is ~5 epochs, and Ultralytics'
