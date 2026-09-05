@@ -277,12 +277,15 @@ def generate_balanced(per_class: int = 5000, render_px: int = 512, seed: int = 4
         import shutil
         shutil.rmtree(out_dir)
 
+    # defects_per_image is left None so generate() SAMPLES the real per-image
+    # count prior. Fixing it to the prior's mean gave every one of the 10,000
+    # rendered images exactly 52 defects - zero variance, against a real
+    # median of 26 - and, with no background images, taught "defects
+    # everywhere". Existing pools on disk carry that; regenerate to fix.
     pbi2_summary = generate(n_images=per_class, render_px=render_px, seed=seed,
-                            pool_name=f"{pool_name}_pbi2", pbi2_fraction=1.0,
-                            defects_per_image=max(1, int(round(priors["counts"].mean()))))
+                            pool_name=f"{pool_name}_pbi2", pbi2_fraction=1.0)
     pinhole_summary = generate(n_images=per_class, render_px=render_px, seed=seed + 1,
-                               pool_name=f"{pool_name}_pinhole", pbi2_fraction=0.0,
-                               defects_per_image=max(1, int(round(priors["counts"].mean()))))
+                               pool_name=f"{pool_name}_pinhole", pbi2_fraction=0.0)
 
     # merge both single-class pools into one pool directory + manifest
     out_dir.mkdir(parents=True, exist_ok=True)

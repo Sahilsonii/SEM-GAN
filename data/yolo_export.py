@@ -162,13 +162,14 @@ def build(regime: str = "real_only", synth_pool: str | None = None,
             src_lbl = pool / "labels" / f"{e['stem']}.txt"
             if not src_lbl.exists():
                 continue
-            boxes = []
-            for line in src_lbl.read_text().splitlines():
-                q = line.split()
-                if len(q) >= 5 and int(q[0]) in known:
-                    boxes.append([remap[int(q[0])]] + [float(v) for v in q[1:5]])
-            if not boxes:
+            raw = [l.split() for l in src_lbl.read_text().splitlines() if l.strip()]
+            boxes = [[remap[int(q[0])]] + [float(v) for v in q[1:5]]
+                     for q in raw if len(q) >= 5 and int(q[0]) in known]
+            if raw and not boxes:
                 continue      # synthetic image of an unknown class - not for training
+            # an EMPTY label is a synthetic background and is kept: the pool
+            # needs negatives, since 69% of real train images are backgrounds.
+            # This used to drop them along with the unknown-class images.
             for b in boxes:
                 syn_mix[names[b[0]]] += 1
             img_dst = out / "images" / "train" / f"{e['stem']}.jpg"
