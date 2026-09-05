@@ -82,8 +82,8 @@ def calibration_report(conf, correct, out_path: str | Path | None = None) -> dic
     return report
 
 
-if __name__ == "__main__":
-    # smoke test: a synthetic well-calibrated vs overconfident model
+def _smoke():
+    """A synthetic well-calibrated vs overconfident model."""
     rng = np.random.default_rng(0)
     n = 2000
     true_p = rng.uniform(0, 1, n)
@@ -100,33 +100,35 @@ if __name__ == "__main__":
 # --------------------------------------------------------------- driver ----
 
 def from_checkpoint(checkpoint: str, split: str = "val", conf: float = 0.05,
-                    iou_thr: float = 0.5, device: str = "0") -> dict:
+                    iou_thr: float = 0.5, device: str = "0",
+                    allow_test: bool = False) -> dict:
     """Per-detection (confidence, correct) pairs from a trained detector.
 
     Correctness is IoU>=iou_thr against a same-class ground-truth box, greedily
     matched in descending confidence - the same convention as eval/detection.py,
     so a detection counted as a hit here is a hit there too.
 
-    Refuses the test split: calibration is a diagnostic and must not consume
-    the locked set.
+    Refuses the test split unless allow_test: calibration is a diagnostic
+    during development. It is read on test exactly once, at the end, for the
+    Phase 2 table.
     """
     import json
     from pathlib import Path
 
     import cv2
-    from ultralytics import YOLO
 
-    from eval.detection import iou_matrix, xywhn_to_xyxy
+    from eval.detection import iou_matrix, load_net, xywhn_to_xyxy
 
-    if split == "test":
+    if split == "test" and not allow_test:
         raise RuntimeError("calibration is a diagnostic - do not read the locked "
-                           "test split; use 'val'")
+                           "test split; use 'val' (or pass allow_test=True for "
+                           "the final table)")
 
     root = Path(__file__).resolve().parents[1]
     recs = json.loads((root / "data" / "splits" / f"{split}.json")
                       .read_text(encoding="utf-8"))["records"]
     recs = [r for r in recs if r["n_boxes"] > 0]
-    net = YOLO(checkpoint)
+    net = load_net(checkpoint)
 
     confs, corrects = [], []
     for r in recs:
@@ -169,3 +171,26 @@ def from_checkpoint(checkpoint: str, split: str = "val", conf: float = 0.05,
     rep["split"] = split
     out_path.write_text(json.dumps(rep, indent=1), encoding="utf-8")
     return rep
+
+
+if __name__ == "__main__":
+    import argparse
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--checkpoint", help="trained .pt; omit for --smoke")
+    ap.add_argument("--split", default="val")
+    ap.add_argument("--conf", type=float, default=0.05)
+    ap.add_argument("--i-am-sure", action="store_true",
+                    help="required to read the locked test split")
+    ap.add_argument("--smoke", action="store_true",
+                    help="synthetic sanity check, no checkpoint needed")
+    a = ap.parse_args()
+    if a.smoke or not a.checkpoint:
+        _smoke()
+    else:
+        from_checkpoint(a.checkpoint, split=a.split, conf=a.conf,
+                        allow_test=a.i_am_sure)

@@ -30,6 +30,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "data"))
 
 from eval.detection import evaluate as score_detections
+from eval.detection import load_net
 from eval.tiny_defect import load_bins
 
 OUT = ROOT / "outputs"
@@ -54,9 +55,7 @@ def _test_records(known_classes=(0, 1)):
 
 def run_one_checkpoint(name: str, checkpoint: str, known_classes=(0, 1),
                        conf: float = 0.001) -> dict:
-    from ultralytics import YOLO
-
-    net = YOLO(checkpoint)
+    net = load_net(checkpoint)
     records = _test_records(known_classes)
     samples = []
     t0 = time.time()
@@ -122,8 +121,14 @@ def main():
               f"({m['images']} imgs, {m['seconds']:.1f}s)")
 
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "final_test_results.json").write_text(
-        json.dumps(results, indent=1), encoding="utf-8")
+    # Merge, do not overwrite. Phase 2 adds checkpoints across several
+    # invocations; a wholesale write would silently drop every earlier arm.
+    out_json = OUT / "final_test_results.json"
+    if out_json.exists():
+        merged = json.loads(out_json.read_text(encoding="utf-8"))
+        merged.update(results)
+        results = merged
+    out_json.write_text(json.dumps(results, indent=1), encoding="utf-8")
 
     lines = ["# FINAL TEST RESULTS (locked split, read once)", "",
             "| checkpoint | mAP50 | mAP50-95 | P | R |", "|---|---|---|---|---|"]

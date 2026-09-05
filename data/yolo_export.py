@@ -51,8 +51,14 @@ def _write_pair(img_src: Path, lbl_src: Path, img_dst: Path, lbl_dst: Path) -> b
 def build(regime: str = "real_only", synth_pool: str | None = None,
           synth_ratio: float = 1.0, include_test: bool = False,
           include_backgrounds: bool = True,
-          known_classes: tuple = (0, 1)) -> Path:
+          known_classes: tuple = (0, 1),
+          include_real: bool = True) -> Path:
     """Write data/yolo/<regime>/ and return the path to its data.yaml.
+
+    include_real=False drops the real images from TRAIN only, giving the
+    synthetic-only regime (plan E-C). Val stays real regardless: it is what the
+    checkpoint is selected on, and selecting on synthetic val would measure how
+    well the model fits its own generator.
 
     known_classes is the closed-set vocabulary. Everything else is an UNKNOWN
     morphology reserved for open-set evaluation and must never be trained on.
@@ -94,10 +100,15 @@ def build(regime: str = "real_only", synth_pool: str | None = None,
             if a < b:
                 assert not (gsets[a] & gsets[b]), f"GROUP LEAK {a}/{b}"
 
+    if not include_real and not synth_pool:
+        raise ValueError("include_real=False with no synth_pool would produce an "
+                         "empty training set")
+
     counts, held_out = {}, {}
     for split, payload in splits.items():
         n, skipped = 0, []
-        for r in payload["records"]:
+        records = [] if (split == "train" and not include_real) else payload["records"]
+        for r in records:
             boxes = [b for b in r["boxes"] if b[0] in known]
             has_unknown = len(boxes) != r["n_boxes"]
 
@@ -151,6 +162,10 @@ def build(regime: str = "real_only", synth_pool: str | None = None,
                 continue      # synthetic image of an unknown class - not for training
             img_dst = out / "images" / "train" / f"{e['stem']}.jpg"
             lbl_dst = out / "labels" / "train" / f"{e['stem']}.txt"
+            # the real-image loop used to be the only thing creating these
+            # dirs; with include_real=False nothing else does
+            img_dst.parent.mkdir(parents=True, exist_ok=True)
+            lbl_dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(pool / "images" / f"{e['stem']}.jpg", img_dst)
             lbl_dst.write_text(_fmt_boxes(boxes), encoding="utf-8")
             n_synth += 1
@@ -182,6 +197,7 @@ def build(regime: str = "real_only", synth_pool: str | None = None,
         "synthetic_pool": synth_pool,
         "synthetic_ratio": synth_ratio,
         "synthetic_images": n_synth,
+        "include_real": include_real,
         "include_test": include_test,
         "known_classes": sorted(known),
         "class_names": names,
@@ -213,7 +229,10 @@ if __name__ == "__main__":
     ap.add_argument("--include-test", action="store_true")
     ap.add_argument("--known-classes", default="0,1",
                     help="closed-set class ids; '1' alone = open-set (PbI2 held out)")
+    ap.add_argument("--synth-only", action="store_true",
+                    help="no real images in train (val stays real)")
     a = ap.parse_args()
     build(regime=a.regime, synth_pool=a.synth_pool,
           synth_ratio=a.synth_ratio, include_test=a.include_test,
-          known_classes=tuple(int(x) for x in a.known_classes.split(",")))
+          known_classes=tuple(int(x) for x in a.known_classes.split(",")),
+          include_real=not a.synth_only)

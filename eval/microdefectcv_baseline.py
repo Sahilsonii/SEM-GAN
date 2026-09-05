@@ -96,11 +96,12 @@ def predict_image(img_bgr: np.ndarray, modes=("pinhole", "pbi2"),
 
 
 def run_baseline(split: str = "val", limit: int | None = None,
-                 min_area: int = 4, sensitivity: float = 1.5) -> dict:
-    if split == "test":
+                 min_area: int = 4, sensitivity: float = 1.5,
+                 allow_test: bool = False) -> dict:
+    if split == "test" and not allow_test:
         raise RuntimeError(
             "the test split is locked until the final evaluation stage; "
-            "develop against 'val'")
+            "develop against 'val' (pass allow_test=True for the final table)")
 
     recs = json.loads((SPLITS / f"{split}.json").read_text(encoding="utf-8"))["records"]
     recs = [r for r in recs if r["n_boxes"] > 0]
@@ -154,9 +155,11 @@ if __name__ == "__main__":
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--min-area", type=int, default=4)
     ap.add_argument("--sensitivity", type=float, default=1.5)
+    ap.add_argument("--i-am-sure", action="store_true",
+                    help="required to read the locked test split")
     a = ap.parse_args()
     run_baseline(split=a.split, limit=a.limit, min_area=a.min_area,
-                 sensitivity=a.sensitivity)
+                 sensitivity=a.sensitivity, allow_test=a.i_am_sure)
 
 
 def sweep(split: str = "val", limit: int = 8,

@@ -16,6 +16,22 @@ import numpy as np
 from eval.tiny_defect import assign_bin, load_bins
 
 
+def load_net(checkpoint: str):
+    """Open a trained ultralytics checkpoint with the right wrapper class.
+
+    train_detector.py dispatches RTDETR vs YOLO on the model name, and the
+    exp_id (and so the checkpoint path) carries that name. Every evaluator used
+    to hardcode YOLO(...), which cannot open an RT-DETR checkpoint - the one
+    place the cross-paradigm comparison would have silently broken.
+    """
+    from pathlib import Path
+
+    from ultralytics import RTDETR, YOLO
+
+    is_detr = "rtdetr" in Path(checkpoint).as_posix().lower()
+    return (RTDETR if is_detr else YOLO)(checkpoint)
+
+
 def xywhn_to_xyxy(box, w: int, h: int):
     _, cx, cy, bw, bh = box
     return np.array([(cx - bw / 2) * w, (cy - bh / 2) * h,

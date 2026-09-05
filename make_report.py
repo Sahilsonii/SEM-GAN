@@ -185,7 +185,10 @@ def build() -> str:
           "headers from all 440 source images and no TIFs survive, so no nanometre "
           "calibration exists.",
           "- Renderer `severity` is a normalised simulation control, not a depth.",
-          "- The test split has not been read.",
+          ("- The test split has been read once, by eval/final_eval.py; see "
+           "outputs/FINAL_TEST_RESULTS.md."
+           if (OUT / "final_test_results.json").exists()
+           else "- The test split has not been read."),
           ""]
 
     text = "\n".join(L)

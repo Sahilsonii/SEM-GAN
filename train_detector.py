@@ -97,8 +97,11 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
           synth_ratio: float = 1.0, device: str = "0",
           patience: int = 30, known_classes: tuple = (0, 1),
           target_steps: int | None = None, min_epochs: int = 3,
-          resume: bool = False) -> dict:
+          resume: bool = False, synth_only: bool = False) -> dict:
     """
+    synth_only=True trains on the synthetic pool alone (plan E-C); val stays
+    real. Requires synth_pool.
+
     target_steps caps wall-clock at scale. Convergence tracks gradient STEPS
     seen, not epochs - at 160 real images, 150 epochs is 3000 steps; at 10160
     images (5000/class synthetic), 150 epochs is 190,000 steps, ~12 hours on
@@ -125,11 +128,15 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
     if p2 and Net is RTDETR:
         raise ValueError("--p2 is a YOLO topology; rtdetr has no -p2 variant")
 
+    if synth_only and not synth_pool:
+        raise ValueError("--synth-only needs --synth-pool")
+
     import yolo_export
 
     data_yaml = yolo_export.build(regime=regime, synth_pool=synth_pool,
                                   synth_ratio=synth_ratio,
-                                  known_classes=known_classes)
+                                  known_classes=known_classes,
+                                  include_real=not synth_only)
     export = json.loads((data_yaml.parent / "export_manifest.json")
                         .read_text(encoding="utf-8"))
 
@@ -183,7 +190,8 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
                               "exp_id": exp_id, "regime": regime, "seed": seed,
                               "epochs": epochs, "imgsz": imgsz, "model": model,
                               "p2_head": p2, "synth_pool": synth_pool,
-                              "synth_ratio": synth_ratio, "device": device,
+                              "synth_ratio": synth_ratio, "synth_only": synth_only,
+                              "device": device,
                               "git_sha": git_sha(), "target_steps": target_steps,
                               "data_yaml": str(data_yaml),
                           })
@@ -214,6 +222,7 @@ def train(regime: str = "real_only", seed: int = 0, epochs: int = 100,
                     "exp_id": exp_id, "regime": regime, "seed": seed, "epochs": epochs,
                     "imgsz": imgsz, "batch": batch, "model": model, "p2_head": p2,
                     "weights": weights, "synth_pool": synth_pool, "synth_ratio": synth_ratio,
+                    "synth_only": synth_only,
                     "device": device, "git_sha": git_sha(), "target_steps": target_steps,
                     "data_yaml": str(data_yaml),
                 }
@@ -383,10 +392,13 @@ if __name__ == "__main__":
     ap.add_argument("--resume", action="store_true",
                     help="continue from experiments/<exp_id>/run/weights/last.pt "
                          "(skips wipe; finished runs with metrics.json are skipped)")
+    ap.add_argument("--synth-only", action="store_true",
+                    help="train on the synthetic pool alone; val stays real. "
+                         "Needs --synth-pool.")
     a = ap.parse_args()
     train(regime=a.regime, seed=a.seed, epochs=a.epochs, imgsz=a.imgsz,
           batch=a.batch, model=a.model, p2=a.p2, synth_pool=a.synth_pool,
           synth_ratio=a.synth_ratio, device=a.device,
           known_classes=tuple(int(x) for x in a.known_classes.split(",")),
           target_steps=a.target_steps, min_epochs=a.min_epochs,
-          patience=a.patience, resume=a.resume)
+          patience=a.patience, resume=a.resume, synth_only=a.synth_only)
