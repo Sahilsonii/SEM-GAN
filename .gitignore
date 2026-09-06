@@ -25,3 +25,8 @@ docs/phase1/
 docs/*.docx
 docs/*.pptx
 docs/*.pdf
+
+# Results - local only, never pushed (untracked 2026-09-06; files stay on disk)
+outputs/
+experiments/
+runs/
