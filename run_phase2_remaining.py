@@ -13,6 +13,8 @@ runs. A one-line-per-step summary lands in outputs/phase2_remaining.log.
 Order is by what can change a claim:
   1. copy-paste baseline, 3 seeds     - is defect APPEARANCE the lever?
   2. yolov8s vs yolov8s-P2, seed 42   - ablation A4 (yolo11 has no P2 yaml)
+  3. real-only and balanced-synthetic at 8,300 steps, 3 seeds each - the
+     empty cell of the budget x data 2x2 (RESULTS.md §17). ~45 min per run.
 """
 import subprocess
 import sys
@@ -24,6 +26,8 @@ PY = [sys.executable]
 LOG = ROOT / "outputs" / "phase2_remaining.log"
 
 CP = ["--synth-pool", "copypaste", "--synth-ratio", "1.0", "--target-steps", "2000"]
+BAL = ["--synth-pool", "refined", "--synth-ratio", "0.05"]
+S8 = ["--target-steps", "8300", "--patience", "500"]
 RUNS = [
     # (exp_id, train_detector args)
     ("copypaste_500_steps2000_yolo11s_seed42", ["--regime", "copypaste_500_steps2000", "--seed", "42", *CP]),
@@ -31,6 +35,15 @@ RUNS = [
     ("copypaste_500_steps2000_yolo11s_seed2",  ["--regime", "copypaste_500_steps2000", "--seed", "2", *CP]),
     ("real_only_yolov8s_seed42",               ["--regime", "real_only", "--seed", "42", "--model", "yolov8s"]),
     ("real_only_p2_yolov8s-p2_seed42",         ["--regime", "real_only_p2", "--seed", "42", "--model", "yolov8s", "--p2"]),
+    # 3. the empty cell of the 2x2: both arms at 8,300 steps. Real-only at
+    #    160 images is 415 epochs by arithmetic (8,300 / 20 per epoch);
+    #    patience 500 so early stopping cannot un-match the budget.
+    ("real_only_steps8300_yolo11s_seed42",     ["--regime", "real_only_steps8300", "--seed", "42", *S8]),
+    ("real_only_steps8300_yolo11s_seed1",      ["--regime", "real_only_steps8300", "--seed", "1", *S8]),
+    ("real_only_steps8300_yolo11s_seed2",      ["--regime", "real_only_steps8300", "--seed", "2", *S8]),
+    ("scale_005_bal_steps8300_yolo11s_seed42", ["--regime", "scale_005_bal_steps8300", "--seed", "42", *BAL, *S8]),
+    ("scale_005_bal_steps8300_yolo11s_seed1",  ["--regime", "scale_005_bal_steps8300", "--seed", "1", *BAL, *S8]),
+    ("scale_005_bal_steps8300_yolo11s_seed2",  ["--regime", "scale_005_bal_steps8300", "--seed", "2", *BAL, *S8]),
 ]
 
 

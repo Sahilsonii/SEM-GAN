@@ -746,6 +746,28 @@ appearance. It is either the budget split, the composition, or the floor of
 a 160-image task — and the experiment that separates those is the
 8,300-step 2×2, not another generator.
 
+### Pre-registered: the 8,300-step cell (written before the runs)
+
+Six runs, seeds 1, 2, 42, YOLO11s, locked test split: `real_only_steps8300`
+(160 real, 415 epochs, patience 500) and `scale_005_bal_steps8300` (160 real +
+500 balanced rendered, 101 epochs, patience 500). Both arms take 8,300
+gradient steps, so the synthetic images no longer displace passes over the
+real ones. The rendered pool is used rather than copy-paste because objective
+5 is about this project's generator, and at 2,000 steps the two pools were
+indistinguishable (0.98×, above).
+
+| if, at 8,300 steps | then §17 ends |
+|---|---|
+| synthetic ≥ real-only by more than seed spread (ratio ≥ ~1.15, Welch p < 0.05) | *synthetic augmentation failed at 2,000 steps mainly because matched-step training diluted exposure to the real images; given the budget to fit both, it helps* — and the 0.1333 in §1 was partly transfer after all |
+| synthetic ≈ real-only (ratio within 0.85–1.15 or p ≥ 0.05) | *synthetic augmentation remained ineffective after removing the training-budget confound* — the pool is neutral at any budget; the 2× in §1 was compute, full stop |
+| synthetic < real-only by more than seed spread | *ineffective and harmful at any budget* — composition or off-distribution, and the §16 synthetic-only 0.04× is the same effect undiluted |
+
+Also read: whether real-only at 8,300 steps rises above its 2,000-step 0.0688.
+If it does, 100 epochs was under-trained and every real-only number in this
+document is a floor, not a ceiling.
+
+Whichever row lands, **Phase 2 is frozen at these six runs.** No further arms.
+
 ---
 
 ## 18. Cross-paradigm — one seed each, stated as such
