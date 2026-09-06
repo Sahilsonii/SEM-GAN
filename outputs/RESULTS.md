@@ -625,6 +625,7 @@ That is the end of the synthetic-data line as it stands. Across §13, §15, §16
 |---|---|
 | does 5% synthetic help at matched compute? | no — 0.96× (PbI₂-only), 0.78× (balanced) |
 | does synthetic help on its own? | no — 0.04× |
+| does *real-appearance* copy-paste help? (§17) | no — 0.76×, same as rendered |
 | was the earlier 2× real? | it was 4.15× the gradient steps |
 
 What remains true and useful: the labels are exact, the geometry matches, the
@@ -642,9 +643,170 @@ refiner was trained on 192-px patches with a mask-area-normalised L1 against
 real defect crops; the halo it leaves on large pits (proposal Figure 8) is the
 visible symptom. A refiner change is the lever, not more data or more seeds.
 
+> **Superseded by §17.** The paragraph above was written before the copy-paste
+> control ran. That control uses *real* defect appearance and lands exactly
+> where the rendered pool did, so appearance was not the lever. Kept in place
+> so the reasoning chain stays auditable.
+
 ---
 
-## 18. Figures
+## 17. Copy-paste control — real appearance, same result
+
+§15–16 blamed the rendered pinhole's appearance. The decisive test is a pool
+with **no rendering at all**: real annotated defect crops from the train split,
+Poisson-blended onto real defect-free train backgrounds, with the box copied
+verbatim (`synth/copypaste.py`, Ghiasi et al. 2021). Labels are exact, the
+appearance is real by construction, and the two composition faults of the
+rendered pool are fixed as well: per-image defect count is *sampled* from the
+real prior instead of pinned to its mean, and 40% of images are backgrounds.
+Pool: 500 images (220 backgrounds), 3,845 PbI₂ + 3,903 pinhole boxes cut from
+2,607 real train boxes.
+
+Pre-registered before the run: **≥ 0.08 → appearance was the lever; ≈ 0.07 →
+a task/evaluation floor; below real-only → the loss is not appearance.**
+
+Same protocol as §15: 160 real + 500 copy-paste, 2,000 steps = 24 epochs,
+seeds 1, 2, 42, YOLO11s, locked test split.
+
+| arm | synthetic appearance | steps | mAP50 | mAP50-95 | recall | precision |
+|---|---|---|---|---|---|---|
+| real only | — | 2,000 | 0.0688 ± 0.0105 | 0.0261 ± 0.0053 | 0.282 | 0.032 |
+| + 5% rendered + refined (§15) | GAN | 2,000 | 0.0533 ± 0.0033 | 0.0182 ± 0.0016 | 0.258 | 0.022 |
+| **+ 500 copy-paste** | **real crops** | **2,000** | **0.0525 ± 0.0052** | **0.0169 ± 0.0024** | **0.254** | **0.029** |
+
+Per seed, copy-paste = [0.0468, 0.0571, 0.0536]. Against real-only: **0.76×,
+Welch p = 0.097**. Against the rendered pool: **0.98×, p = 0.83** — the two
+synthetic arms are indistinguishable.
+
+| per-bin AP50, test | T1 <8 px | T2 8–16 | T3 16–32 | T4 ≥32 |
+|---|---|---|---|---|
+| real only @2,000 | 0.0096 | 0.0561 | 0.1084 | 0.1187 |
+| rendered @2,000 (§15) | 0.0079 | 0.0615 | 0.0948 | 0.0626 |
+| copy-paste @2,000 | 0.0091 | 0.0630 | **0.0605** | 0.0977 |
+
+Same shape as §15: T1/T2 flat, the loss in T3/T4. Which bin takes the larger
+hit differs between the two pools, and with n = 3 that difference is inside
+seed spread.
+
+**Reading: the third pre-registered outcome.** A pool made of real defects on
+real backgrounds hurts by the same amount as a pool made of rendered ones. So
+the §15–16 diagnosis — that the *rendered pinhole does not look real enough* —
+is not what the numbers were measuring. Whatever these 500 images cost the
+detector, they cost it whether the pixels were synthesised or cut from
+annotated real images. The remaining explanations are the ones shared by both
+pools:
+
+1. **Budget dilution.** At a fixed 2,000 steps, 660 training images means each
+   real image is visited 24 times instead of 100. The synthetic images do not
+   just add signal; they displace passes over the 160 real ones. Under this
+   reading no 500-image pool of *any* quality can win at matched steps, and
+   the fair comparison is the empty cell of the 2×2 — balanced or copy-paste
+   at 8,300 steps against real-only at 8,300 steps (§15, "what this does not
+   settle"). That cell is still empty.
+2. **Composition is still off.** Copy-paste fixed the constant-count and
+   no-background faults, so those two are not the cause. What both pools
+   still share is *placement*: defects scattered by the grain-boundary prior
+   over backgrounds that a human labelled as defect-free, at counts sampled
+   from images that were chosen for having defects. A background image with
+   26 pasted pits is not a real defective image; it is a clean film with
+   holes in it.
+3. **A task floor.** Real-only mAP50 is 0.069 ± 0.010 on 22 defect-bearing
+   test images with a 3-class-merged label set where 34% of boxes are under
+   8 px. The seed spread alone is 15% of the mean; a 24% effect is one and a
+   half seed-spreads.
+
+### Val and test disagree on every synthetic seed
+
+The checkpoint of every run is selected on the real val split. On val, both
+synthetic arms **beat** real-only on every seed; on test they lose on every
+seed:
+
+| run | val mAP50 (selection) | test mAP50 (locked) |
+|---|---|---|
+| real only s1 / s2 / s42 | 0.072 / 0.065 / 0.051 | 0.079 / 0.069 / 0.058 |
+| rendered @2,000 s1 / s2 / s42 | 0.087 / 0.073 / **0.093** | 0.057 / 0.051 / 0.051 |
+| copy-paste s1 / s2 / s42 | 0.077 / 0.082 / 0.066 | 0.047 / 0.057 / 0.054 |
+
+Real-only: val mean 0.063, test 0.069. Synthetic arms: val mean 0.080, test
+0.053. Val has 12 defect-bearing images (640 boxes, one of them carrying all
+108 PbI₂ boxes); test has 22 (1,331 boxes). Two things follow. First, **any
+claim in this document that rests on a val number is unreliable for the
+synthetic arms** — the val gain is real and does not transfer. Second, the
+best-epoch selection is itself tuned toward the val images, and with 12 of
+them the synthetic arms may be selecting a checkpoint that happens to fit val.
+This is the argument for grouped cross-validation over the 84 defect groups
+that the plan's §20 listed as a fallback; at n = 3 seeds and 12 val images it
+is no longer optional if the synthetic line is pursued further.
+
+**Where this leaves objective 5.** Three synthetic pools (PbI₂-only rendered,
+balanced rendered, copy-paste), one protocol, nine seeds: none improves
+detection on the locked test split at matched compute, and the two that carry
+pinholes hurt by about a quarter. The failure is not the generator's
+appearance. It is either the budget split, the composition, or the floor of
+a 160-image task — and the experiment that separates those is the
+8,300-step 2×2, not another generator.
+
+---
+
+## 18. Cross-paradigm — one seed each, stated as such
+
+Real-only training, seed 42, 100 epochs, batch 8 (RT-DETR batch 4), locked
+test split. **n = 1 for every row except YOLO11s**; the YOLO11s seed spread
+(0.058 – 0.079) is the yardstick for what a one-seed difference means.
+
+| detector | params | train min | test mAP50 | mAP50-95 | recall | precision | n pred |
+|---|---|---|---|---|---|---|---|
+| MicroDefectCV, zero training (§6) | — | 0 | 0.0012 | 0.0003 | 0.075 | 0.004 | 22,922 |
+| YOLO11s, seed 42 | 9.4 M | 10.7 | 0.0584 | 0.0219 | 0.279 | 0.031 | 11,990 |
+| YOLO11s, mean of 3 seeds | 9.4 M | 10.6 | 0.0688 | 0.0261 | 0.282 | 0.032 | — |
+| YOLOv8s | 11.1 M | 10.5 | **0.0826** | **0.0301** | 0.292 | 0.032 | 12,020 |
+| YOLOv8s + P2 head | 10.6 M | 17.3 | 0.0310 | 0.0072 | 0.223 | 0.016 | 18,371 |
+| RT-DETR-L | 32.0 M | 76.9 | 0.0381 | 0.0144 | 0.280 | 0.017 | 21,900 |
+
+| per-bin AP50, test | T1 <8 px | T2 8–16 | T3 16–32 | T4 ≥32 |
+|---|---|---|---|---|
+| YOLO11s s42 | 0.0114 | 0.0480 | 0.0919 | 0.0891 |
+| YOLOv8s | 0.0081 | 0.0771 | 0.1351 | 0.1181 |
+| YOLOv8s + P2 | 0.0080 | 0.0261 | 0.0336 | 0.0339 |
+| RT-DETR-L | 0.0083 | 0.0608 | 0.0408 | 0.0311 |
+
+**YOLOv8s vs YOLO11s.** 0.083 against a YOLO11s seed range of 0.058 – 0.079:
+at the top of the range, one seed, not a finding. Both are the same family at
+the same budget; the honest statement is that the two are interchangeable here.
+
+**P2 head — ablation A4, confounded, reported anyway.** The plan predicted the
+stride-4 level would help T1/T2. It did not: T1 is unchanged at 0.008 and every
+other bin is a third of the plain model. But the comparison is not clean:
+
+- Ultralytics 8.4.127 ships no `yolo11-p2` topology, so the pair is YOLOv8s,
+  not YOLO11s. (`train_detector.py` now fails fast on this instead of after
+  wiping the experiment directory, which is how the first attempt found out.)
+- The P2 model is built from YAML; the COCO checkpoint transfers into
+  **219 of 437** tensors — the backbone — and the P2 neck and all four
+  detection heads start from random. The plain model starts fully pretrained.
+- It early-stopped at epoch 71 with train cls-loss still at 2.5 against ~1.0
+  for the plain model, and val mAP50 still rising. It is under-trained.
+
+So this row says *a P2 head trained from a partially pretrained start, for 71
+epochs, on 160 images, is worse*. It does not say the stride-4 level cannot
+help. A fair A4 needs either a P2-pretrained checkpoint (none published) or a
+longer schedule with the neck warmed up first; it is the one ablation in the
+plan that this environment cannot run cleanly, and that goes in Limitations.
+
+**RT-DETR-L.** Val peaked at epoch ~37 and decayed; test precision 0.017 at
+recall 0.28 means it fires almost everywhere. 32 M parameters, 7× the
+training time, 160 images: the expected outcome for a transformer detector at
+this data scale, and the reason the plan's §7.4 hedged on RF-DETR/D-FINE. The
+1.6× T2 AP over YOLO11s s42 sits inside the YOLO11s seed range.
+
+**MicroDefectCV** (§6) is two orders of magnitude below every trained model on
+mAP50 at 22,922 predictions over 22 images; its recall at any usable precision
+is nil. R1's question — how far does zero-training morphology get — is
+answered: not far, on this corpus.
+
+---
+
+## 19. Figures
 
 All regenerated by `py -3.10 figures/<module>.py`; none hand-edited.
 

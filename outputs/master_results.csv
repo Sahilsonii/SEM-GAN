@@ -1,11 +1,16 @@
 exp_id,regime,seed,model,p2_head,synth_pool,synth_ratio,epochs,imgsz,batch,mAP50,mAP50_95,precision,recall,params_M,train_seconds,git_sha
+copypaste_500_steps2000_yolo11s_seed1,copypaste_500_steps2000,1,yolo11s,False,copypaste,1.0,24,640,8,0.0765,0.025,0.1462,0.1288,9.41,527.6,ba2028d
+copypaste_500_steps2000_yolo11s_seed2,copypaste_500_steps2000,2,yolo11s,False,copypaste,1.0,24,640,8,0.0823,0.0281,0.1607,0.1344,9.41,525.9,ba2028d
+copypaste_500_steps2000_yolo11s_seed42,copypaste_500_steps2000,42,yolo11s,False,copypaste,1.0,24,640,8,0.0655,0.0229,0.144,0.1316,9.41,532.9,ba2028d
 openset_probe_yolo11s_seed1,openset_probe,1,yolo11s,False,,1.0,100,640,8,0.1199,0.0466,0.2809,0.1898,9.41,613.9,30264ce
 openset_probe_yolo11s_seed2,openset_probe,2,yolo11s,False,,1.0,100,640,8,0.0774,0.0268,0.1955,0.1974,9.41,609.8,30264ce
 openset_probe_yolo11s_seed42,openset_probe,42,yolo11s,False,,1.0,100,640,8,0.1067,0.039,0.2686,0.1823,9.41,607.5,30264ce
+real_only_p2_yolov8s-p2_seed42,real_only_p2,42,yolov8s,True,,1.0,100,640,8,0.0348,0.0127,0.0954,0.0808,10.63,1038.2,ba2028d
 real_only_rtdetr-l_seed42,real_only,42,rtdetr-l,False,,1.0,100,640,4,0.0203,0.0071,0.5479,0.1222,31.99,4611.6,84133de
 real_only_yolo11s_seed1,real_only,1,yolo11s,False,,1.0,100,640,8,0.0724,0.0309,0.1472,0.0987,9.41,634.7,4c64164
 real_only_yolo11s_seed2,real_only,2,yolo11s,False,,1.0,100,640,8,0.0652,0.0276,0.1582,0.1053,9.41,635.2,4c64164
 real_only_yolo11s_seed42,real_only,42,yolo11s,False,,1.0,100,640,8,0.0513,0.0203,0.1261,0.0987,9.41,639.1,4c64164
+real_only_yolov8s_seed42,real_only,42,yolov8s,False,,1.0,100,640,8,0.0686,0.0284,0.1319,0.0996,11.13,628.5,ba2028d
 scale_002_yolo11s_seed42,scale_002,42,yolo11s,False,refined,0.02,100,640,8,0.102,0.0427,0.1511,0.1598,9.41,897.8,4c64164
 scale_005_bal_steps2000_yolo11s_seed1,scale_005_bal_steps2000,1,yolo11s,False,refined,0.05,24,640,8,0.0873,0.035,0.1925,0.1118,9.41,542.2,be24cc1
 scale_005_bal_steps2000_yolo11s_seed2,scale_005_bal_steps2000,2,yolo11s,False,refined,0.05,24,640,8,0.073,0.029,0.1693,0.0996,9.41,534.1,be24cc1

@@ -1,0 +1,18 @@
+{
+ "exp_id": "real_only_rtdetr-l_seed42",
+ "regime": "real_only",
+ "seed": 42,
+ "epochs": 100,
+ "imgsz": 640,
+ "batch": 4,
+ "model": "rtdetr-l",
+ "p2_head": false,
+ "weights": "rtdetr-l.pt",
+ "synth_pool": null,
+ "synth_ratio": 1.0,
+ "synth_only": false,
+ "device": "0",
+ "git_sha": "84133de",
+ "target_steps": null,
+ "data_yaml": "C:\\Users\\Sahil\\Downloads\\SEM_GAN_Dissertation\\data\\yolo\\real_only\\data.yaml"
+}

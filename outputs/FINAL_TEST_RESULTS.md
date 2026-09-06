@@ -21,6 +21,11 @@
 | `synth_only_005_bal_s2` | 0.0023 | 0.0007 | 0.004 | 0.065 |
 | `synth_only_005_bal_s42` | 0.0055 | 0.0015 | 0.005 | 0.053 |
 | `real_only_rtdetr-l_seed42` | 0.0381 | 0.0144 | 0.017 | 0.280 |
+| `copypaste_500_steps2000_yolo11s_seed42` | 0.0536 | 0.0169 | 0.031 | 0.263 |
+| `copypaste_500_steps2000_yolo11s_seed1` | 0.0468 | 0.0145 | 0.029 | 0.253 |
+| `copypaste_500_steps2000_yolo11s_seed2` | 0.0571 | 0.0193 | 0.029 | 0.247 |
+| `real_only_yolov8s_seed42` | 0.0826 | 0.0301 | 0.032 | 0.292 |
+| `real_only_p2_yolov8s-p2_seed42` | 0.0310 | 0.0072 | 0.016 | 0.223 |
 
 ## Per scale bin
 
@@ -45,3 +50,8 @@
 | `synth_only_005_bal_s2` | 0.036 | 0.062 | 0.097 | 0.055 |
 | `synth_only_005_bal_s42` | 0.040 | 0.078 | 0.038 | 0.017 |
 | `real_only_rtdetr-l_seed42` | 0.024 | 0.326 | 0.412 | 0.238 |
+| `copypaste_500_steps2000_yolo11s_seed42` | 0.044 | 0.328 | 0.306 | 0.282 |
+| `copypaste_500_steps2000_yolo11s_seed1` | 0.044 | 0.283 | 0.327 | 0.309 |
+| `copypaste_500_steps2000_yolo11s_seed2` | 0.040 | 0.269 | 0.332 | 0.304 |
+| `real_only_yolov8s_seed42` | 0.040 | 0.316 | 0.432 | 0.304 |
+| `real_only_p2_yolov8s-p2_seed42` | 0.036 | 0.271 | 0.303 | 0.182 |

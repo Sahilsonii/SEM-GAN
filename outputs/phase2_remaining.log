@@ -1,0 +1,16 @@
+2026-09-06 04:34:38 === start ===
+2026-09-06 04:34:38 $ C:\Users\Sahil\AppData\Local\Python\pythoncore-3.10-64\python.exe train_detector.py --regime copypaste_500_steps2000 --seed 42 --synth-pool copypaste --synth-ratio 1.0 --target-steps 2000 --resume
+2026-09-06 04:43:46 copypaste_500_steps2000_yolo11s_seed42: exit=0 (9.1 min)
+2026-09-06 04:43:46 $ C:\Users\Sahil\AppData\Local\Python\pythoncore-3.10-64\python.exe train_detector.py --regime copypaste_500_steps2000 --seed 1 --synth-pool copypaste --synth-ratio 1.0 --target-steps 2000 --resume
+2026-09-06 04:52:42 copypaste_500_steps2000_yolo11s_seed1: exit=0 (8.9 min)
+2026-09-06 04:52:42 $ C:\Users\Sahil\AppData\Local\Python\pythoncore-3.10-64\python.exe train_detector.py --regime copypaste_500_steps2000 --seed 2 --synth-pool copypaste --synth-ratio 1.0 --target-steps 2000 --resume
+2026-09-06 05:01:36 copypaste_500_steps2000_yolo11s_seed2: exit=0 (8.9 min)
+2026-09-06 05:01:36 $ C:\Users\Sahil\AppData\Local\Python\pythoncore-3.10-64\python.exe train_detector.py --regime real_only --seed 42 --model yolov8s --resume
+2026-09-06 05:12:12 real_only_yolov8s_seed42: exit=0 (10.6 min)
+2026-09-06 05:12:12 $ C:\Users\Sahil\AppData\Local\Python\pythoncore-3.10-64\python.exe train_detector.py --regime real_only_p2 --seed 42 --model yolov8s --p2 --resume
+2026-09-06 05:29:38 real_only_p2_yolov8s-p2_seed42: exit=0 (17.4 min)
+2026-09-06 05:29:38 $ C:\Users\Sahil\AppData\Local\Python\pythoncore-3.10-64\python.exe eval/final_eval.py --i-am-sure --confirm I am done tuning --checkpoints copypaste_500_steps2000_yolo11s_seed42=experiments/copypaste_500_steps2000_yolo11s_seed42/run/weights/best.pt copypaste_500_steps2000_yolo11s_seed1=experiments/copypaste_500_steps2000_yolo11s_seed1/run/weights/best.pt copypaste_500_steps2000_yolo11s_seed2=experiments/copypaste_500_steps2000_yolo11s_seed2/run/weights/best.pt real_only_yolov8s_seed42=experiments/real_only_yolov8s_seed42/run/weights/best.pt real_only_p2_yolov8s-p2_seed42=experiments/real_only_p2_yolov8s-p2_seed42/run/weights/best.pt
+2026-09-06 05:29:55 final_eval on 5 checkpoints: exit=0
+2026-09-06 05:29:55 $ C:\Users\Sahil\AppData\Local\Python\pythoncore-3.10-64\python.exe -m pytest tests -q
+2026-09-06 05:30:12 pytest: exit=0
+2026-09-06 05:30:12 === done - tell Claude ===
