@@ -22,6 +22,7 @@ data/yolo/
 
 # Research proposal, presentation and their build tooling - local only, never pushed
 docs/phase1/
+docs/phase2/
 docs/*.docx
 docs/*.pptx
 docs/*.pdf
