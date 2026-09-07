@@ -1,4 +1,4 @@
-# Phase 4 — whole-image diffusion with exact labels
+# Phase 4 — whole-image diffusion with verified labels
 
 ## Why this arm exists
 
@@ -67,11 +67,15 @@ strength.
 
 **Decision.** No strength reaches the 85–90% target on the tiny bands, and
 the loss is concentrated in T1/T2. So: **strength 0.25** (the pre-agreed
-fallback: labels before prettier texture), and labels are made exact by
-**verification** rather than only by construction: every rendered box is
-checked against the output, kept if its defect retains ≥ 30% of the rendered
+fallback: labels before prettier texture). The labels of this pool are
+**not** "exact" in the sense that every rendered label survives; they are
+*verified* labels: generated exactly by construction and subsequently
+filtered using an output-image contrast-preservation check, which removes
+the defects that did not survive refinement. Every rendered box is checked
+against the output, kept if its defect retains ≥ 30% of the rendered
 contrast (87% of boxes at 0.25 on the audit set), dropped otherwise — a
-dropped box is a defect the image no longer contains. `n_rendered`,
+dropped box is a defect the image no longer contains, so the detector is
+never trained to find something that is not there. `n_rendered`,
 `n_dropped` and the per-box ratios are written to the manifest, so the
 size bias of the drops is auditable. The pool therefore under-represents
 sub-16-px defects relative to the renderer's prior; that is stated, not
@@ -86,7 +90,8 @@ grain-boundary placement, exact boxes) → SD 1.5 img2img at strength 0.25,
 condition (scale 0.8) and a random real train image as the IP-Adapter
 reference (scale 0.6). 40% of images are backgrounds. Output greyscale.
 500 images, seed 42, resumable, leak-asserted. The written labels are the
-renderer's boxes that survived verification (≥ 30% contrast retained).
+renderer's boxes that survived the contrast-preservation check (≥ 30%
+retained); the size-dependent retention is reported as a result, not hidden.
 
 The style reference and the background edges are derived from real train
 images, so the output is not independent of the real data; the memorisation
