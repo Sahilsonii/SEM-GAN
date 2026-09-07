@@ -1,0 +1,12 @@
+{
+ "warmup": {
+  "steps": 4,
+  "seconds": 8.2,
+  "peak_vram_gib": 2.47
+ },
+ "run": {
+  "steps": 20,
+  "seconds": 7.2,
+  "peak_vram_gib": 2.47
+ }
+}
