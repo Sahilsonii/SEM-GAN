@@ -140,4 +140,98 @@ its own background at 256 px; > 0.95 flags a near-copy.
 
 ## Results
 
-_(appended after the runs; every number pasted from `outputs/final_test_results.json`)_
+### The pool as built
+
+500 images, 205 backgrounds, strength 0.25, 11.2 s/image. **8,805 boxes
+rendered, 7,674 kept, 1,131 dropped** by the contrast-preservation check
+(87% kept overall; no image was rejected, because the ghost band was
+replaced by a single threshold before generation). Class mix of the kept
+labels: 6,686 pinhole / 988 PbI₂. Median 2 boxes per image, mean 15.3,
+max 59.
+
+**Retention is size-dependent, as the sweep predicted** — this is the
+methodological result of the phase, and it is a limitation of the method,
+not a defect of the reporting:
+
+| band (side at 640 px) | rendered | kept |
+|---|---|---|
+| T1 < 8 px | 2,074 | **81%** |
+| T2 8–16 px | 3,764 | 88% |
+| T3 16–32 px | 2,086 | 92% |
+| T4 ≥ 32 px | 798 | **95%** |
+
+By class: pinhole 88% (n = 7,632), PbI₂ 90% (n = 1,090). So the pool
+under-represents sub-8-px defects relative to the renderer's prior by about
+14 points against the largest band. Any detector trained on it sees a
+size distribution shifted upward from the one the renderer sampled.
+
+### Detector results, locked test split, 3 seeds, 8,300 steps
+
+| arm | mAP50 | mAP50-95 | recall | precision | seeds |
+|---|---|---|---|---|---|
+| real only | 0.1480 ± 0.0367 | 0.0582 | 0.349 | 0.049 | 0.1509 / 0.1100 / 0.1832 |
+| + rendered + GAN synthetic (Phase 2) | 0.1347 ± 0.0052 | 0.0529 | 0.323 | 0.036 | 0.1314 / 0.1320 / 0.1407 |
+| **+ diffusion synthetic** | **0.1264 ± 0.0271** | 0.0475 | 0.327 | 0.035 | 0.1185 / 0.1566 / 0.1042 |
+| rendered synthetic **only** (Phase 2) | 0.0029 ± 0.0023 | 0.0009 | 0.054 | 0.004 | — |
+| **diffusion synthetic only** | **0.0050 ± 0.0027** | 0.0013 | 0.060 | 0.007 | 0.0052 / 0.0023 / 0.0076 |
+
+| comparison | ratio | Welch *p* |
+|---|---|---|
+| diffusion mixed vs real only | **0.85×** | 0.46 |
+| diffusion mixed vs rendered mixed | 0.94× | 0.65 |
+| diffusion only vs rendered synthetic only | 1.72× | 0.36 |
+| diffusion only vs real only | **0.03×** | 0.021 |
+
+| per-bin AP50 at 8,300 steps | T1 <8 px | T2 8–16 | T3 16–32 | T4 ≥32 |
+|---|---|---|---|---|
+| real only | 0.0125 | 0.1493 | 0.2218 | 0.1980 |
+| + rendered synthetic | 0.0170 | 0.1409 | 0.2032 | 0.1699 |
+| + diffusion synthetic | **0.0215** | 0.1454 | 0.1845 | 0.1660 |
+
+### Reading, against the pre-registration
+
+**Releasability: the third row — no transfer.** `diffusion_cn_only` scored
+**0.0050**, below the 0.03 threshold. It is 1.72× the rendered synthetic-only
+floor (0.0029) but that difference is not significant at n = 3 (p = 0.36) and
+both are two orders of magnitude below real-only. The training curves say the
+same thing as Phase 2's synthetic-only arm: **best epoch 1, 7 and 7 of 134**,
+so the selected checkpoint is essentially the COCO initialisation with a few
+epochs of drift, and fitting the diffusion pool was monotonically harmful to
+real-image performance. **The set is a showcase, not training data**, and the
+thesis will say so.
+
+**Augmentation: the middle row — neutral, trending down.** Mixed with the 160
+real images at a matched budget, the diffusion pool gives **0.85×** real-only
+(p = 0.46), statistically indistinguishable from the rendered pool it was
+meant to improve on (0.94×, p = 0.65). Removing the composite seam did not
+help. This is the fourth construction to land in the same place.
+
+**One signal worth recording, honestly weak.** T1 (sub-8-px) AP is the only
+bin where the diffusion arm leads: 0.0215 vs 0.0125 real-only and 0.0170
+rendered. Absolute values are near zero and the seed spread is wide, so this
+is a hypothesis for future work, not a finding. It is also the bin the pool
+*under-represents* most (81% retention), which makes it harder, not easier,
+to explain as a data effect.
+
+**Memorisation: clean.** DINO ViT-B/16 cosine similarity, 500 generated
+against 160 real train images. Real-to-real nearest-neighbour median 0.867,
+99th percentile 0.973. Generated images: median 0.765 to their own background
+source (max 0.963), 0.393 to their IP-Adapter reference, 0.712 to the nearest
+other real image. **Zero images exceeded the p99 real-to-real threshold**, and
+pixel-level cross-correlation to the own background had median 0.55, max 0.90,
+**none above 0.95**. So the pool does not reproduce any real specimen and
+would be safe to publish in place of the real corpus — it simply is not useful
+as training data, which is the more important finding.
+
+### What Phase 4 adds to the thesis
+
+The seam hypothesis from Phase 3 is now tested and rejected. Whole-image
+diffusion, with no composite boundary anywhere and verified labels, performs
+like every paste-based pool: neutral to slightly harmful as augmentation, and
+useless alone. Across Phases 2–4 that is **seven pools, 33 augmented seeds,
+none above real-only at a matched budget**. The privacy question is answered
+in the negative for training use: a releasable synthetic replacement for this
+corpus does not exist by any method tried, though the diffusion pool is at
+least memorisation-clean enough to publish as illustration.
+
+**Phase 4 is frozen here.** 2026-09-08, 48 detector runs on the CSV.
