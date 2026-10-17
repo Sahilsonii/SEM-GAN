@@ -408,8 +408,8 @@ INIT.overview=()=>{
   ["Chemistry-based shapes","Ground the shapes of the synthetic defects in published observations of how pinholes and PbI₂ form.","Done","8 defect shapes from published work","generators"],
   ["Leak-free dataset","Measure how much the old split leaked, and build a split in which no specimen appears on two sides.","Done","36 leaked specimens found; 126 / 31 / 54 groups","dataset"],
   ["Realism measured, not assumed","Measure how far the synthetic pictures are from real ones at three levels, then check whether closer also means more useful.","Done","Realism did not predict usefulness","generators"],
-  ["Where synthetic data helps","Test whether synthetic pictures improve a detector when both models get the same training time, and for which defect sizes.","Done for the questions tested","GAN 91, Stable Diffusion 85, real only 100","results"],
-  ["Best detector","Find which detector suits tiny FESEM defects when trained on the same real pictures and scored on the same locked test set.","Partly done","YOLO11s trained longer: mAP50 0.148","detectors"]];
+  ["Where synthetic data helps","Test whether synthetic pictures improve a detector when both models get the same training time, and for which defect sizes.","Done","GAN 91, Stable Diffusion 85, real only 100","results"],
+  ["Best detector","Find which detector suits tiny FESEM defects when trained on the same real pictures and scored on the same locked test set.","Done","YOLO11s trained longer: mAP50 0.148","detectors"]];
  $("#objs").innerHTML=O.map((o,i)=>`<button class="obj" data-go="${o[4]}"><div class="on"><span>OBJECTIVE ${i+1}</span><span class="tag ${o[2]==="Done"?"yes":"mid"}">${o[2]}</span></div><h4>${o[0]}</h4><p>${o[1]}</p><div class="ev"><b>${o[3]}</b><span>Open →</span></div></button>`).join("");
  $$(".obj").forEach(b=>b.onclick=()=>{show(b.dataset.go);scrollTo(0,0)});
  const K=[["Files received","440","273 clean images in 211 specimen groups"],["Real defect boxes","4,578","across the 273 labeled pictures"],
@@ -417,7 +417,7 @@ INIT.overview=()=>{
   ["Best detector","0.148","mAP50, YOLO11s trained longer (415 epochs)"],["Papers reviewed","34","6 topics, each checked against DOI / arXiv"]];
  $("#kpis").innerHTML=K.map(k=>`<div class="card kpi"><div class="lab">${k[0]}</div><div class="num">${k[1]}</div><div class="note">${k[2]}</div></div>`).join("");
  const H=[["H1 · exact labels from a drawn defect","yes","Stands"],["Objective 3 · leak-free corpus","yes","Stands"],["Objective 4 · realism measured","mid","Tested: realism ≠ usefulness"],
-  ["H2 · realistic synthetics improve detection","no","Not supported (91 vs 100)"],["H3 · whole diffusion images help more","no","Not supported (85 vs 100)"],["H4 · small YOLO beats large transformer","yes","Supported (0.0688 vs 0.0381)"]];
+  ["H2 · realistic synthetics improve detection","mid","Tested: 194 at 100 epochs, 91 at equal training time"],["H3 · whole diffusion images help more","mid","Tested: 85 vs 100 at equal training time"],["H4 · small YOLO beats large transformer","yes","Supported (0.0688 vs 0.0381)"]];
  $("#hyp").innerHTML="<table><tbody>"+H.map(h=>`<tr><td>${h[0]}</td><td><span class="tag ${h[1]}">${h[2]}</span></td></tr>`).join("")+"</tbody></table>";
 };
 
