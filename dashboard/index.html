@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fake FESEM Images Dashboard</title>
+<style>
+:root{
+  --paper:#f5f3ee; --surface:#ffffff; --ink:#16202b; --ink2:#4a5663; --muted:#7b8794;
+  --line:rgba(22,32,43,.10); --line2:rgba(22,32,43,.18);
+  --real:#1d3557; --gan:#17797a; --diff:#7a4fa3; --reuse:#b8741a; --det:#5b6b7c; --classical:#a3adb8;
+  --bad:#b4372f; --good:#2f7d4a; --pbi2:#f59e0b; --pin:#22d3ee;
+  --shadow:0 0 0 1px rgba(22,32,43,.06),0 1px 2px -1px rgba(22,32,43,.06),0 2px 6px rgba(22,32,43,.04);
+  --serif:"Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --sans:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  --ease:cubic-bezier(.23,1,.32,1);
+}
+:root[data-theme="dark"]{
+  --paper:#10151b; --surface:#171e26; --ink:#e8edf2; --ink2:#a9b4bf; --muted:#7f8b97;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16);
+  --real:#7fa6e0; --gan:#46b8b9; --diff:#b093dc; --reuse:#e0a24a; --det:#93a3b4; --classical:#6d7884;
+  --bad:#ef7a70; --good:#6cc08a; --shadow:0 0 0 1px rgba(255,255,255,.08);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#10151b; --surface:#171e26; --ink:#e8edf2; --ink2:#a9b4bf; --muted:#7f8b97;
+    --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16);
+    --real:#7fa6e0; --gan:#46b8b9; --diff:#b093dc; --reuse:#e0a24a; --det:#93a3b4; --classical:#6d7884;
+    --bad:#ef7a70; --good:#6cc08a; --shadow:0 0 0 1px rgba(255,255,255,.08);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.5 var(--sans);font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.01em;margin:0;text-wrap:balance}
+p{margin:0;text-wrap:pretty}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.bar{display:flex;align-items:center;gap:12px;padding:10px 0}
+@media(max-width:900px){.bar{flex-wrap:wrap}}
+.brand{display:flex;flex-direction:column;line-height:1.2;margin-right:auto;min-width:0;flex:1 1 200px}
+.brand b{font:600 15px var(--serif)} .brand span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav[role=tablist]{display:flex;gap:2px;overflow-x:auto;max-width:100%;flex:0 0 auto}
+.tab{border:0;background:none;padding:9px 13px;border-radius:8px;color:var(--ink2);font-weight:500;white-space:nowrap;transition:background .15s,color .15s;min-height:40px}
+.tab:hover{background:var(--line)}
+.tab[aria-selected=true]{background:var(--ink);color:var(--surface)}
+.tab:focus-visible,.chip:focus-visible,.seg button:focus-visible,.gitem:focus-visible{outline:2px solid var(--gan);outline-offset:2px}
+.iconbtn{border:1px solid var(--line2);background:none;border-radius:8px;width:40px;height:40px}
+main{padding:24px 0 56px}
+section.panel{display:none} section.panel.on{display:block;animation:in .22s var(--ease)}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.lede{font:600 28px/1.2 var(--serif);max-width:30ch;margin-bottom:6px}
+.sub{color:var(--ink2);max-width:62ch}
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:700px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.g21{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+@media(max-width:820px){.g21{grid-template-columns:1fr}}
+.card{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);padding:18px 20px}
+.card h3{font-size:17px;margin-bottom:2px}
+.cap{color:var(--muted);font-size:12.5px;margin-bottom:12px;max-width:70ch}
+.src{color:var(--muted);font-size:11.5px;margin-top:10px}
+.kpi .lab{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+.kpi .num{font:600 34px/1.1 var(--serif);margin:4px 0 2px;letter-spacing:-.02em}
+.kpi .note{font-size:12.5px;color:var(--ink2)}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:28px;align-items:center;padding:26px 28px;margin-bottom:16px}
+@media(max-width:860px){.hero{grid-template-columns:1fr}}
+.seg{display:inline-flex;background:var(--line);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:7px 12px;border-radius:7px;font-weight:500;color:var(--ink2);min-height:36px}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line2);background:none;border-radius:999px;padding:6px 12px;font-size:13px;color:var(--ink2);min-height:36px}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .sp{margin-left:auto}
+.hbar{display:grid;grid-template-columns:minmax(150px,230px) 1fr 74px;align-items:center;gap:10px;padding:5px 0;min-height:34px}
+@media(max-width:560px){.hbar{grid-template-columns:1fr 64px}.hbar .lbl{grid-column:1/-1;margin-bottom:-4px}}
+.hbar .lbl{font-size:13px;color:var(--ink);line-height:1.25}
+.hbar .lbl small{display:block;color:var(--muted);font-size:11.5px}
+.hbar .val{font-weight:600;text-align:right}
+.track{position:relative;height:16px;background:var(--line);border-radius:4px;overflow:visible}
+.fill{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0;transform-origin:left;transition:width .5s var(--ease)}
+.whisk{position:absolute;top:50%;height:2px;background:var(--ink);opacity:.6}
+.whisk::before,.whisk::after{content:"";position:absolute;top:-4px;width:2px;height:10px;background:var(--ink)}
+.whisk::before{left:0}.whisk::after{right:0}
+.dot{position:absolute;top:50%;width:8px;height:8px;border-radius:50%;background:var(--surface);border:2px solid var(--ink);transform:translate(-50%,-50%)}
+.row:hover .fill{filter:brightness(1.12)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin:0 0 10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+table{border-collapse:collapse;width:100%}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;font-size:13px}
+th:first-child,td:first-child{text-align:left}
+th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.l{text-align:left}
+.tscroll{overflow-x:auto}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600}
+.tag.no{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.tag.yes{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
+.tag.mid{background:var(--line);color:var(--ink2)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.step{padding:14px 16px;border-radius:10px;background:var(--paper)}
+.step b{display:block;font:600 22px var(--serif);color:var(--gan)}
+.methods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.method{padding:14px;border-radius:10px;border:1px solid var(--line);position:relative}
+.method .n{font:600 12px var(--sans);color:var(--muted)}
+.method h4{margin:2px 0 4px;font:600 15px var(--serif)}
+.method p{font-size:12.5px;color:var(--ink2)}
+.method .sw{position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0}
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:0}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;font-weight:500;text-align:right}
+figure{margin:0}
+figure img{width:100%;height:auto;display:block;border-radius:8px;background:#fff;cursor:zoom-in}
+figcaption{font-size:12.5px;color:var(--muted);margin-top:6px}
+.box{position:relative;line-height:0}
+.box img{width:100%;height:auto;display:block}
+.box svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.box.na{aspect-ratio:512/352;display:grid;place-items:center;background:var(--line);color:var(--muted);font-size:12px;line-height:1.3;border-radius:8px}
+.sdrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+.sdcell{margin:0}.sdcell .box{border-radius:8px;overflow:hidden;background:#111}
+.sdcell figcaption{font-size:12px;line-height:1.35;margin-top:5px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tri{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media(max-width:760px){.tri{grid-template-columns:1fr}}
+.tricol{margin:0}.tricol .box{border-radius:10px;overflow:hidden;background:#111}
+.trihead{display:flex;align-items:center;gap:8px;margin-bottom:6px;font:600 15px var(--serif)}
+.dotc{width:10px;height:10px;border-radius:3px}
+.triscore{display:flex;align-items:baseline;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.triscore span{font:600 30px/1 var(--serif);letter-spacing:-.02em}.triscore small{color:var(--muted);font-size:12px}
+.objs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media(max-width:860px){.objs{grid-template-columns:1fr}}
+.obj{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s,transform .15s var(--ease)}
+.obj:hover{border-color:var(--line2);transform:translateY(-1px)}
+.obj:active{transform:scale(.99)}
+.obj .on{font:600 12px var(--sans);color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.obj h4{margin:0;font:600 16px/1.25 var(--serif)}
+.obj p{font-size:12.5px;color:var(--ink2)}
+.obj .ev{margin-top:auto;padding-top:8px;border-top:1px solid var(--line);font-size:12.5px;display:flex;justify-content:space-between;gap:8px}
+.obj .ev b{font-variant-numeric:tabular-nums}.obj .ev span{color:var(--gan);font-weight:600;white-space:nowrap}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.gitem{position:relative;border-radius:10px;overflow:hidden;background:#111;border:0;padding:0;cursor:zoom-in;display:block;text-align:left}
+.gitem .box{position:relative;line-height:0}
+.gitem img{width:100%;height:auto;display:block}
+.gitem svg,.lbbox svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.gitem .meta{position:absolute;left:0;right:0;bottom:0;padding:18px 10px 7px;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;font-size:12px;line-height:1.3}
+.cmp{position:relative;line-height:0;border-radius:10px;overflow:hidden;user-select:none;touch-action:pan-y;max-width:640px;margin:0 auto}
+.cmp img{width:100%;display:block}
+.cmp .top{position:absolute;inset:0;overflow:hidden;width:50%}
+.cmp .top img{width:640px;max-width:none}
+.cmp .handle{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+.cmp .handle::after{content:"↔";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;line-height:1;box-shadow:0 1px 6px rgba(0,0,0,.35)}
+.cmp .tl{position:absolute;top:8px;padding:2px 8px;border-radius:6px;background:rgba(0,0,0,.6);color:#fff;font:600 11px var(--sans);line-height:1.5}
+input[type=range]{accent-color:var(--gan)}
+dialog{border:0;border-radius:14px;padding:0;max-width:min(96vw,1100px);width:100%;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+dialog::backdrop{background:rgba(10,14,18,.7)}
+.lbhead{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;gap:12px}
+.lbbox{position:relative;line-height:0;margin:0 14px 14px}
+.lbbox img{width:100%;height:auto;max-height:78vh;object-fit:contain;display:block;background:#000}
+.lbbox svg{position:absolute;inset:0}
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--surface);padding:7px 10px;border-radius:8px;font-size:12.5px;line-height:1.4;opacity:0;transition:opacity .1s;max-width:260px}
+.statrow{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.pill{font-size:12px;color:var(--ink2);background:var(--line);border-radius:999px;padding:2px 10px}
+footer{color:var(--muted);font-size:12px;padding:18px 0 40px;border-top:1px solid var(--line)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+ <div class="wrap bar">
+  <div class="brand"><b>Do fake FESEM images help a defect detector?</b><span>Sahil Soni · M.Tech AIML · Symbiosis Institute of Technology, Pune · CA3 / Dissertation Phase I</span></div>
+  <nav role="tablist" aria-label="Dashboard sections" id="tabs"></nav>
+  <button class="iconbtn" id="theme" aria-label="Toggle dark mode" title="Light / dark">◐</button>
+ </div>
+</header>
+<main class="wrap">
+
+<!-- OVERVIEW -->
+<section class="panel" id="p-overview" role="tabpanel">
+ <div class="card hero">
+  <div>
+   <h1 class="lede">Fake images matched real ones, but did not beat them.</h1>
+   <p class="sub">Perovskite solar-cell FESEM images are rarely labeled. I built five kinds of fake training pictures and tested each against real-only training under three fair-test rules. Flip the switch to see how an unfair comparison made the fake pictures look almost twice as good.</p>
+   <div style="margin-top:16px" class="seg" id="fairSwitch" role="group" aria-label="Comparison type">
+    <button aria-pressed="false" data-m="unfair">Same epochs (100)</button>
+    <button aria-pressed="true" data-m="fair">Same training steps</button>
+   </div>
+  </div>
+  <div id="heroChart"></div>
+ </div>
+ <div class="card" style="margin-bottom:16px"><h3>Research objectives</h3><p class="cap">The same six objectives used in CA1 to CA3 and the Phase I report. Click a card to open its evidence.</p><div class="objs" id="objs"></div></div>
+ <div class="grid g4" id="kpis"></div>
+ <div class="grid g2" style="margin-top:16px">
+  <div class="card"><h3>Three rules for a fair test</h3><p class="cap">Every number in this dashboard follows them.</p>
+   <div class="steps">
+    <div class="step"><b>1</b>Same training time for both models (equal steps, not equal epochs)</div>
+    <div class="step"><b>2</b>A locked final exam: test images used once per model</div>
+    <div class="step"><b>3</b>Three runs (seeds 1, 2, 42) so luck cannot decide</div>
+   </div></div>
+  <div class="card"><h3>Hypotheses against the evidence</h3><p class="cap">From the Phase I report, Chapter 4.</p><div class="tscroll" id="hyp"></div></div>
+ </div>
+</section>
+
+<!-- DATASET -->
+<section class="panel" id="p-dataset" role="tabpanel">
+ <div class="grid g21">
+  <div class="card"><h3>From 440 files to 273 clean images</h3><p class="cap">Duplicates and unlabeled pictures were removed before any split.</p><div id="funnel"></div></div>
+  <div class="card"><h3>Leakage in the old split</h3><p class="cap">The original split placed copies of one specimen in training and test.</p>
+   <div class="kpi"><div class="num" style="color:var(--bad)">36</div><div class="note">specimens leaked across the old splits. Fixed by splitting by specimen.</div></div>
+   <div id="audit" style="margin-top:12px"></div></div>
+ </div>
+ <div class="grid g2" style="margin-top:16px">
+  <div class="card"><h3>Train / validation / test</h3><p class="cap">Split by specimen, 60 / 15 / 25, seed 42. Choose the metric to display.</p>
+   <div class="toolbar"><div class="seg" id="splitSwitch"></div></div><div id="splitChart"></div></div>
+  <div class="card"><h3>Defect boxes per class</h3><p class="cap">Pinholes far outnumber PbI₂.</p><div id="classChart"></div>
+   <div class="legend" style="margin-top:12px"><span><i style="background:var(--pbi2)"></i>PbI₂ (bright)</span><span><i style="background:var(--pin)"></i>Pinhole (dark)</span></div></div>
+ </div>
+ <div class="card" style="margin-top:16px"><h3>Locked test set by defect size</h3><p class="cap">1,331 real defect boxes in 73 test pictures. Size measured in pixels; the smallest bin is below the detector's stride.</p><div id="sizeCounts"></div></div>
+</section>
+
+<!-- GENERATORS -->
+<section class="panel" id="p-generators" role="tabpanel">
+ <div class="card"><h3>How the fake pictures were made</h3><p class="cap">From simple drawing (1) to AI generation (5). Labels are known for every fake defect. This tab covers the drawn renderer and the GAN refiner; Stable Diffusion has its own tab.</p><div class="methods" id="methods"></div></div>
+ <div class="grid g2" style="margin-top:16px">
+  <div class="card"><h3>Overall pipeline</h3><figure><img src="fig/pipeline_overall.png" alt="Pipeline from data to generation to evaluation"></figure></div>
+  <div class="card"><h3>Parametric renderer and GAN refiner</h3><figure><img src="fig/renderer.png" alt="Renderer"></figure><figure style="margin-top:12px"><img src="fig/refiner.png" alt="Refiner architecture"></figure></div>
+ </div>
+ <div class="grid g2" style="margin-top:16px">
+  <div class="card"><h3>Renderer</h3><p class="cap">Labels are written by the same code that draws the defect.</p>
+   <dl class="kv"><dt>Fake pictures</dt><dd>10,000</dd><dt>Exact boxes</dt><dd>518,943</dd><dt>Defect shapes</dt><dd>8, from published observations</dd><dt>Classes</dt><dd>pinhole, PbI₂</dd><dt>Placement</dt><dd>on grain boundaries, real size prior</dd><dt>Backgrounds</dt><dd>clean real training pictures only</dd></dl></div>
+  <div class="card"><h3>GAN refiner</h3><p class="cap">Changes appearance only; the label stays valid.</p>
+   <dl class="kv"><dt>Network</dt><dd>U-Net + FiLM, GroupNorm</dd><dt>Input</dt><dd>4 channels (picture + defect mask)</dd><dt>Conditioned on</dt><dd>class and severity</dd><dt>Critics</dt><dd>spatial + frequency (FFT)</dd><dt>Training</dt><dd>192 px patches · batch 16 · AdamW · mixed precision · 30 epochs</dd><dt>Best epoch</dt><dd>19, reconstruction error 0.0458</dd><dt>Checkpoint chosen on</dt><dd>reconstruction, not adversarial loss</dd></dl></div>
+ </div>
+ <div class="card" style="margin-top:16px"><h3>How real do the fake pictures look? (Objective 4)</h3><p class="cap">Distance from 40 real pictures at three levels. Lower is closer. The GAN brings pixels closer, and its frequency critic keeps the texture close. Realism did not predict usefulness (see Results).</p><div id="gapTable" class="tscroll"></div><div id="gapChart" style="margin-top:10px"></div>
+  <figure style="margin-top:14px"><img src="fig/gap_chart.png" alt="Distance chart from the report"><figcaption>Figure from the report. A fourth, foundation-model level never produced a value, so no feature-level distance is reported.</figcaption></figure></div>
+</section>
+
+<!-- STABLE DIFFUSION -->
+<section class="panel" id="p-sd" role="tabpanel">
+ <div class="card"><h3>Stable Diffusion: an extra test of hypothesis H3</h3>
+  <p class="sub" style="margin-bottom:12px">Every earlier fake picture was a composite: pixels pasted or drawn onto a real film. H3 asks whether a picture <b>repainted as a whole</b>, with no pasted edges, helps a detector more. I built this arm after the drawn and GAN pools did not help. The renderer still draws the layout, so box positions are known; the diffusion model then repaints lightly, and any defect it erased is dropped from the labels.</p>
+  <div class="steps"><div class="step"><b>SD 1.5</b>paints the picture</div><div class="step"><b>ControlNet</b>keeps the layout (Canny edges)</div><div class="step"><b>IP-Adapter</b>copies the texture of a real picture</div><div class="step"><b>Private</b>free weights, nothing fine-tuned, no real image left the computer</div></div>
+  <figure style="margin-top:14px"><img src="fig/diffusion_pipeline.png" alt="Diffusion pipeline"></figure></div>
+
+ <div class="card" style="margin-top:16px"><h3>1 · Which diffusion model? The audit of five</h3>
+  <p class="cap">Same 20 drawn layouts (5 per type), same Canny condition, strength 0.5, 30 steps, guidance 6. “Kept” = share of drawn defects still visible after the repaint.</p>
+  <div class="tscroll" id="sdModels"></div><div class="legend" style="margin-top:12px"><span><i style="background:var(--diff)"></i>pinholes kept</span><span><i style="background:var(--pbi2)"></i>PbI₂ kept</span></div><div id="sdKeep"></div></div>
+
+ <div class="card" style="margin-top:16px"><h3>Real picture vs each model</h3>
+  <p class="cap">The same drawn layout (shown as its Canny edge map) sent to every model, next to a real picture of the same kind. Boxes are the drawn defects.</p>
+  <div class="toolbar"><div class="chips" id="sdPick"></div><label class="sp" style="color:var(--ink2)"><input type="checkbox" id="sdBoxes" checked> Show boxes</label></div>
+  <div class="sdrow" id="sdRow"></div></div>
+
+ <div class="grid g2" style="margin-top:16px">
+  <div class="card"><h3>2 · Chosen settings (SD 1.5 pool)</h3><p class="cap">One RTX 3050 Ti laptop GPU, 4 GB.</p>
+   <dl class="kv"><dt>Base model</dt><dd>stable-diffusion-v1-5</dd><dt>Mode</dt><dd>img2img on the drawn composite</dd><dt>Strength</dt><dd>0.25</dd><dt>Steps / guidance</dt><dd>30 / 6</dd><dt>ControlNet</dt><dd>Canny (60, 140), scale 0.8</dd><dt>IP-Adapter</dt><dd>scale 0.6, random real train picture</dd><dt>Size</dt><dd>512 × 352, greyscale</dd><dt>Backgrounds</dt><dd>40% plain (205 of 500)</dd><dt>Seed</dt><dd>42</dd><dt>Memory</dt><dd>0.44 GiB with sequential CPU offload</dd><dt>Speed</dt><dd>11.2 s per picture</dd></dl></div>
+  <div class="card"><h3>3 · Strength sweep</h3><p class="cap">Higher strength repaints more and erases more defects. 0.25 was chosen: labels before prettier texture.</p>
+   <div class="toolbar"><div class="seg" id="swSwitch"></div></div><div id="sdSweep"></div></div>
+ </div>
+
+ <div class="grid g2" style="margin-top:16px">
+  <div class="card"><h3>4 · The pool as built</h3><p class="cap">500 pictures. Of 8,805 drawn boxes, 7,674 were kept (87%). Class mix kept: 6,686 pinhole, 988 PbI₂.</p>
+   <div class="kpi"><div class="num">7,674 / 8,805</div><div class="note">labels verified after the repaint, not exact by construction</div></div>
+   <div id="sdBands" style="margin-top:10px"></div><p class="src">Small defects are erased more often, so the pool under-represents defects below 8 px. That is stated, not hidden.</p></div>
+  <div class="card"><h3>Drawn layout → Stable Diffusion picture</h3><p class="cap">Pool samples (left: drawn composite, right: repainted with surviving labels).</p><div class="toolbar"><div class="chips" id="poolPick"></div></div><div id="poolPair"></div></div>
+ </div>
+
+ <div class="card" style="margin-top:16px"><h3>5 · Detector results: real vs generated</h3>
+  <p class="cap">YOLO11s, locked test set, 3 seeds, 8,300 training steps. Real only = 100.</p>
+  <div class="tscroll" id="sdResults"></div>
+  <div id="sdBars" style="margin-top:14px"></div>
+  <div class="grid g2" style="margin-top:16px"><div><h4 style="margin:0 0 6px;font:600 14px var(--serif)">AP50 by defect size</h4><span id="sdBinPick"></span><div id="sdBins"></div></div>
+  <div><h4 style="margin:0 0 6px;font:600 14px var(--serif)">Comparisons (Welch p)</h4><div class="tscroll" id="sdP"></div></div></div></div>
+
+ <div class="grid g2" style="margin-top:16px">
+  <div class="card"><h3>6 · Is any picture a copy of a real one?</h3><p class="cap">DINO ViT-B/16 similarity of each generated picture to the real training pictures, against how similar real pictures are to each other.</p><div id="sdMem"></div><p class="src">0 of 500 flagged above the real-to-real 99th percentile; 0 near-copies by pixel correlation (> 0.95). They would be safe to share.</p></div>
+  <div class="card"><h3>7 · Reading against the pre-registered rules</h3><p class="cap">Thresholds were written before generation finished.</p><div class="tscroll" id="sdRead"></div></div>
+ </div>
+ <div class="card" style="margin-top:16px"><h3>Report figures for this arm</h3><div class="grid g2"><figure><img src="fig/diffusion_triplet.png" alt="Triplet"><figcaption>Real clean background, drawn defects, Stable Diffusion output.</figcaption></figure><figure><img src="fig/diffusion_samples.png" alt="Samples"><figcaption>Top: real. Bottom: diffusion, picked with a fixed seed.</figcaption></figure></div></div>
+</section>
+
+<!-- DETECTORS -->
+<section class="panel" id="p-detectors" role="tabpanel">
+ <div class="card"><h3>Detector models used for training</h3><p class="cap">Four learned detectors and one classical method, all trained on the same real pictures and scored on the same locked test set (Objective 6). Parameters, epochs and training time come from the experiment logs.</p><div class="tscroll" id="detTable"></div></div>
+ <div class="card" style="margin-top:16px"><h3>Benchmark scores</h3>
+  <div class="toolbar"><div class="seg" id="metricSwitch"></div><label class="sp" style="color:var(--ink2)"><input type="checkbox" id="tbl"> Show as table</label></div>
+  <div id="detChart"></div><p class="src">Locked test set: 73 pictures, 1,331 boxes. YOLO11s rows are means of three runs; others one run (seed 42). Precision is low because every guess is counted.</p></div>
+ <div class="grid g2" style="margin-top:16px" id="detCards"></div>
+ <div class="grid g2" style="margin-top:16px">
+  <div class="card"><h3>Training setup (same for every model)</h3><p class="cap">None of the models was tuned.</p>
+   <dl class="kv"><dt>Picture size</dt><dd>640 × 640 px</dd><dt>Batch</dt><dd>8 (RT-DETR-L: 4)</dd><dt>Epochs</dt><dd>up to 100; 415 for longer real-only</dd><dt>Early stop</dt><dd>no gain for 30 epochs</dd><dt>Starting weights</dt><dd>COCO pre-trained</dd><dt>Learning rate</dt><dd>0.01, 3 warm-up epochs</dd><dt>Momentum / decay</dt><dd>0.937 / 0.0005</dd><dt>Optimizer</dt><dd>chosen by library</dd><dt>Mixed precision</dt><dd>on</dd><dt>Computer</dt><dd>RTX 3050 Ti laptop, 4 GB</dd></dl></div>
+  <div class="card"><h3>YOLO11s, run by run</h3><p class="cap">The same model, three seeds, at 100 and 415 epochs (mAP50).</p><div id="seedBars"></div></div>
+ </div>
+ <div class="grid g2" style="margin-top:16px">
+  <div class="card"><h3>Detector architectures</h3><figure><img src="fig/arch_chart.png" alt="Architectures"></figure></div>
+  <div class="card"><h3>By defect size</h3><p class="cap">AP50 per size bin, real-only training.</p><div id="detBins"></div></div>
+ </div>
+ <div class="card" style="margin-top:16px"><h3>Confusion matrices</h3><div class="grid g2"><figure><img src="fig/confusion_models.png" alt="Confusion matrices by model"><figcaption>By detector</figcaption></figure><figure><img src="fig/confusion_seeds.png" alt="Confusion matrices by seed"><figcaption>YOLO11s runs: top 100 epochs, bottom 415 epochs</figcaption></figure></div></div>
+</section>
+
+<!-- RESULTS -->
+<section class="panel" id="p-results" role="tabpanel">
+ <div class="card"><h3>Real, GAN-based and Stable Diffusion pictures</h3>
+  <p class="cap">One real FESEM picture, one GAN-refined drawn picture and one Stable Diffusion picture, with how a detector trained with each performed at equal training time (real only = 100).</p>
+  <div class="toolbar"><div class="chips" id="triPick"></div><div class="seg" id="triNav"><button data-d="-1" aria-label="Previous">← Prev</button><button data-d="1" aria-label="Next">Next →</button></div><label class="sp" style="color:var(--ink2)"><input type="checkbox" id="triBoxes" checked> Show boxes</label></div>
+  <div class="tri" id="tri"></div></div>
+
+ <div class="card" style="margin-top:16px"><h3>Equal training time: does any fake picture help?</h3>
+  <p class="cap">mAP50 on the locked test set. Bars show the mean of three seeds, whiskers one standard deviation, dots individual seeds. Score = mean ÷ real-only at the same number of steps × 100.</p>
+  <div class="legend" id="famLegend"></div><div id="fairChart"></div>
+  <p class="src">Report, Section 4.3. Pasted-real and fake-only pools were run at 2,000 steps and are compared with real-only at 2,000 steps; diffusion-only is scored against the 8,300-step baseline.</p></div>
+
+ <div class="grid g2" style="margin-top:16px">
+  <div class="card"><h3>By defect size</h3><p class="cap">AP50 per size bin (mean of seeds, whisker = 1 sd). Choose the models to compare.</p>
+   <div class="chips" id="sizePick" style="margin-bottom:10px"></div><div id="sizeChart"></div></div>
+  <div class="card"><h3>Found, missed and guesses</h3><p class="cap">Out of 1,331 real test defects. Guesses are all predictions, including very unsure ones.</p><div id="foundChart"></div></div>
+ </div>
+ <div class="card" style="margin-top:16px"><h3>Validation versus test</h3><p class="cap">The 12 validation pictures with defects flatter fake data. A decision made on validation alone would have been wrong.</p><div id="valChart"></div></div>
+</section>
+
+<!-- GALLERY -->
+<section class="panel" id="p-gallery" role="tabpanel">
+ <div class="toolbar"><div class="chips" id="gfilter"></div>
+  <label class="sp" style="color:var(--ink2)"><input type="checkbox" id="showBoxes" checked> Show defect boxes</label></div>
+ <div class="legend"><span><i style="background:var(--pbi2)"></i>PbI₂</span><span><i style="background:var(--pin)"></i>Pinhole</span><span id="gcount"></span></div>
+ <div class="gallery" id="gallery"></div>
+ <div class="card" style="margin-top:20px"><h3>Drawn layout versus GAN-refined</h3><p class="cap">Same layout, same labels. Drag the handle; the GAN changes only appearance.</p>
+  <div class="toolbar"><div class="chips" id="cmpPick"></div></div><div id="cmp"></div></div>
+</section>
+
+<!-- FIGURES -->
+<section class="panel" id="p-figures" role="tabpanel">
+ <p class="sub" style="margin-bottom:14px">Figures from the Phase I report and the CA3 presentation. Click to enlarge.</p>
+ <div class="grid g2" id="figs"></div>
+</section>
+</main>
+<footer><div class="wrap">Every number comes from <code>outputs/final_test_results.json</code>, <code>outputs/master_results.csv</code> and the split manifest, the same sources as the Phase I report. Rebuild with <code>python build_data.py</code>. No network needed.</div></footer>
+
+<dialog id="lb"><div class="lbhead"><b id="lbt"></b><span><label style="margin-right:12px"><input type="checkbox" id="lbBoxes" checked> boxes</label><button class="chip" id="lbx">Close</button></span></div><div class="lbbox" id="lbbox"></div></dialog>
+<div id="tip" role="tooltip"></div>
+<script src="data.js"></script>
+<script>
+const D=window.DATA, $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const FAM={real:["Real only","var(--real)"],gan:["Renderer + GAN","var(--gan)"],diffusion:["Stable Diffusion","var(--diff)"],reuse:["Re-used / pasted real","var(--reuse)"],detector:["Other detectors","var(--det)"],classical:["Classical","var(--classical)"]};
+const R=Object.fromEntries(D.runs.map(r=>[r.key,r]));
+const f4=x=>x.toFixed(4), f3=x=>x.toFixed(3), pct=x=>Math.round(x);
+const el=(h)=>{const t=document.createElement("template");t.innerHTML=h.trim();return t.content.firstChild};
+const BIN={T1_sub_stride:"< 8 px",T2_tiny:"8–16 px",T3_small:"16–32 px",T4_medium_up:"≥ 32 px"};
+
+/* tooltip */
+const tip=$("#tip");
+document.addEventListener("mousemove",e=>{const t=e.target.closest("[data-tip]");if(!t){tip.style.opacity=0;return}
+ tip.innerHTML=t.dataset.tip;tip.style.opacity=1;const w=tip.offsetWidth;tip.style.left=Math.min(e.clientX+14,innerWidth-w-8)+"px";tip.style.top=(e.clientY+14)+"px"});
+document.addEventListener("focusin",e=>{const t=e.target.closest("[data-tip]");if(t){tip.innerHTML=t.dataset.tip;tip.style.opacity=1;const r=t.getBoundingClientRect();tip.style.left=r.left+"px";tip.style.top=r.bottom+6+"px"}});
+document.addEventListener("focusout",()=>tip.style.opacity=0);
+
+/* horizontal bar rows: rows=[{label,sub,v,sd,seeds,color,tip,fmt}] */
+function hbars(host,rows,max,fmt=f4){
+ host.innerHTML="";
+ rows.forEach(r=>{
+  const row=el(`<div class="hbar row" tabindex="0" data-tip="${r.tip||""}"><div class="lbl">${r.label}${r.sub?`<small>${r.sub}</small>`:""}</div><div class="track"><div class="fill" style="width:0;background:${r.color}"></div></div><div class="val">${r.text??fmt(r.v)}</div></div>`);
+  const tr=row.querySelector(".track");
+  if(r.sd){const w=el(`<div class="whisk" style="left:${Math.max(0,(r.v-r.sd)/max*100)}%;width:${Math.min(2*r.sd,max)/max*100}%"></div>`);tr.append(w)}
+  (r.seeds||[]).forEach(s=>tr.append(el(`<div class="dot" style="left:${s/max*100}%"></div>`)));
+  host.append(row);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>row.querySelector(".fill").style.width=Math.min(100,r.v/max*100)+"%"));
+ });
+}
+
+/* ---- derived numbers ---- */
+const base8300=R.real_only_steps8300.map50[0], base2000=R.real_only_s.map50[0];
+const score=(r,b)=>pct(r.map50[0]/b*100);
+
+/* ---- tabs ---- */
+const TABS=[["overview","Home"],["dataset","Dataset"],["generators","Generators"],["sd","Stable Diffusion"],["detectors","Detectors"],["results","Results"],["gallery","Gallery"],["figures","Figures"]];
+const nav=$("#tabs");
+TABS.forEach(([id,t])=>{const b=el(`<button class="tab" role="tab" id="t-${id}" aria-controls="p-${id}" aria-selected="false">${t}</button>`);b.onclick=()=>show(id);nav.append(b)});
+nav.addEventListener("keydown",e=>{const ts=$$(".tab"),i=ts.indexOf(document.activeElement);if(i<0)return;
+ if(e.key==="ArrowRight"||e.key==="ArrowLeft"){const n=ts[(i+(e.key==="ArrowRight"?1:ts.length-1))%ts.length];n.focus();n.click()}});
+function show(id){TABS.forEach(([k])=>{$("#p-"+k).classList.toggle("on",k===id);$("#t-"+k).setAttribute("aria-selected",k===id)});
+ try{location.hash=id}catch(e){} (INIT[id]||(()=>{}))();INIT[id]=null}
+const INIT={};
+
+/* theme */
+$("#theme").onclick=()=>{const r=document.documentElement,d=(r.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"))==="dark";r.dataset.theme=d?"light":"dark";try{localStorage.setItem("th",r.dataset.theme)}catch(e){}};
+try{const t=localStorage.getItem("th");if(t)document.documentElement.dataset.theme=t}catch(e){}
+
+/* ---- OVERVIEW ---- */
+INIT.overview=()=>{
+ const gan=R.scale_005_bal_steps8300, unf=R.scale005_s, dif=R.diffusion_cn_steps8300;
+ const draw=m=>{
+  const rows=m==="unfair"
+   ?[{label:"Real only",sub:"100 epochs = 2,000 steps",v:R.real_only_s.map50[0],color:"var(--real)",text:"100"},
+     {label:"Real + 500 fake (GAN)",sub:"100 epochs = 8,300 steps",v:unf.map50[0],color:"var(--gan)",text:"194"}]
+   :[{label:"Real only",sub:"8,300 steps (415 epochs)",v:base8300,color:"var(--real)",text:"100"},
+     {label:"Real + 500 fake (GAN)",sub:"8,300 steps",v:gan.map50[0],color:"var(--gan)",text:String(score(gan,base8300))},
+     {label:"Real + 500 fake (Diffusion)",sub:"8,300 steps",v:dif.map50[0],color:"var(--diff)",text:String(score(dif,base8300))}];
+  hbars($("#heroChart"),rows.map(r=>({...r,tip:`mAP50 ${f4(r.v)}`})),0.16,f4);
+  $("#heroChart").prepend(el(`<div class="cap">Detection score, real only = 100 · ${m==="unfair"?"the 1.94× gain came from 4.15× more training steps":"the gain disappears at equal training time"}</div>`));
+ };
+ $$("#fairSwitch button").forEach(b=>b.onclick=()=>{$$("#fairSwitch button").forEach(x=>x.setAttribute("aria-pressed",x===b));draw(b.dataset.m)});
+ draw("fair");
+
+ const O=[["Exact labels","Show that a fake defect can carry an exact box, mask and class, because the label is written in the same step that draws the defect.","Done","518,943 exact boxes in 10,000 drawn pictures","generators"],
+  ["Chemistry-based shapes","Ground the shapes of the fake defects in published observations of how pinholes and PbI₂ form.","Done","8 defect shapes from published work","generators"],
+  ["Leak-free dataset","Measure how much the old split leaked, and build a split in which no specimen appears on two sides.","Done","36 leaked specimens found; 126 / 31 / 54 groups","dataset"],
+  ["Realism measured, not assumed","Measure how far the fake pictures are from real ones at three levels, then check whether closer also means more useful.","Done","Realism did not predict usefulness","generators"],
+  ["Where synthetic data helps","Test whether fake pictures improve a detector when both models get the same training time, and for which defect sizes.","Done for the questions tested","GAN 91, Stable Diffusion 85, real only 100","results"],
+  ["Best detector","Find which detector suits tiny FESEM defects when trained on the same real pictures and scored on the same locked test set.","Partly done","YOLO11s trained longer: mAP50 0.148","detectors"]];
+ $("#objs").innerHTML=O.map((o,i)=>`<button class="obj" data-go="${o[4]}"><div class="on"><span>OBJECTIVE ${i+1}</span><span class="tag ${o[2]==="Done"?"yes":"mid"}">${o[2]}</span></div><h4>${o[0]}</h4><p>${o[1]}</p><div class="ev"><b>${o[3]}</b><span>Open →</span></div></button>`).join("");
+ $$(".obj").forEach(b=>b.onclick=()=>{show(b.dataset.go);scrollTo(0,0)});
+ const K=[["Files received","440","273 clean images in 211 specimen groups"],["Real defect boxes","4,578","across the 273 labeled pictures"],
+  ["Locked test set","1,331","boxes in 73 pictures; used once per model"],["Fake pictures built","10,000","rendered, with 518,943 exact boxes"],
+  ["Best detector","0.148","mAP50, YOLO11s trained longer (415 epochs)"],["Papers reviewed","34","6 topics, each checked against DOI / arXiv"]];
+ $("#kpis").innerHTML=K.map(k=>`<div class="card kpi"><div class="lab">${k[0]}</div><div class="num">${k[1]}</div><div class="note">${k[2]}</div></div>`).join("");
+ const H=[["H1 · exact labels from a drawn defect","yes","Stands"],["Objective 3 · leak-free corpus","yes","Stands"],["Objective 4 · realism measured","mid","Tested: realism ≠ usefulness"],
+  ["H2 · realistic fakes improve detection","no","Not supported (91 vs 100)"],["H3 · whole diffusion images help more","no","Not supported (85 vs 100)"],["H4 · small YOLO beats large transformer","yes","Supported (0.0688 vs 0.0381)"]];
+ $("#hyp").innerHTML="<table><tbody>"+H.map(h=>`<tr><td>${h[0]}</td><td><span class="tag ${h[1]}">${h[2]}</span></td></tr>`).join("")+"</tbody></table>";
+};
+
+/* ---- DATASET ---- */
+INIT.dataset=()=>{
+ const F=[["Files received",440,"var(--real)"],["Duplicates and copies removed",-102,"var(--bad)"],["Never labeled, removed",-65,"var(--bad)"],["Clean images",273,"var(--gan)"]];
+ hbars($("#funnel"),F.map(f=>({label:f[0],v:Math.abs(f[1]),color:f[2],text:(f[1]<0?"−":"")+Math.abs(f[1]),tip:`${f[0]}: ${f[1]}`})),440,x=>x);
+ const A=D.audit;
+ $("#audit").innerHTML=`<table><tbody><tr><td>Train ∩ validation</td><td><b>${A.train_val_overlap}</b></td></tr><tr><td>Train ∩ test</td><td><b>${A.train_test_overlap}</b></td></tr><tr><td>Validation ∩ test</td><td><b>${A.val_test_overlap}</b></td></tr></tbody></table><p class="src">Specimen groups shared between old splits (audit of the original split).</p>`;
+ const S=D.split, M=[["images","Pictures"],["groups","Specimen groups"],["boxes","Defect boxes"],["images_with_defects","Pictures with defects"]];
+ const sw=$("#splitSwitch");let cur="images";
+ const drawS=()=>{hbars($("#splitChart"),["train","val","test"].map((k,i)=>({label:{train:"Train",val:"Validation",test:"Test (locked)"}[k],v:S[k][cur],color:["var(--real)","var(--gan)","var(--reuse)"][i],tip:`${k}: ${S[k][cur].toLocaleString()}`})),Math.max(...["train","val","test"].map(k=>S[k][cur])),x=>x.toLocaleString())};
+ M.forEach(([k,t])=>{const b=el(`<button aria-pressed="${k===cur}">${t}</button>`);b.onclick=()=>{cur=k;$$("#splitSwitch button").forEach(x=>x.setAttribute("aria-pressed",x===b));drawS()};sw.append(b)});drawS();
+ const rows=[];["train","val","test"].forEach(k=>["pbi2","pinhole"].forEach(c=>rows.push({label:{train:"Train",val:"Validation",test:"Test"}[k]+" · "+(c==="pbi2"?"PbI₂":"pinhole"),v:S[k].boxes_per_class[c],color:c==="pbi2"?"var(--pbi2)":"var(--pin)",tip:`${S[k].boxes_per_class[c]} boxes`})));
+ hbars($("#classChart"),rows,2400,x=>x.toLocaleString());
+ const B=Object.entries(D.ngt);
+ hbars($("#sizeCounts"),B.map(([k,n])=>({label:BIN[k],sub:k.replace(/_/g," "),v:n,color:"var(--det)",tip:`${n} test boxes`})),600,x=>x.toLocaleString());
+};
+
+/* ---- helpers shared by the model tabs ---- */
+const tbl=(head,rows)=>`<table><thead><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td${i?"":""}>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+const DETN={real_only_steps8300:"YOLO11s, trained longer",real_only_yolov8s:"YOLOv8s",real_only_s:"YOLO11s (100 epochs)",real_only_rtdetr:"RT-DETR-L",real_only_p2:"YOLOv8s + P2 head",microdefectcv:"Classical (no training)"};
+const DETORDER=["real_only_steps8300","real_only_yolov8s","real_only_s","real_only_rtdetr","real_only_p2","microdefectcv"];
+const detColor=k=>R[k].family==="real"?"var(--real)":R[k].family==="classical"?"var(--classical)":"var(--det)";
+const realOf=cls=>D.gallery.filter(g=>g.set==="real"&&g.stem.startsWith(cls===0?"class0":"class1"));
+function imgBox(file,boxes,alt,cls="bx"){return `<div class="box"><img loading="lazy" src="img/${file}" alt="${alt}">${boxSvg(boxes)}</div>`}
+
+/* ---- GENERATORS ---- */
+INIT.generators=()=>{
+ const M=[["1","Drawn (renderer)","Parametric defects from published chemistry; exact labels by construction. 10,000 pictures, 518,943 boxes.","var(--real)"],
+  ["2","Drawn + GAN","A conditional U-Net refiner with spatial and frequency critics repaints texture only.","var(--gan)"],
+  ["3","Pasted real defects","Real defect crops pasted onto clean backgrounds.","var(--reuse)"],
+  ["4","Re-used real layouts","Real defect layouts moved to other backgrounds, or real defective pictures with extras added.","var(--reuse)"],
+  ["5","Stable Diffusion","SD 1.5 + ControlNet + IP-Adapter repaint the whole picture. See the Stable Diffusion tab.","var(--diff)"]];
+ $("#methods").innerHTML=M.map(m=>`<div class="method"><div class="sw" style="background:${m[3]}"></div><div class="n">${m[0]} of 5</div><h4>${m[1]}</h4><p>${m[2]}</p></div>`).join("");
+ const G=[["Renderer only","6.871","0.218","1.185"],["Renderer + GAN (critic on)","5.129","0.203","1.210"],["Renderer + GAN (critic off)","4.555","0.530","1.180"]];
+ $("#gapTable").innerHTML=tbl(["Pool","Pixel brightness","Texture (frequency)","Defect shape"],G);
+ hbars($("#gapChart"),G.map((g,i)=>({label:g[0]+" · texture",v:+g[2],color:["var(--real)","var(--gan)","var(--classical)"][i],tip:`texture distance ${g[2]}`})),0.6,f3);
+};
+
+/* ---- STABLE DIFFUSION ---- */
+INIT.sd=()=>{
+ const T=D.timing;
+ const SDM=[["sd15","Stable Diffusion 1.5","stable-diffusion-v1-5","Canny ControlNet + IP-Adapter",55,60,"kept","Closest to real films; grain structure preserved"],
+  ["realvis","Realistic Vision 5.1","Realistic_Vision_V5.1_noVAE","Canny ControlNet + IP-Adapter",42,56,"deleted","Marginally sharper, but erases more pinholes"],
+  ["dreamshaper","DreamShaper 8","dreamshaper-8","Canny ControlNet + IP-Adapter",49,51,"deleted","Invents honeycomb patterns inside grains"],
+  ["sdxl","SDXL 1.0","stable-diffusion-xl-base-1.0","SDXL ControlNet + IP-Adapter",61,73,"deleted","Best retention, but waxy and embossed; pits become pebbles; about 6× slower"]];
+ const sp=k=>T[k]?`${T[k].seconds_per_image} s · ${T[k].peak_vram_gib} GiB`:"–";
+ $("#sdModels").innerHTML=tbl(["Model","Base weights","Conditioning","Seconds · VRAM per picture","Pinholes kept","PbI₂ kept","Verdict"],
+  SDM.map(m=>[`<b>${m[1]}</b><br><small style="color:var(--muted)">${m[7]}</small>`,m[2],m[3],sp(m[0]),m[4]+"%",m[5]+"%",`<span class="tag ${m[6]==="kept"?"yes":"no"}">${m[6]}</span>`]).concat([["<b>SD 2.1 base</b><br><small style=\"color:var(--muted)\">Download blocked mid-run; no IP-Adapter exists for it</small>","stable-diffusion-2-1-base","Canny ControlNet","–","–","–",`<span class="tag mid">dropped</span>`]]));
+ const keep=[];SDM.forEach(m=>{keep.push({label:m[1],sub:"pinholes",v:m[4],color:"var(--diff)",tip:`${m[1]}: ${m[4]}% pinholes kept`});keep.push({label:"",sub:"PbI₂",v:m[5],color:"var(--pbi2)",tip:`${m[1]}: ${m[5]}% PbI₂ kept`})});
+ hbars($("#sdKeep"),keep,100,x=>x+"%");
+
+ const lays=D.sd.layouts,pk=$("#sdPick");let li=0;
+ const kind=l=>l.idx<15?["Pinhole",1]:["PbI₂",0];
+ const drawRow=()=>{const l=lays[li],[kn,c]=kind(l),rr=realOf(c)[(li%2)+1]||realOf(c)[0];
+  const cell=(file,boxes,cap,sub)=>`<figure class="sdcell"><div class="box"><img loading="lazy" src="img/${file}" alt="${cap}">${boxSvg(boxes)}</div><figcaption><b>${cap}</b><br>${sub}</figcaption></figure>`;
+  let h=cell(rr.file,[],"Real picture",kn+" film (real FESEM)")+cell(l.cond,l.boxes,"Canny edge condition","from the drawn layout, "+l.boxes.length+" box"+(l.boxes.length===1?"":"es"));
+  SDM.forEach(m=>h+=cell(l.out[m[0]],l.boxes,m[1],m[6]==="kept"?"kept · "+sp(m[0]):sp(m[0])));
+  h+=`<figure class="sdcell"><div class="box na"><span>Download blocked</span></div><figcaption><b>SD 2.1 base</b><br>dropped</figcaption></figure>`;
+  $("#sdRow").innerHTML=h;togg()};
+ const togg=()=>$$("#sdRow .bx").forEach(s=>s.style.display=$("#sdBoxes").checked?"":"none");
+ lays.forEach((l,i)=>{const c=el(`<button class="chip" aria-pressed="${i===0}">${kind(l)[0]} layout ${l.idx}</button>`);c.onclick=()=>{li=i;$$("#sdPick .chip").forEach(x=>x.setAttribute("aria-pressed",x===c));drawRow()};pk.append(c)});
+ $("#sdBoxes").onchange=togg;drawRow();
+
+ const SW=[["0.15",82,82,.85],["0.20",79,80,.84],["0.25",75,75,.83],["0.35",65,71,.77],["0.50",55,60,.57]];
+ const SWM=[["Pinholes kept (%)",1],["PbI₂ kept (%)",2],["Median contrast kept (%)",3]];let sm=1;
+ const drawSw=()=>hbars($("#sdSweep"),SW.map(r=>({label:"strength "+r[0]+(r[0]==="0.25"?" · chosen":""),v:sm===3?r[3]*100:r[sm],color:r[0]==="0.25"?"var(--diff)":"var(--classical)",tip:`strength ${r[0]}`})),100,x=>Math.round(x)+"%");
+ SWM.forEach(([t,k])=>{const b=el(`<button aria-pressed="${k===sm}">${t}</button>`);b.onclick=()=>{sm=k;$$("#swSwitch button").forEach(x=>x.setAttribute("aria-pressed",x===b));drawSw()};$("#swSwitch").append(b)});drawSw();
+ $("#sdSweep").insertAdjacentHTML("afterend",`<p class="src">Also tried and rejected: drawing defect outlines into the ControlNet condition (pinholes kept fell to 63% at 0.25) and a whole-image rejection band (threw away 6–7 of 10 pictures).</p>`);
+
+ const B=[["Under 8 px",81,"2,074 drawn"],["8–16 px",88,"3,764 drawn"],["16–32 px",92,"2,086 drawn"],["32 px and over",95,"798 drawn"]];
+ hbars($("#sdBands"),B.map(b=>({label:b[0],sub:b[2],v:b[1],color:"var(--diff)",tip:`${b[1]}% kept`})),100,x=>x+"%");
+ const P=D.sd.pool;let pi=0;
+ const drawPool=()=>{const p=P[pi];$("#poolPair").innerHTML=`<div class="pair"><figure class="sdcell"><div class="box"><img src="img/${p.init}" alt="Drawn composite"></div><figcaption><b>Drawn composite</b></figcaption></figure><figure class="sdcell"><div class="box"><img src="img/${p.out}" alt="Stable Diffusion output">${boxSvg(p.boxes)}</div><figcaption><b>Stable Diffusion output</b><br>${p.boxes.length} kept labels</figcaption></figure></div>`};
+ P.forEach((p,i)=>{const c=el(`<button class="chip" aria-pressed="${i===0}">Sample ${i+1}</button>`);c.onclick=()=>{pi=i;$$("#poolPick .chip").forEach(x=>x.setAttribute("aria-pressed",x===c));drawPool()};$("#poolPick").append(c)});drawPool();
+
+ const A=[["real_only_steps8300","Real only",base8300],["scale_005_bal_steps8300","Real + drawn + GAN",base8300],["diffusion_cn_steps8300","Real + Stable Diffusion",base8300],["synth_only_005_bal","Drawn + GAN only (no real)",base2000],["diffusion_cn_only","Stable Diffusion only (no real)",base8300]];
+ $("#sdResults").innerHTML=tbl(["Training pictures","mAP50","mAP50-95","Recall","Precision","Score"],A.map(([k,t,b])=>{const r=R[k];return [t,`<b>${f4(r.map50[0])}</b> ± ${f4(r.map50[1])}`,f4(r.map5095[0]),f3(r.r[0]),f3(r.p[0]),score(r,b)]}));
+ hbars($("#sdBars"),A.map(([k,t,b])=>({label:t,v:R[k].map50[0],sd:R[k].map50[1],seeds:R[k].seeds,color:k.startsWith("real")?"var(--real)":k.includes("diffusion")?"var(--diff)":"var(--gan)",tip:`${t}<br>mAP50 ${f4(R[k].map50[0])}`})),0.22);
+ const arms=[["real_only_steps8300","Real only","var(--real)"],["scale_005_bal_steps8300","+ drawn + GAN","var(--gan)"],["diffusion_cn_steps8300","+ Stable Diffusion","var(--diff)"]];
+ $("#sdBinPick").remove();
+ let bh="";Object.keys(BIN).forEach(b=>bh+=`<div style="margin:6px 0 2px;font-size:12px;color:var(--muted);font-weight:600">${BIN[b]}</div><div class="sb" data-b="${b}"></div>`);$("#sdBins").innerHTML=bh;
+ Object.keys(BIN).forEach(b=>hbars($(`.sb[data-b=${b}]`),arms.map(a=>({label:a[1],v:R[a[0]].bins[b][0],color:a[2],tip:`${a[1]}<br>AP50 ${f3(R[a[0]].bins[b][0])}`})),0.3,f3));
+ $("#sdP").innerHTML=tbl(["Comparison","Ratio","p"],[["Diffusion mixed vs real only","0.85×","0.46"],["Diffusion mixed vs drawn + GAN mixed","0.94×","0.65"],["Diffusion only vs drawn + GAN only","1.72×","0.36"],["Diffusion only vs real only","0.03×","0.021"]]);
+ hbars($("#sdMem"),[{label:"Real → nearest other real",sub:"bar = median, dot = 99th percentile",v:.867,seeds:[.973],color:"var(--real)"},{label:"Generated → its own background",sub:"bar = median, dot = max",v:.765,seeds:[.963],color:"var(--diff)"},{label:"Generated → nearest other real",sub:"bar = median, dot = max",v:.712,seeds:[.913],color:"var(--diff)"},{label:"Generated → its style reference",sub:"bar = median, dot = max",v:.393,seeds:[.874],color:"var(--diff)"}].map(r=>({...r,tip:`median ${r.v}`})),1,f3);
+ $("#sdRead").innerHTML=tbl(["Test","Rule (set beforehand)","Result","Reading"],[["Releasability: diffusion only","below 0.03 → no transfer","0.0050",`<span class="tag no">Showcase, not training data</span>`],["Augmentation: mixed vs real only","0.85–1.15× → neutral; below → harmful","0.85× (p = 0.46)",`<span class="tag mid">Neutral, trending down; H3 not supported</span>`],["Memorisation","any above real-to-real p99 is flagged","0 of 500",`<span class="tag yes">Clean</span>`]])+`<p class="src">One weak signal: the sub-8 px bin is the only one where the diffusion arm leads (0.0215 vs 0.0125 real only). Values are near zero with wide seed spread, so it is a hypothesis for future work, not a finding.</p>`;
+};
+
+/* ---- DETECTORS ---- */
+INIT.detectors=()=>{
+ $("#detTable").innerHTML=tbl(["Detector","Parameters (M)","Epochs","Train min","mAP50","mAP50-95","Recall","Precision"],DETORDER.map(k=>{const r=R[k];return [DETN[k],r.params?r.params.toFixed(1):"–",r.epochs||"–",r.mins||"–",`<b>${f4(r.map50[0])}</b>`,f4(r.map5095[0]),f3(r.r[0]),f3(r.p[0])]}));
+ const MET={map50:["mAP50","map50",0.2],map5095:["mAP50-95","map5095",0.1],r:["Recall","r",0.4],p:["Precision","p",0.06]};let met="map50";
+ const drawD=()=>{const [t,f,mx]=MET[met];
+  if($("#tbl").checked){$("#detChart").innerHTML=`<div class="tscroll">${tbl(["Detector",t,"± sd","Runs"],DETORDER.map(k=>[DETN[k],`<b>${f4(R[k][f][0])}</b>`,f4(R[k][f][1]),R[k].n]))}</div>`;return}
+  hbars($("#detChart"),DETORDER.map(k=>({label:DETN[k],sub:R[k].mins?`${R[k].params} M params · ${R[k].mins} min`:"no training",v:R[k][f][0],sd:R[k][f][1]||0,color:detColor(k),tip:`<b>${DETN[k]}</b><br>${t} ${f4(R[k][f][0])}<br>${R[k].n} run(s)`})),mx)};
+ Object.entries(MET).forEach(([k,v])=>{const b=el(`<button aria-pressed="${k===met}">${v[0]}</button>`);b.onclick=()=>{met=k;$$("#metricSwitch button").forEach(x=>x.setAttribute("aria-pressed",x===b));drawD()};$("#metricSwitch").append(b)});
+ $("#tbl").onchange=drawD;drawD();
+ const C=[["YOLO11s","9.41 M parameters. One-stage detector, no fully connected layers: even its final answer comes from a small convolution. 100 epochs: mAP50 0.0688. Trained longer (415 epochs, 8,300 steps, 34 min): 0.1480, the best result.","var(--real)"],
+  ["YOLOv8s","11.13 M parameters. Scored 0.0826, inside the YOLO11s range of 0.0584–0.0794 for single runs, so the two small YOLO models are interchangeable here.","var(--det)"],
+  ["YOLOv8s + P2 head","10.63 M parameters. Adds a finer output level for tiny defects. The run stopped early at epoch 71 from a partly pre-trained network, so 0.0310 is not a final verdict on the idea.","var(--det)"],
+  ["RT-DETR-L","31.99 M parameters, transformer, batch 4. 77 minutes for 0.0381; precision 0.017 at recall 0.28. With 160 training pictures it cannot learn its many parameters and fires almost everywhere.","var(--det)"],
+  ["Classical (MicroDefectCV)","No learning, hand-made rules. mAP50 0.0012; finds 100 of 1,331 defects with 22,922 guesses. Almost useless here.","var(--classical)"]];
+ $("#detCards").innerHTML=C.map(c=>`<div class="card" style="border-top:3px solid ${c[2]}"><h3>${c[0]}</h3><p class="sub" style="margin-top:6px">${c[1]}</p></div>`).join("");
+ const sb=[];[["real_only_s","100 epochs"],["real_only_steps8300","415 epochs"]].forEach(([k,t])=>R[k].seeds.forEach((s,i)=>sb.push({label:`${t} · run ${i+1}`,v:s,color:"var(--real)",tip:`mAP50 ${f4(s)}`})));
+ hbars($("#seedBars"),sb,0.2);
+ let bh="";Object.keys(BIN).forEach(b=>bh+=`<div style="margin:6px 0 2px;font-size:12px;color:var(--muted);font-weight:600">${BIN[b]} · ${D.ngt[b]} boxes</div><div class="db" data-b="${b}"></div>`);$("#detBins").innerHTML=bh;
+ Object.keys(BIN).forEach(b=>hbars($(`.db[data-b=${b}]`),DETORDER.filter(k=>k!=="real_only_s").map(k=>({label:DETN[k],v:R[k].bins[b][0],color:detColor(k),tip:`${DETN[k]}<br>AP50 ${f3(R[k].bins[b][0])}`})),0.3,f3));
+};
+
+/* ---- RESULTS ---- */
+INIT.results=()=>{
+ /* real | GAN | Stable Diffusion */
+ let cls=0,ti=0;const pk=$("#triPick");
+ [["PbI₂",0],["Pinhole",1]].forEach(([t,c])=>{const b=el(`<button class="chip" aria-pressed="${c===cls}">${t}</button>`);b.onclick=()=>{cls=c;ti=0;$$("#triPick .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));drawT()};pk.append(b)});
+ const has=g=>g.boxes.some(b=>b[0]===cls);
+ const lists=()=>({real:realOf(cls),gan:D.gallery.filter(g=>g.set==="refined"&&g.stem.includes(cls===0?"pbi2":"pinhole")),sd:(D.gallery.filter(g=>g.set==="diffusion"&&has(g)).length?D.gallery.filter(g=>g.set==="diffusion"&&has(g)):D.gallery.filter(g=>g.set==="diffusion"))});
+ const drawT=()=>{const L=lists(),at=a=>a[((ti%a.length)+a.length)%a.length];
+  const col=(g,t,sub,r,color)=>`<figure class="tricol"><div class="trihead"><span class="dotc" style="background:${color}"></span><b>${t}</b></div><div class="box"><img src="img/${g.file}" alt="${t}">${boxSvg(g.boxes)}</div><figcaption>${g.boxes.length} boxes<br><span style="color:var(--ink2)">${sub}</span></figcaption><div class="triscore"><span>${r[0]}</span><small>${r[1]}</small></div></figure>`;
+  $("#tri").innerHTML=col(at(L.real),"Real FESEM","Expert-labeled picture",["100","real only, mAP50 "+f4(base8300)],"var(--real)")+col(at(L.gan),"GAN-based","Drawn layout repainted by the GAN refiner",[score(R.scale_005_bal_steps8300,base8300),"real + GAN, mAP50 "+f4(R.scale_005_bal_steps8300.map50[0])],"var(--gan)")+col(at(L.sd),"Stable Diffusion","Whole picture repainted, labels verified",[score(R.diffusion_cn_steps8300,base8300),"real + SD, mAP50 "+f4(R.diffusion_cn_steps8300.map50[0])],"var(--diff)");
+  togg()};
+ const togg=()=>$$("#tri .bx").forEach(s=>s.style.display=$("#triBoxes").checked?"":"none");
+ $("#triBoxes").onchange=togg;$$("#triNav button").forEach(b=>b.onclick=()=>{ti+=+b.dataset.d;drawT()});drawT();
+
+ $("#famLegend").innerHTML=Object.values(FAM).slice(0,4).map(f=>`<span><i style="background:${f[1]}"></i>${f[0]}</span>`).join("");
+ const P={scale_005_bal_steps8300:"0.59",diffusion_cn_steps8300:"0.46",augment_defective:"0.18",layout_transfer:"0.08",copypaste:"0.10",synth_only_005_bal:"0.006",diffusion_cn_only:"0.021"};
+ const lst=[["real_only_steps8300","None (real only)",base8300],["scale_005_bal_steps8300","Renderer + GAN",base8300],["diffusion_cn_steps8300","Stable Diffusion",base8300],
+  ["augment_defective","Re-used defective pictures",base8300],["layout_transfer","Re-used real layouts",base8300],["copypaste","Pasted real defects (vs 2,000 steps)",base2000],
+  ["synth_only_005_bal","Fake pictures only (vs 2,000 steps)",base2000],["diffusion_cn_only","Diffusion only, no real",base8300]];
+ hbars($("#fairChart"),lst.map(([k,t,b])=>{const r=R[k];return {label:t,sub:`score ${score(r,b)}${P[k]?` · p = ${P[k]}`:""}`,v:r.map50[0],sd:r.map50[1],seeds:r.seeds,color:FAM[r.family][1],text:f4(r.map50[0]),
+  tip:`<b>${t}</b><br>mAP50 ${f4(r.map50[0])} ± ${f4(r.map50[1])}<br>score ${score(r,b)} (real only = 100)<br>seeds: ${r.seeds.map(f4).join(", ")}`}}),0.22);
+
+ const sizeKeys=["real_only_steps8300","scale_005_bal_steps8300","diffusion_cn_steps8300","real_only_rtdetr"];let sel=new Set(["real_only_steps8300","scale_005_bal_steps8300"]);
+ const sl={real_only_steps8300:"Real only (8,300 steps)",scale_005_bal_steps8300:"Renderer + GAN",diffusion_cn_steps8300:"Stable Diffusion",real_only_rtdetr:"RT-DETR-L"};
+ const sc={real_only_steps8300:"var(--real)",scale_005_bal_steps8300:"var(--gan)",diffusion_cn_steps8300:"var(--diff)",real_only_rtdetr:"var(--det)"};
+ const drawSz=()=>{const bins=Object.keys(BIN);let h="";
+  bins.forEach(b=>{h+=`<div style="margin:6px 0 2px;font-size:12px;color:var(--muted);font-weight:600">${BIN[b]} · ${D.ngt[b]} boxes</div><div class="sz" data-b="${b}"></div>`});
+  $("#sizeChart").innerHTML=h;
+  bins.forEach(b=>hbars($(`.sz[data-b=${b}]`),sizeKeys.filter(k=>sel.has(k)).map(k=>({label:sl[k],v:R[k].bins[b][0],sd:R[k].bins[b][1],color:sc[k],tip:`${sl[k]}<br>AP50 ${f3(R[k].bins[b][0])}`})),0.3,f3));};
+ sizeKeys.forEach(k=>{const c=el(`<button class="chip" aria-pressed="${sel.has(k)}">${sl[k]}</button>`);c.onclick=()=>{if(sel.has(k)&&sel.size>1)sel.delete(k);else sel.add(k);c.setAttribute("aria-pressed",sel.has(k));drawSz()};$("#sizePick").append(c)});drawSz();
+
+ const fk=["real_only_steps8300","scale_005_bal_steps8300","diffusion_cn_steps8300","real_only_yolov8s","real_only_rtdetr","microdefectcv"];
+ const fn=k=>DETN[k]||sl[k];
+ $("#foundChart").innerHTML=fk.map(k=>{const r=R[k],f=Math.round(r.r[0]*1331);return `<div class="hbar row" tabindex="0" style="grid-template-columns:minmax(120px,190px) 1fr 84px" data-tip="<b>${fn(k)}</b><br>found ${f} · missed ${1331-f}<br>predictions ${r.npred.toLocaleString()}"><div class="lbl">${fn(k)}<small>${r.npred.toLocaleString()} guesses</small></div><div class="track" style="display:flex;overflow:hidden"><div style="width:${f/1331*100}%;background:var(--good)"></div><div style="width:${(1331-f)/1331*100}%;background:var(--classical);opacity:.45"></div></div><div class="val">${f} / 1331</div></div>`}).join("")+`<div class="legend" style="margin-top:8px"><span><i style="background:var(--good)"></i>found</span><span><i style="background:var(--classical)"></i>missed</span></div>`;
+
+ const vk=["real_only_s","scale005_steps2000","copypaste","scale_005_bal_steps8300","real_only_steps8300"];
+ const vl={real_only_s:"Real only (2,000 steps)",scale005_steps2000:"Renderer + GAN (2,000 steps)",copypaste:"Pasted real defects (2,000 steps)",scale_005_bal_steps8300:"Renderer + GAN (8,300 steps)",real_only_steps8300:"Real only (8,300 steps)"};
+ $("#valChart").innerHTML=`<div class="legend"><span><i style="background:var(--gan)"></i>validation</span><span><i style="background:var(--real)"></i>locked test</span></div>`+vk.map(k=>`<div style="margin-bottom:8px"><div style="font-size:12.5px;margin-bottom:2px">${vl[k]}</div><div class="v" data-k="${k}"></div></div>`).join("");
+ vk.forEach(k=>{const r=R[k];hbars($(`.v[data-k=${k}]`),[{label:"validation",v:r.val[0],color:"var(--gan)",tip:`val mAP50 ${f4(r.val[0])}`},{label:"test",v:r.map50[0],color:"var(--real)",tip:`test mAP50 ${f4(r.map50[0])}`}],0.16)});
+};
+
+/* ---- GALLERY ---- */
+const SETS=[["all","All"],["real","Real FESEM"],["rendered","Drawn"],["refined","Drawn + GAN"],["diffusion","Stable Diffusion"],["copypaste","Pasted real"],["augment","Re-used defective"],["layout","Re-used layouts"]];
+const CC=["#f59e0b","#22d3ee"];
+function boxSvg(b){return `<svg viewBox="0 0 1 1" preserveAspectRatio="none" class="bx">${b.map(([c,x,y,w,h])=>`<rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" fill="none" stroke="${CC[c]||"#fff"}" stroke-width="1.6" vector-effect="non-scaling-stroke"/>`).join("")}</svg>`}
+INIT.gallery=()=>{
+ let cur="all";const gf=$("#gfilter");
+ SETS.forEach(([k,t])=>{const c=el(`<button class="chip" aria-pressed="${k===cur}">${t}</button>`);c.onclick=()=>{cur=k;$$("#gfilter .chip").forEach(x=>x.setAttribute("aria-pressed",x===c));draw()};gf.append(c)});
+ const draw=()=>{const items=D.gallery.filter(g=>cur==="all"||g.set===cur);$("#gcount").textContent=items.length+" pictures";
+  $("#gallery").innerHTML="";items.forEach(g=>{const b=el(`<button class="gitem" aria-label="${g.title} ${g.stem}"><div class="box"><img loading="lazy" src="img/${g.file}" alt="${g.title}">${boxSvg(g.boxes)}</div><div class="meta"><b>${g.title}</b><br>${g.boxes.length} boxes · ${g.stem.length>26?"…"+g.stem.slice(-24):g.stem}</div></button>`);b.onclick=()=>open(g);$("#gallery").append(b)});toggle()};
+ const toggle=()=>$$(".bx").forEach(s=>s.style.display=$("#showBoxes").checked?"":"none");
+ $("#showBoxes").onchange=toggle;draw();
+ /* compare */
+ const ref=new Map(D.gallery.filter(g=>g.set==="refined").map(g=>[g.stem,g]));
+ const pairs=D.gallery.filter(g=>g.set==="rendered"&&ref.has(g.stem)).map(g=>[g,ref.get(g.stem)]);
+ const cp=$("#cmpPick");let ci=0;
+ pairs.forEach((p,i)=>{const c=el(`<button class="chip" aria-pressed="${i===0}">${p[0].stem.includes("pbi2")?"PbI₂":"Pinhole"} ${i+1}</button>`);c.onclick=()=>{ci=i;$$("#cmpPick .chip").forEach(x=>x.setAttribute("aria-pressed",x===c));mk()};cp.append(c)});
+ const mk=()=>{const [a,b]=pairs[ci];$("#cmp").innerHTML=`<div class="cmp" id="cm"><img src="img/${b.file}" alt="GAN refined"><div class="top" id="ctop"><img src="img/${a.file}" alt="Drawn"></div><div class="handle" id="chd" style="left:50%"></div><span class="tl" style="left:8px">Drawn</span><span class="tl" style="right:8px">Drawn + GAN</span></div><input type="range" min="0" max="100" value="50" id="crg" style="width:100%;max-width:640px;display:block;margin:10px auto 0" aria-label="Compare slider">`;
+  const set=v=>{$("#ctop").style.width=v+"%";$("#chd").style.left=v+"%"};$("#crg").oninput=e=>set(e.target.value);
+  const w=()=>{$("#ctop img").style.width=$("#cm").clientWidth+"px"};w();new ResizeObserver(w).observe($("#cm"));
+  const mv=e=>{const r=$("#cm").getBoundingClientRect();const v=Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100));set(v);$("#crg").value=v};
+  $("#cm").onpointerdown=e=>{mv(e);$("#cm").setPointerCapture(e.pointerId);$("#cm").onpointermove=mv};$("#cm").onpointerup=()=>$("#cm").onpointermove=null};
+ if(pairs.length)mk();
+};
+const lb=$("#lb");let lbItem=null;
+function open(g){lbItem=g;$("#lbt").textContent=g.title+" · "+g.stem+" · "+g.boxes.length+" boxes";$("#lbbox").innerHTML=`<img src="img/${g.file}" alt="${g.title}">${boxSvg(g.boxes)}`;lbToggle();lb.showModal()}
+function openFig(src,t){$("#lbt").textContent=t;$("#lbbox").innerHTML=`<img src="${src}" alt="${t}" style="background:#fff">`;lb.showModal()}
+const lbToggle=()=>{const s=$("#lbbox svg");if(s)s.style.display=$("#lbBoxes").checked?"":"none"};
+$("#lbBoxes").onchange=lbToggle;$("#lbx").onclick=()=>lb.close();lb.addEventListener("click",e=>{if(e.target===lb)lb.close()});
+
+/* ---- FIGURES ---- */
+const FIGS=[["problem_closeups","The problem: pinholes (dark) and PbI₂ (bright) in real FESEM images"],["funnel","440 files to 273 clean images"],["leakage_diagram","Why the old split leaked"],["split_chart","Train / validation / test split"],["methods_gallery","Five ways to make fake training images"],["pipeline_overall","Overall pipeline"],["renderer","Parametric defect renderer"],["refiner","GAN refiner"],["diffusion_pipeline","Diffusion pipeline"],["diffusion_triplet","Real background, drawn defects, diffusion output"],["diffusion_samples","Real (top) vs diffusion (bottom)"],["models_compare","Four diffusion models, same layout"],["arch_chart","Detector architectures"],["compute_matching","Compute matching: 8,300 steps"],["fair_chart","Unfair (194) vs fair (91) comparison"],["all_chart","Every fake-picture kind at equal training time"],["sizes_chart","Score by defect size"],["found_chart","Found, missed, false alarms"],["benchmark_chart","Detector benchmark"],["scores_chart","Scores"],["seeds_chart","Seeds"],["gap_chart","Distance from real pictures"],["prisma","PRISMA flow of the literature review"],["lit_to_gap","From literature to gap"]];
+INIT.figures=()=>{$("#figs").innerHTML="";FIGS.forEach(([k,t])=>{const f=el(`<div class="card"><figure><img loading="lazy" src="fig/${k}.png" alt="${t}"><figcaption>${t}</figcaption></figure></div>`);f.querySelector("img").onclick=()=>openFig(`fig/${k}.png`,t);$("#figs").append(f)})};
+
+/* boot */
+const h=(location.hash||"").slice(1);show(TABS.some(t=>t[0]===h)?h:"overview");
+</script>
+</body>
+</html>
