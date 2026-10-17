@@ -30,7 +30,7 @@ GROUPS = [
     ("layout_transfer", "Re-used real layouts · 8,300 steps", "reuse"),
     ("augment_defective", "Re-used defective pictures · 8,300 steps", "reuse"),
     ("copypaste", "Pasted real defects · 2,000 steps", "reuse"),
-    ("synth_only_005_bal", "Fake pictures only", "gan"),
+    ("synth_only_005_bal", "Synthetic pictures only", "gan"),
 ]
 
 

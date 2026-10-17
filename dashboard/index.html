@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fake FESEM Images Dashboard</title>
+<title>Phase 1 Dissertation Dashboard</title>
 <style>
 :root{
   --paper:#f5f3ee; --surface:#ffffff; --ink:#16202b; --ink2:#4a5663; --muted:#7b8794;
@@ -120,6 +120,9 @@ figcaption{font-size:12.5px;color:var(--muted);margin-top:6px}
 .sdrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
 .sdcell{margin:0}.sdcell .box{border-radius:8px;overflow:hidden;background:#111}
 .sdcell figcaption{font-size:12px;line-height:1.35;margin-top:5px}
+.mrow{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,340px) minmax(0,340px);gap:12px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.mrow:first-child{border-top:0}.mname{display:flex;flex-direction:column;gap:2px;padding-top:4px}.mname small{color:var(--muted);font-size:12px}
+@media(max-width:620px){.mrow{grid-template-columns:1fr 1fr}.mname{grid-column:1/-1}}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .tri{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 @media(max-width:760px){.tri{grid-template-columns:1fr}}
@@ -168,7 +171,7 @@ footer{color:var(--muted);font-size:12px;padding:18px 0 40px;border-top:1px soli
 <body>
 <header class="top">
  <div class="wrap bar">
-  <div class="brand"><b>Do fake FESEM images help a defect detector?</b><span>Sahil Soni · M.Tech AIML · Symbiosis Institute of Technology, Pune · CA3 / Dissertation Phase I</span></div>
+  <div class="brand"><b>Phase 1 Dissertation</b><span>Sahil Soni · M.Tech AIML · Symbiosis Institute of Technology, Pune</span></div>
   <nav role="tablist" aria-label="Dashboard sections" id="tabs"></nav>
   <button class="iconbtn" id="theme" aria-label="Toggle dark mode" title="Light / dark">◐</button>
  </div>
@@ -179,8 +182,8 @@ footer{color:var(--muted);font-size:12px;padding:18px 0 40px;border-top:1px soli
 <section class="panel" id="p-overview" role="tabpanel">
  <div class="card hero">
   <div>
-   <h1 class="lede">Fake images matched real ones, but did not beat them.</h1>
-   <p class="sub">Perovskite solar-cell FESEM images are rarely labeled. I built five kinds of fake training pictures and tested each against real-only training under three fair-test rules. Flip the switch to see how an unfair comparison made the fake pictures look almost twice as good.</p>
+   <h1 class="lede" style="max-width:34ch;font-size:26px">Generative Modeling and Microstructural Characterization of Perovskite Solar Cell FESEM Imagery</h1>
+   <p class="sub"><b>Synthetic images matched real ones, but did not beat them.</b> Perovskite solar-cell FESEM images are rarely labeled. I built five kinds of synthetic training pictures and tested each against real-only training under three fair-test rules. Flip the switch to see how an unfair comparison made the synthetic pictures look almost twice as good.</p>
    <div style="margin-top:16px" class="seg" id="fairSwitch" role="group" aria-label="Comparison type">
     <button aria-pressed="false" data-m="unfair">Same epochs (100)</button>
     <button aria-pressed="true" data-m="fair">Same training steps</button>
@@ -188,7 +191,7 @@ footer{color:var(--muted);font-size:12px;padding:18px 0 40px;border-top:1px soli
   </div>
   <div id="heroChart"></div>
  </div>
- <div class="card" style="margin-bottom:16px"><h3>Research objectives</h3><p class="cap">The same six objectives used in CA1 to CA3 and the Phase I report. Click a card to open its evidence.</p><div class="objs" id="objs"></div></div>
+ <div class="card" style="margin-bottom:16px"><h3>Research objectives</h3><p class="cap">The same six objectives used throughout the Phase 1 Dissertation. Click a card to open its evidence.</p><div class="objs" id="objs"></div></div>
  <div class="grid g4" id="kpis"></div>
  <div class="grid g2" style="margin-top:16px">
   <div class="card"><h3>Three rules for a fair test</h3><p class="cap">Every number in this dashboard follows them.</p>
@@ -220,25 +223,25 @@ footer{color:var(--muted);font-size:12px;padding:18px 0 40px;border-top:1px soli
 
 <!-- GENERATORS -->
 <section class="panel" id="p-generators" role="tabpanel">
- <div class="card"><h3>How the fake pictures were made</h3><p class="cap">From simple drawing (1) to AI generation (5). Labels are known for every fake defect. This tab covers the drawn renderer and the GAN refiner; Stable Diffusion has its own tab.</p><div class="methods" id="methods"></div></div>
+ <div class="card"><h3>How the synthetic pictures were made</h3><p class="cap">From simple drawing (1) to AI generation (5). Labels are known for every synthetic defect. This tab covers the drawn renderer and the GAN refiner; Stable Diffusion has its own tab.</p><div class="methods" id="methods"></div></div>
  <div class="grid g2" style="margin-top:16px">
   <div class="card"><h3>Overall pipeline</h3><figure><img src="fig/pipeline_overall.png" alt="Pipeline from data to generation to evaluation"></figure></div>
   <div class="card"><h3>Parametric renderer and GAN refiner</h3><figure><img src="fig/renderer.png" alt="Renderer"></figure><figure style="margin-top:12px"><img src="fig/refiner.png" alt="Refiner architecture"></figure></div>
  </div>
  <div class="grid g2" style="margin-top:16px">
   <div class="card"><h3>Renderer</h3><p class="cap">Labels are written by the same code that draws the defect.</p>
-   <dl class="kv"><dt>Fake pictures</dt><dd>10,000</dd><dt>Exact boxes</dt><dd>518,943</dd><dt>Defect shapes</dt><dd>8, from published observations</dd><dt>Classes</dt><dd>pinhole, PbI₂</dd><dt>Placement</dt><dd>on grain boundaries, real size prior</dd><dt>Backgrounds</dt><dd>clean real training pictures only</dd></dl></div>
+   <dl class="kv"><dt>Synthetic pictures</dt><dd>10,000</dd><dt>Exact boxes</dt><dd>518,943</dd><dt>Defect shapes</dt><dd>8, from published observations</dd><dt>Classes</dt><dd>pinhole, PbI₂</dd><dt>Placement</dt><dd>on grain boundaries, real size prior</dd><dt>Backgrounds</dt><dd>clean real training pictures only</dd></dl></div>
   <div class="card"><h3>GAN refiner</h3><p class="cap">Changes appearance only; the label stays valid.</p>
    <dl class="kv"><dt>Network</dt><dd>U-Net + FiLM, GroupNorm</dd><dt>Input</dt><dd>4 channels (picture + defect mask)</dd><dt>Conditioned on</dt><dd>class and severity</dd><dt>Critics</dt><dd>spatial + frequency (FFT)</dd><dt>Training</dt><dd>192 px patches · batch 16 · AdamW · mixed precision · 30 epochs</dd><dt>Best epoch</dt><dd>19, reconstruction error 0.0458</dd><dt>Checkpoint chosen on</dt><dd>reconstruction, not adversarial loss</dd></dl></div>
  </div>
- <div class="card" style="margin-top:16px"><h3>How real do the fake pictures look? (Objective 4)</h3><p class="cap">Distance from 40 real pictures at three levels. Lower is closer. The GAN brings pixels closer, and its frequency critic keeps the texture close. Realism did not predict usefulness (see Results).</p><div id="gapTable" class="tscroll"></div><div id="gapChart" style="margin-top:10px"></div>
+ <div class="card" style="margin-top:16px"><h3>How real do the synthetic pictures look? (Objective 4)</h3><p class="cap">Distance from 40 real pictures at three levels. Lower is closer. The GAN brings pixels closer, and its frequency critic keeps the texture close. Realism did not predict usefulness (see Results).</p><div id="gapTable" class="tscroll"></div><div id="gapChart" style="margin-top:10px"></div>
   <figure style="margin-top:14px"><img src="fig/gap_chart.png" alt="Distance chart from the report"><figcaption>Figure from the report. A fourth, foundation-model level never produced a value, so no feature-level distance is reported.</figcaption></figure></div>
 </section>
 
 <!-- STABLE DIFFUSION -->
 <section class="panel" id="p-sd" role="tabpanel">
  <div class="card"><h3>Stable Diffusion: an extra test of hypothesis H3</h3>
-  <p class="sub" style="margin-bottom:12px">Every earlier fake picture was a composite: pixels pasted or drawn onto a real film. H3 asks whether a picture <b>repainted as a whole</b>, with no pasted edges, helps a detector more. I built this arm after the drawn and GAN pools did not help. The renderer still draws the layout, so box positions are known; the diffusion model then repaints lightly, and any defect it erased is dropped from the labels.</p>
+  <p class="sub" style="margin-bottom:12px">Every earlier synthetic picture was a composite: pixels pasted or drawn onto a real film. H3 asks whether a picture <b>repainted as a whole</b>, with no pasted edges, helps a detector more. I built this arm after the drawn and GAN pools did not help. The renderer still draws the layout, so box positions are known; the diffusion model then repaints lightly, and any defect it erased is dropped from the labels.</p>
   <div class="steps"><div class="step"><b>SD 1.5</b>paints the picture</div><div class="step"><b>ControlNet</b>keeps the layout (Canny edges)</div><div class="step"><b>IP-Adapter</b>copies the texture of a real picture</div><div class="step"><b>Private</b>free weights, nothing fine-tuned, no real image left the computer</div></div>
   <figure style="margin-top:14px"><img src="fig/diffusion_pipeline.png" alt="Diffusion pipeline"></figure></div>
 
@@ -246,10 +249,10 @@ footer{color:var(--muted);font-size:12px;padding:18px 0 40px;border-top:1px soli
   <p class="cap">Same 20 drawn layouts (5 per type), same Canny condition, strength 0.5, 30 steps, guidance 6. “Kept” = share of drawn defects still visible after the repaint.</p>
   <div class="tscroll" id="sdModels"></div><div class="legend" style="margin-top:12px"><span><i style="background:var(--diff)"></i>pinholes kept</span><span><i style="background:var(--pbi2)"></i>PbI₂ kept</span></div><div id="sdKeep"></div></div>
 
- <div class="card" style="margin-top:16px"><h3>Real picture vs each model</h3>
-  <p class="cap">The same drawn layout (shown as its Canny edge map) sent to every model, next to a real picture of the same kind. Boxes are the drawn defects.</p>
-  <div class="toolbar"><div class="chips" id="sdPick"></div><label class="sp" style="color:var(--ink2)"><input type="checkbox" id="sdBoxes" checked> Show boxes</label></div>
-  <div class="sdrow" id="sdRow"></div></div>
+ <div class="card" style="margin-top:16px"><h3>Real and generated pictures, per model</h3>
+  <p class="cap">A real picture of the same kind next to what each Stable Diffusion model generated from the same drawn layout.</p>
+  <div class="toolbar"><div class="chips" id="sdPick"></div></div>
+  <div id="sdRow"></div></div>
 
  <div class="grid g2" style="margin-top:16px">
   <div class="card"><h3>2 · Chosen settings (SD 1.5 pool)</h3><p class="cap">One RTX 3050 Ti laptop GPU, 4 GB.</p>
@@ -305,17 +308,17 @@ footer{color:var(--muted);font-size:12px;padding:18px 0 40px;border-top:1px soli
   <div class="toolbar"><div class="chips" id="triPick"></div><div class="seg" id="triNav"><button data-d="-1" aria-label="Previous">← Prev</button><button data-d="1" aria-label="Next">Next →</button></div><label class="sp" style="color:var(--ink2)"><input type="checkbox" id="triBoxes" checked> Show boxes</label></div>
   <div class="tri" id="tri"></div></div>
 
- <div class="card" style="margin-top:16px"><h3>Equal training time: does any fake picture help?</h3>
+ <div class="card" style="margin-top:16px"><h3>Equal training time: does any synthetic picture help?</h3>
   <p class="cap">mAP50 on the locked test set. Bars show the mean of three seeds, whiskers one standard deviation, dots individual seeds. Score = mean ÷ real-only at the same number of steps × 100.</p>
   <div class="legend" id="famLegend"></div><div id="fairChart"></div>
-  <p class="src">Report, Section 4.3. Pasted-real and fake-only pools were run at 2,000 steps and are compared with real-only at 2,000 steps; diffusion-only is scored against the 8,300-step baseline.</p></div>
+  <p class="src">Report, Section 4.3. Pasted-real and synthetic-only pools were run at 2,000 steps and are compared with real-only at 2,000 steps; diffusion-only is scored against the 8,300-step baseline.</p></div>
 
  <div class="grid g2" style="margin-top:16px">
   <div class="card"><h3>By defect size</h3><p class="cap">AP50 per size bin (mean of seeds, whisker = 1 sd). Choose the models to compare.</p>
    <div class="chips" id="sizePick" style="margin-bottom:10px"></div><div id="sizeChart"></div></div>
   <div class="card"><h3>Found, missed and guesses</h3><p class="cap">Out of 1,331 real test defects. Guesses are all predictions, including very unsure ones.</p><div id="foundChart"></div></div>
  </div>
- <div class="card" style="margin-top:16px"><h3>Validation versus test</h3><p class="cap">The 12 validation pictures with defects flatter fake data. A decision made on validation alone would have been wrong.</p><div id="valChart"></div></div>
+ <div class="card" style="margin-top:16px"><h3>Validation versus test</h3><p class="cap">The 12 validation pictures with defects flatter synthetic data. A decision made on validation alone would have been wrong.</p><div id="valChart"></div></div>
 </section>
 
 <!-- GALLERY -->
@@ -330,7 +333,7 @@ footer{color:var(--muted);font-size:12px;padding:18px 0 40px;border-top:1px soli
 
 <!-- FIGURES -->
 <section class="panel" id="p-figures" role="tabpanel">
- <p class="sub" style="margin-bottom:14px">Figures from the Phase I report and the CA3 presentation. Click to enlarge.</p>
+ <p class="sub" style="margin-bottom:14px">Figures from the Phase 1 Dissertation report and presentation. Click to enlarge.</p>
  <div class="grid g2" id="figs"></div>
 </section>
 </main>
@@ -391,30 +394,30 @@ INIT.overview=()=>{
  const draw=m=>{
   const rows=m==="unfair"
    ?[{label:"Real only",sub:"100 epochs = 2,000 steps",v:R.real_only_s.map50[0],color:"var(--real)",text:"100"},
-     {label:"Real + 500 fake (GAN)",sub:"100 epochs = 8,300 steps",v:unf.map50[0],color:"var(--gan)",text:"194"}]
+     {label:"Real + 500 synthetic (GAN)",sub:"100 epochs = 8,300 steps",v:unf.map50[0],color:"var(--gan)",text:"194"}]
    :[{label:"Real only",sub:"8,300 steps (415 epochs)",v:base8300,color:"var(--real)",text:"100"},
-     {label:"Real + 500 fake (GAN)",sub:"8,300 steps",v:gan.map50[0],color:"var(--gan)",text:String(score(gan,base8300))},
-     {label:"Real + 500 fake (Diffusion)",sub:"8,300 steps",v:dif.map50[0],color:"var(--diff)",text:String(score(dif,base8300))}];
+     {label:"Real + 500 synthetic (GAN)",sub:"8,300 steps",v:gan.map50[0],color:"var(--gan)",text:String(score(gan,base8300))},
+     {label:"Real + 500 synthetic (Diffusion)",sub:"8,300 steps",v:dif.map50[0],color:"var(--diff)",text:String(score(dif,base8300))}];
   hbars($("#heroChart"),rows.map(r=>({...r,tip:`mAP50 ${f4(r.v)}`})),0.16,f4);
   $("#heroChart").prepend(el(`<div class="cap">Detection score, real only = 100 · ${m==="unfair"?"the 1.94× gain came from 4.15× more training steps":"the gain disappears at equal training time"}</div>`));
  };
  $$("#fairSwitch button").forEach(b=>b.onclick=()=>{$$("#fairSwitch button").forEach(x=>x.setAttribute("aria-pressed",x===b));draw(b.dataset.m)});
  draw("fair");
 
- const O=[["Exact labels","Show that a fake defect can carry an exact box, mask and class, because the label is written in the same step that draws the defect.","Done","518,943 exact boxes in 10,000 drawn pictures","generators"],
-  ["Chemistry-based shapes","Ground the shapes of the fake defects in published observations of how pinholes and PbI₂ form.","Done","8 defect shapes from published work","generators"],
+ const O=[["Exact labels","Show that a synthetic defect can carry an exact box, mask and class, because the label is written in the same step that draws the defect.","Done","518,943 exact boxes in 10,000 drawn pictures","generators"],
+  ["Chemistry-based shapes","Ground the shapes of the synthetic defects in published observations of how pinholes and PbI₂ form.","Done","8 defect shapes from published work","generators"],
   ["Leak-free dataset","Measure how much the old split leaked, and build a split in which no specimen appears on two sides.","Done","36 leaked specimens found; 126 / 31 / 54 groups","dataset"],
-  ["Realism measured, not assumed","Measure how far the fake pictures are from real ones at three levels, then check whether closer also means more useful.","Done","Realism did not predict usefulness","generators"],
-  ["Where synthetic data helps","Test whether fake pictures improve a detector when both models get the same training time, and for which defect sizes.","Done for the questions tested","GAN 91, Stable Diffusion 85, real only 100","results"],
+  ["Realism measured, not assumed","Measure how far the synthetic pictures are from real ones at three levels, then check whether closer also means more useful.","Done","Realism did not predict usefulness","generators"],
+  ["Where synthetic data helps","Test whether synthetic pictures improve a detector when both models get the same training time, and for which defect sizes.","Done for the questions tested","GAN 91, Stable Diffusion 85, real only 100","results"],
   ["Best detector","Find which detector suits tiny FESEM defects when trained on the same real pictures and scored on the same locked test set.","Partly done","YOLO11s trained longer: mAP50 0.148","detectors"]];
  $("#objs").innerHTML=O.map((o,i)=>`<button class="obj" data-go="${o[4]}"><div class="on"><span>OBJECTIVE ${i+1}</span><span class="tag ${o[2]==="Done"?"yes":"mid"}">${o[2]}</span></div><h4>${o[0]}</h4><p>${o[1]}</p><div class="ev"><b>${o[3]}</b><span>Open →</span></div></button>`).join("");
  $$(".obj").forEach(b=>b.onclick=()=>{show(b.dataset.go);scrollTo(0,0)});
  const K=[["Files received","440","273 clean images in 211 specimen groups"],["Real defect boxes","4,578","across the 273 labeled pictures"],
-  ["Locked test set","1,331","boxes in 73 pictures; used once per model"],["Fake pictures built","10,000","rendered, with 518,943 exact boxes"],
+  ["Locked test set","1,331","boxes in 73 pictures; used once per model"],["Synthetic pictures built","10,000","rendered, with 518,943 exact boxes"],
   ["Best detector","0.148","mAP50, YOLO11s trained longer (415 epochs)"],["Papers reviewed","34","6 topics, each checked against DOI / arXiv"]];
  $("#kpis").innerHTML=K.map(k=>`<div class="card kpi"><div class="lab">${k[0]}</div><div class="num">${k[1]}</div><div class="note">${k[2]}</div></div>`).join("");
  const H=[["H1 · exact labels from a drawn defect","yes","Stands"],["Objective 3 · leak-free corpus","yes","Stands"],["Objective 4 · realism measured","mid","Tested: realism ≠ usefulness"],
-  ["H2 · realistic fakes improve detection","no","Not supported (91 vs 100)"],["H3 · whole diffusion images help more","no","Not supported (85 vs 100)"],["H4 · small YOLO beats large transformer","yes","Supported (0.0688 vs 0.0381)"]];
+  ["H2 · realistic synthetics improve detection","no","Not supported (91 vs 100)"],["H3 · whole diffusion images help more","no","Not supported (85 vs 100)"],["H4 · small YOLO beats large transformer","yes","Supported (0.0688 vs 0.0381)"]];
  $("#hyp").innerHTML="<table><tbody>"+H.map(h=>`<tr><td>${h[0]}</td><td><span class="tag ${h[1]}">${h[2]}</span></td></tr>`).join("")+"</tbody></table>";
 };
 
@@ -471,14 +474,9 @@ INIT.sd=()=>{
  const lays=D.sd.layouts,pk=$("#sdPick");let li=0;
  const kind=l=>l.idx<15?["Pinhole",1]:["PbI₂",0];
  const drawRow=()=>{const l=lays[li],[kn,c]=kind(l),rr=realOf(c)[(li%2)+1]||realOf(c)[0];
-  const cell=(file,boxes,cap,sub)=>`<figure class="sdcell"><div class="box"><img loading="lazy" src="img/${file}" alt="${cap}">${boxSvg(boxes)}</div><figcaption><b>${cap}</b><br>${sub}</figcaption></figure>`;
-  let h=cell(rr.file,[],"Real picture",kn+" film (real FESEM)")+cell(l.cond,l.boxes,"Canny edge condition","from the drawn layout, "+l.boxes.length+" box"+(l.boxes.length===1?"":"es"));
-  SDM.forEach(m=>h+=cell(l.out[m[0]],l.boxes,m[1],m[6]==="kept"?"kept · "+sp(m[0]):sp(m[0])));
-  h+=`<figure class="sdcell"><div class="box na"><span>Download blocked</span></div><figcaption><b>SD 2.1 base</b><br>dropped</figcaption></figure>`;
-  $("#sdRow").innerHTML=h;togg()};
- const togg=()=>$$("#sdRow .bx").forEach(s=>s.style.display=$("#sdBoxes").checked?"":"none");
- lays.forEach((l,i)=>{const c=el(`<button class="chip" aria-pressed="${i===0}">${kind(l)[0]} layout ${l.idx}</button>`);c.onclick=()=>{li=i;$$("#sdPick .chip").forEach(x=>x.setAttribute("aria-pressed",x===c));drawRow()};pk.append(c)});
- $("#sdBoxes").onchange=togg;drawRow();
+  $("#sdRow").innerHTML=SDM.map(m=>`<div class="mrow"><div class="mname"><b>${m[1]}</b><small>${sp(m[0])}${m[6]==="kept"?" · kept":""}</small></div><figure class="sdcell"><div class="box"><img loading="lazy" src="img/${rr.file}" alt="Real ${kn} picture"></div><figcaption>Real (${kn})</figcaption></figure><figure class="sdcell"><div class="box"><img loading="lazy" src="img/${l.out[m[0]]}" alt="${m[1]} output"></div><figcaption>Generated</figcaption></figure></div>`).join("")};
+ lays.forEach((l,i)=>{const c=el(`<button class="chip" aria-pressed="${i===0}">${kind(l)[0]} ${i%2+1}</button>`);c.onclick=()=>{li=i;$$("#sdPick .chip").forEach(x=>x.setAttribute("aria-pressed",x===c));drawRow()};pk.append(c)});
+ drawRow();
 
  const SW=[["0.15",82,82,.85],["0.20",79,80,.84],["0.25",75,75,.83],["0.35",65,71,.77],["0.50",55,60,.57]];
  const SWM=[["Pinholes kept (%)",1],["PbI₂ kept (%)",2],["Median contrast kept (%)",3]];let sm=1;
@@ -543,7 +541,7 @@ INIT.results=()=>{
  const P={scale_005_bal_steps8300:"0.59",diffusion_cn_steps8300:"0.46",augment_defective:"0.18",layout_transfer:"0.08",copypaste:"0.10",synth_only_005_bal:"0.006",diffusion_cn_only:"0.021"};
  const lst=[["real_only_steps8300","None (real only)",base8300],["scale_005_bal_steps8300","Renderer + GAN",base8300],["diffusion_cn_steps8300","Stable Diffusion",base8300],
   ["augment_defective","Re-used defective pictures",base8300],["layout_transfer","Re-used real layouts",base8300],["copypaste","Pasted real defects (vs 2,000 steps)",base2000],
-  ["synth_only_005_bal","Fake pictures only (vs 2,000 steps)",base2000],["diffusion_cn_only","Diffusion only, no real",base8300]];
+  ["synth_only_005_bal","Synthetic pictures only (vs 2,000 steps)",base2000],["diffusion_cn_only","Diffusion only, no real",base8300]];
  hbars($("#fairChart"),lst.map(([k,t,b])=>{const r=R[k];return {label:t,sub:`score ${score(r,b)}${P[k]?` · p = ${P[k]}`:""}`,v:r.map50[0],sd:r.map50[1],seeds:r.seeds,color:FAM[r.family][1],text:f4(r.map50[0]),
   tip:`<b>${t}</b><br>mAP50 ${f4(r.map50[0])} ± ${f4(r.map50[1])}<br>score ${score(r,b)} (real only = 100)<br>seeds: ${r.seeds.map(f4).join(", ")}`}}),0.22);
 
@@ -596,7 +594,7 @@ const lbToggle=()=>{const s=$("#lbbox svg");if(s)s.style.display=$("#lbBoxes").c
 $("#lbBoxes").onchange=lbToggle;$("#lbx").onclick=()=>lb.close();lb.addEventListener("click",e=>{if(e.target===lb)lb.close()});
 
 /* ---- FIGURES ---- */
-const FIGS=[["problem_closeups","The problem: pinholes (dark) and PbI₂ (bright) in real FESEM images"],["funnel","440 files to 273 clean images"],["leakage_diagram","Why the old split leaked"],["split_chart","Train / validation / test split"],["methods_gallery","Five ways to make fake training images"],["pipeline_overall","Overall pipeline"],["renderer","Parametric defect renderer"],["refiner","GAN refiner"],["diffusion_pipeline","Diffusion pipeline"],["diffusion_triplet","Real background, drawn defects, diffusion output"],["diffusion_samples","Real (top) vs diffusion (bottom)"],["models_compare","Four diffusion models, same layout"],["arch_chart","Detector architectures"],["compute_matching","Compute matching: 8,300 steps"],["fair_chart","Unfair (194) vs fair (91) comparison"],["all_chart","Every fake-picture kind at equal training time"],["sizes_chart","Score by defect size"],["found_chart","Found, missed, false alarms"],["benchmark_chart","Detector benchmark"],["scores_chart","Scores"],["seeds_chart","Seeds"],["gap_chart","Distance from real pictures"],["prisma","PRISMA flow of the literature review"],["lit_to_gap","From literature to gap"]];
+const FIGS=[["problem_closeups","The problem: pinholes (dark) and PbI₂ (bright) in real FESEM images"],["funnel","440 files to 273 clean images"],["leakage_diagram","Why the old split leaked"],["split_chart","Train / validation / test split"],["methods_gallery","Five ways to make synthetic training images"],["pipeline_overall","Overall pipeline"],["renderer","Parametric defect renderer"],["refiner","GAN refiner"],["diffusion_pipeline","Diffusion pipeline"],["diffusion_triplet","Real background, drawn defects, diffusion output"],["diffusion_samples","Real (top) vs diffusion (bottom)"],["models_compare","Four diffusion models, same layout"],["arch_chart","Detector architectures"],["compute_matching","Compute matching: 8,300 steps"],["fair_chart","Unfair (194) vs fair (91) comparison"],["all_chart","Every synthetic-picture kind at equal training time"],["sizes_chart","Score by defect size"],["found_chart","Found, missed, false alarms"],["benchmark_chart","Detector benchmark"],["scores_chart","Scores"],["seeds_chart","Seeds"],["gap_chart","Distance from real pictures"],["prisma","PRISMA flow of the literature review"],["lit_to_gap","From literature to gap"]];
 INIT.figures=()=>{$("#figs").innerHTML="";FIGS.forEach(([k,t])=>{const f=el(`<div class="card"><figure><img loading="lazy" src="fig/${k}.png" alt="${t}"><figcaption>${t}</figcaption></figure></div>`);f.querySelector("img").onclick=()=>openFig(`fig/${k}.png`,t);$("#figs").append(f)})};
 
 /* boot */
